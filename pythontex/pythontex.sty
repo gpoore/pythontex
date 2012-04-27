@@ -1,0 +1,977 @@
+%%
+%% This is file `pythontex.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% pythontex.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2012 by Geoffrey M. Poore <gpoore@gmail.com>
+%% --------------------------------------------------------------------------
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%   http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{pythontex}
+    [2012/4/27 Version~0.9beta PythonTeX]
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{pythontex}[2012/1/13 v0.8]
+\newcommand{\pytx@packagename}{PythonTeX}
+\RequirePackage{fancyvrb}
+\RequirePackage{etex}
+\RequirePackage{etoolbox}
+\RequirePackage{xstring}
+\RequirePackage{pgfopts}
+\RequirePackage{makecmds}
+\RequirePackage{newfloat}
+\RequirePackage{xcolor}
+\AtBeginDocument{\provideenvironment{NoHyper}{}{}}
+\newbool{pytx@opt@autoprint}
+\booltrue{pytx@opt@autoprint}
+\pgfkeys{/PYTX/pkgopt/autoprint/.default=true}
+\pgfkeys{/PYTX/pkgopt/autoprint/.is choice}
+\pgfkeys{/PYTX/pkgopt/autoprint/true/.code=\booltrue{pytx@opt@autoprint}}
+\pgfkeys{/PYTX/pkgopt/autoprint/false/.code=\boolfalse{pytx@opt@autoprint}}
+\newbool{pytx@opt@fixlr}
+\booltrue{pytx@opt@fixlr}
+\pgfkeys{/PYTX/pkgopt/fixlr/.default=true}
+\pgfkeys{/PYTX/pkgopt/fixlr/.is choice}
+\pgfkeys{/PYTX/pkgopt/fixlr/true/.code=\booltrue{pytx@opt@fixlr}}
+\pgfkeys{/PYTX/pkgopt/fixlr/false/.code=\boolfalse{pytx@opt@fixlr}}
+\def\pytx@opt@keeptemps{none}
+\pgfkeys{/PYTX/pkgopt/keeptemps/.default=all}
+\pgfkeys{/PYTX/pkgopt/keeptemps/.is choice}
+\pgfkeys{/PYTX/pkgopt/keeptemps/all/.code=\def\pytx@opt@keeptemps{all}}
+\pgfkeys{/PYTX/pkgopt/keeptemps/code/.code=\def\pytx@opt@keeptemps{code}}
+\pgfkeys{/PYTX/pkgopt/keeptemps/none/.code=\def\pytx@opt@keeptemps{none}}
+\newbool{pytx@opt@pygments}
+\pgfkeys{/PYTX/pkgopt/pygments/.default=true}
+\pgfkeys{/PYTX/pkgopt/pygments/.is choice}
+\pgfkeys{/PYTX/pkgopt/pygments/true/.code=\booltrue{pytx@opt@pygments}}
+\pgfkeys{/PYTX/pkgopt/pygments/false/.code=\boolfalse{pytx@opt@pygments}}
+\pgfkeys{/PYTX/pkgopt/pygopt/.code=\edef\pytx@pygopt{#1}}
+\pgfkeys{/PYTX/pkgopt/pygextfile/.default=25}
+\pgfkeys{/PYTX/pkgopt/pygextfile/.code=\edef\pytx@pygextfile{#1}}
+\ProcessPgfPackageOptions{/PYTX/pkgopt}
+\ifcsname pytx@pygmentsopt\endcsname\else\edef\pytx@pygopt{}\fi
+\ifbool{pytx@opt@fixlr}{
+    \let\originalleft\left
+    \let\originalright\right
+    \renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}%
+    \renewcommand{\right}{\aftergroup\egroup\originalright}%
+}{}%
+\def\pytx@CheckCounter#1{%
+    \@ifundefined{c@#1}{\newcounter{#1}}{}%
+}%
+\AtBeginDocument{%
+    \@ifpackageloaded{amsmath}%
+        {\def\pytx@SetStyle{%
+            \edef\pytx@style{%
+                \ifmmode
+                    \ifinalign@ align%
+                    \else\ifingather@ gather%
+                        \else\ifinner text%
+                            \else display%
+                            \fi
+                        \fi
+                    \fi
+                \else nonmath%
+                \fi
+            }%
+        }}%
+        {\def\pytx@SetStyle{%
+            \edef\pytx@style{%
+                \ifmmode
+                    \ifinner text%
+                    \else display%
+                    \fi
+                \else nonmath%
+                \fi
+            }%
+       }}%
+}%
+\newcommand{\restartpythontexsession}[1]{\def\pytx@group{#1}}
+\@onlypreamble\restartpythontexsession
+\AtBeginDocument{
+    \@ifundefined{pytx@group}{\def\pytx@group{default}}{}%
+}%
+\StrSubstitute{\jobname}{ }{-}[\pytx@jobname]
+\StrSubstitute{\pytx@jobname}{"}{}[\pytx@jobname]
+\StrSubstitute{\pytx@jobname}{*}{-}[\pytx@jobname]
+\newcommand{\setpythontexoutputdir}[1]{
+    \def\pytx@outputdir{#1}
+    \AtBeginDocument{\@ifpackageloaded{graphicx}{\graphicspath{{#1/}}}{}}
+}%
+\@onlypreamble\setpythontexoutputdir
+\AtBeginDocument{%
+    \@ifundefined{pytx@outputdir}%
+        {\setpythontexoutputdir{pythontex-files-\pytx@jobname}}{}%
+}%
+\newbool{pytx@usedpygments}
+\AfterEndPreamble{%
+    \ifbool{pytx@usedpygments}%
+        {\InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxpyg}{}{}}{}
+}%
+\AtBeginDocument{%
+    \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxref}{}{}
+}%
+\AtBeginDocument{\newwrite\pytx@codefile}
+\edef\pytx@delimchar{\string#}
+\edef\pytx@delim{=\string>PYTHONTEX\string#}
+\edef\pytx@delimparam{=\string>PYTHONTEX\string#PARAMS\string#}
+\AtBeginDocument{
+    \immediate\openout\pytx@codefile=\jobname.pytxcode
+    \immediate\write\pytx@codefile{%
+        \pytx@delimparam outputdir=\pytx@outputdir\pytx@delimchar}%
+    \immediate\write\pytx@codefile{%
+        \pytx@delimparam keeptemps=\pytx@opt@keeptemps\pytx@delimchar}%
+    \immediate\write\pytx@codefile{%
+        \pytx@delimparam pygments=%
+        \ifbool{pytx@opt@pygments}{True}{False}\pytx@delimchar}%
+    \immediate\write\pytx@codefile{\pytx@delimparam pygmentsoptions:%
+        \string{\pytx@pygopt\string}\pytx@delimchar}%
+    \ifcsname pytx@pygextfile\endcsname
+        \immediate\write\pytx@codefile{%
+            \pytx@delimparam pygextfile=\pytx@pygextfile \pytx@delimchar}%
+    \else\fi
+}%
+\def\pytx@WriteCodefileInfo{%
+    \immediate\write\pytx@codefile{\pytx@delim\pytx@type\pytx@delimchar%
+        \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
+        \arabic{\pytx@counter}\pytx@delimchar\pytx@cmd\pytx@delimchar%
+        \pytx@style\pytx@delimchar\the\inputlineno\pytx@delimchar}%
+}%
+\newcommand{\pytx@WriteCodefileInfoExt}[1][]{%
+    \immediate\write\pytx@codefile{\pytx@delim\pytx@type\pytx@delimchar%
+        \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
+        0\pytx@delimchar\pytx@cmd\pytx@delimchar%
+        \pytx@style\pytx@delimchar\the\inputlineno\pytx@delimchar#1}%
+}%
+\AtEndDocument{%
+    \immediate\write\pytx@codefile{%
+        \pytx@delim END\pytx@delimchar END\pytx@delimchar END\pytx@delimchar%
+        END\pytx@delimchar END\pytx@delimchar END\pytx@delimchar END\pytx@delimchar}
+    \immediate\closeout\pytx@codefile
+}%
+\newcommand{\setpythontexfv}[2][]{%
+    \ifstrempty{#1}%
+        {\gdef\pytx@fvsettings{#2}}%
+        {\expandafter\gdef\csname pytx@fvsettings@#1\endcsname{#2}}%
+}%
+\setpythontexfv{tabsize=4}
+\def\pytx@FVSet{%
+    \expandafter\let\expandafter\pytx@fvsettings@family
+        \csname pytx@fvsettings@\pytx@type\endcsname
+    \ifdefstring{\pytx@fvsettings@family}{}%
+        {}%
+        {\expandafter\fvset\expandafter{\pytx@fvsettings@family}}%
+    \ifdefstring{\pytx@fvsettings}{}%
+        {}%
+        {\expandafter\fvset\expandafter{\pytx@fvsettings}}%
+}%
+\def\pytx@outfile{}%
+\def\pytx@FetchOutfile[#1][#2]#3{%
+    \IfFileExists{\pytx@outputdir/#3}{%
+        \ifstrequal{#1}{}{\input{\pytx@outputdir/#3}}{}%
+        \ifstrequal{#1}{verb}{\VerbatimInput[#2]{\pytx@outputdir/#3}}{}%
+        \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3}}{}%
+    }%
+    {\textbf{??~\pytx@packagename~??}%
+        \PackageWarning{\pytx@packagename}{Non-existent printed content}}%
+}%
+\def\printpythontex{%
+    \@ifnextchar[{\pytx@Print}{\pytx@Print[]}%
+}%
+\def\pytx@Print[#1]{%
+    \@ifnextchar[{\pytx@Print@i[#1]}{\pytx@Print@i[#1][]}%
+}%
+\def\pytx@Print@i[#1][#2]{%
+    \pytx@FetchOutfile[#1][#2]{\pytx@outfile}%
+}%
+\let\stdoutpythontex\printpythontex
+\def\saveprintpythontex#1{%
+    \ifcsname pytx@SVOUT@#1\endcsname
+        \PackageError{\pytx@packagename}%
+            {Attempt to save content using an already-defined name}%
+            {Use a name that is not already defined}%
+    \else
+        \expandafter\edef\csname pytx@SVOUT@#1\endcsname{\pytx@outfile}%
+    \fi
+}%
+\let\savestdoutpythontex\saveprintpythontex
+\def\useprintpythontex{%
+    \@ifnextchar[{\pytx@UsePrint}{\pytx@UsePrint[]}%
+}%
+\def\pytx@UsePrint[#1]{%
+    \@ifnextchar[{\pytx@UsePrint@i[#1]}{\pytx@UsePrint@i[#1][]}%
+}%
+\def\pytx@UsePrint@i[#1][#2]#3{%
+    \ifcsname pytx@SVOUT@#3\endcsname
+        \pytx@FetchOutfile[#1][#2]{\csname pytx@SVOUT@#3\endcsname}%
+    \else
+        \textbf{??~\pytx@packagename~??}%
+        \PackageWarning{\pytx@packagename}{Non-existent saved printed content}%
+    \fi
+}%
+\let\usestdoutpythontex\useprintpythontex
+\newbool{pytx@inline@save}
+\newbool{pytx@inline@show}
+\begingroup
+\catcode`\ =12
+\xdef\pytx@spacecattwelve{ }%
+\endgroup
+\def\pytx@Retokenize#1{%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\ =\active
+    \tokenize{\pytx@retoked}{\detokenize{#1}}%
+    \endgroup
+}%
+\def\pytx@FormatInline#1{%
+    \begingroup
+    \pytx@FVSet
+    \frenchspacing\FV@SetupFont\FV@DefineWhiteSpace\FancyVerbDefineActive
+    \FancyVerbFormatCom
+    \hbox{\FancyVerbFormatLine{#1}}%
+    \endgroup
+}%
+\def\pytx@Inline{%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\{=1
+    \@ifnextchar[{\endgroup\pytx@InlineOarg}{\endgroup\pytx@InlineOarg[default]}%
+}%
+\def\pytx@InlineOarg[#1]{%
+    \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{_}[\pytx@session]}%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\{=1
+    \catcode`\}=2
+    \@ifnextchar\bgroup
+        {\pytx@InlineMargBgroup}%
+        {\catcode`\{=12
+            \catcode`\}=12
+            \pytx@InlineMargOther}%
+}%
+\def\pytx@InlineMargBgroup#1{%
+    \endgroup
+    \ifbool{pytx@inline@save}{%
+        \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+        \pytx@CheckCounter{\pytx@counter}%
+        \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+        \pytx@WriteCodefileInfo
+        \immediate\write\pytx@codefile{#1}%
+        \ifdefstring{\pytx@cmd}{inlinec}%
+            {\ifbool{pytx@opt@autoprint}%
+                {\InputIfFileExists{\pytx@outputdir/\pytx@outfile}{}{}}{}}%
+            {}%
+        \ifdefstring{\pytx@cmd}{inline}%
+            {\begin{NoHyper}\ref{\pytx@counter @\arabic{\pytx@counter}}%
+                \end{NoHyper}}%
+            {}%
+        \stepcounter{\pytx@counter}%
+        \boolfalse{pytx@inline@save}%
+    }{}%
+    \ifbool{pytx@inline@show}{%
+        \pytx@Retokenize{#1}%
+        \pytx@FormatInline{\pytx@retoked}%
+        \boolfalse{pytx@inline@show}%
+    }{}%
+}%
+\def\pytx@InlineMargOther#1{%
+    \endgroup
+    \ifstrequal{#1}{\pytx@spacecattwelve}%
+        {\PackageError{\pytx@packagename}%
+            {The space character cannot be used as a delimiting character}%
+            {Choose another delimiting character}}%
+        {\def\pytx@InlineMargOtherGet##1#1{%
+            \endgroup
+            \def\pytx@arg{##1}%
+            \pytx@InlineMargOtherGet@i}%
+    }%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\ =\active
+    \pytx@InlineMargOtherGet
+}%
+\def\pytx@InlineMargOtherGet@i{%
+    \ifbool{pytx@inline@save}{%
+        \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+        \pytx@CheckCounter{\pytx@counter}%
+        \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+        \pytx@WriteCodefileInfo
+        \immediate\write\pytx@codefile{\pytx@arg}%
+        \ifdefstring{\pytx@cmd}{inlinec}%
+            {\ifbool{pytx@opt@autoprint}%
+                {\InputIfFileExists{\pytx@outputdir/\pytx@outfile}{}{}}{}}{}%
+        \ifdefstring{\pytx@cmd}{inline}%
+            {\begin{NoHyper}\ref{\pytx@counter @\arabic{\pytx@counter}}%
+                \end{NoHyper}}{}%
+        \stepcounter{\pytx@counter}%
+        \boolfalse{pytx@inline@save}%
+    }{}%
+    \ifbool{pytx@inline@show}{%
+        \pytx@FormatInline{\pytx@arg}%
+        \boolfalse{pytx@inline@show}%
+    }{}%
+}%
+\newcommand{\pytx@MakeInlineb}[1]{%
+    \expandafter\newcommand\expandafter{\csname #1b\endcsname}{%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{inlineb}%
+        \pytx@SetStyle
+        \booltrue{pytx@inline@save}%
+        \booltrue{pytx@inline@show}%
+        \pytx@Inline
+    }%
+}%
+\newcommand{\pytx@MakeInlinev}[1]{%
+    \expandafter\newcommand\expandafter{\csname #1v\endcsname}{%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{inlinev}%
+        \pytx@SetStyle
+        \booltrue{pytx@inline@show}%
+        \pytx@Inline
+    }%
+}%
+\newcommand{\pytx@MakeInlinec}[1]{%
+    \expandafter\newcommand\expandafter{\csname #1c\endcsname}{%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{inlinec}%
+        \pytx@SetStyle
+        \booltrue{pytx@inline@save}%
+        \pytx@Inline
+    }%
+}%
+\newcommand{\pytx@MakeInline}[1]{%
+    \expandafter\newcommand\expandafter{\csname #1\endcsname}{%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{inline}%
+        \pytx@SetStyle
+        \booltrue{pytx@inline@save}%
+        \pytx@Inline
+    }%
+}%
+\newcounter{pytx@FancyVerbLineTemp}%
+\begingroup
+\catcode`\^^M=\active
+\gdef\pytx@FancyVerbGetLine#1^^M{%
+    \@nil%
+    \FV@CheckEnd{#1}%
+    \ifx\@tempa\FV@EnvironName%
+        \ifx\@tempb\FV@@@CheckEnd\else\FV@BadEndError\fi%
+        \let\next\FV@EndScanning%
+    \else%
+        \def\FV@Line{#1}%
+        \def\next{\FV@PreProcessLine\FV@GetLine}%
+        \immediate\write\pytx@codefile{\detokenize{#1}}%
+    \fi%
+    \next}%
+\endgroup
+\newcommand{\pytx@MakeBlock}[1]{%
+    \expandafter\newenvironment{#1block}{%
+        \VerbatimEnvironment
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{block}%
+        \pytx@SetStyle
+        \let\FancyVerbGetLine\pytx@FancyVerbGetLine
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BeginBlockEnv}{\endgroup\pytx@BeginBlockEnv[default]}%
+    }%
+    {\end{Verbatim}\endgroup%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+    }%
+}%
+\def\pytx@BeginBlockEnv[#1]{%
+    \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{_}[\pytx@session]}%
+    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \pytx@CheckCounter{\pytx@counter}%
+    \edef\pytx@linecount{\pytx@counter @line}%
+    \pytx@CheckCounter{\pytx@linecount}%
+    \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+    \pytx@WriteCodefileInfo
+    \begingroup\pytx@FVSet\begin{Verbatim}%
+}%
+\newcommand{\pytx@MakeVerb}[1]{%
+    \expandafter\newenvironment{#1verb}{%
+        \VerbatimEnvironment
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{verb}%
+        \pytx@SetStyle
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BeginVerbEnv}{\endgroup\pytx@BeginVerbEnv[default]}%
+    }%
+    {\end{Verbatim}\endgroup%
+    \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    }%
+}%
+\def\pytx@BeginVerbEnv[#1]{%
+    \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{_}[\pytx@session]}%
+    \edef\pytx@linecount{pytx@\pytx@type @\pytx@session @\pytx@group @line}%
+    \pytx@CheckCounter{\pytx@linecount}%
+    \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+    \begingroup\pytx@FVSet\begin{Verbatim}%
+}%
+\def\pytx@WriteDetok#1{%
+    \immediate\write\pytx@codefile{\detokenize{#1}}}%
+\def\pytx@FVB@VerbatimOut{%
+    \@bsphack
+    \begingroup
+    \let\FV@ProcessLine\pytx@WriteDetok
+    \let\FV@FontScanPrep\relax
+    \let\@noligs\relax
+    \FV@Scan}%
+\def\pytx@FVE@VerbatimOut{\endgroup\@esphack}%
+\newcommand{\pytx@MakeCode}[1]{%
+    \expandafter\newenvironment{#1code}{%
+        \VerbatimEnvironment
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{code}%
+        \pytx@SetStyle
+        \let\FVB@VerbatimOut\pytx@FVB@VerbatimOut
+        \let\FVE@VerbatimOut\pytx@FVE@VerbatimOut
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BeginCodeEnv}{\endgroup\pytx@BeginCodeEnv[default]}%
+    }%
+    {\end{VerbatimOut}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \ifbool{pytx@opt@autoprint}{\InputIfFileExists{\pytx@outputdir/\pytx@outfile}{}{}}{}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+    }%
+}%
+\def\pytx@BeginCodeEnv[#1]{%
+    \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{_}[\pytx@session]}%
+    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \pytx@CheckCounter{\pytx@counter}%
+    \pytx@WriteCodefileInfo
+    \begingroup
+    \obeylines
+    \@ifnextchar[{\endgroup\pytx@BeginCodeEnv@i}{\endgroup\pytx@BeginCodeEnv@i[]}%
+}%
+\def\pytx@BeginCodeEnv@i[#1]{%
+    \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \begin{VerbatimOut}%
+}%
+\def\pytx@FVB@SaveVerbatim#1{%
+    \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \@bsphack
+    \begingroup
+    \FV@UseKeyValues
+    \def\SaveVerbatim@Name{#1}%
+    \def\FV@ProcessLine##1{%
+        \expandafter\gdef\expandafter\FV@TheVerbatim\expandafter{%
+        \FV@TheVerbatim\FV@StepLineNo\FV@ProcessLine{##1}}}%
+    \gdef\FV@TheVerbatim{\FV@CodeLineNo=1}%
+    \FV@Scan}
+\def\pytx@FVE@SaveVerbatim{%
+    \expandafter\global\expandafter\let
+    \csname FV@SV@\SaveVerbatim@Name\endcsname\FV@TheVerbatim
+    \endgroup\@esphack
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}}
+\let\FVB@SaveVerbatim\pytx@FVB@SaveVerbatim
+\let\FVE@SaveVerbatim\pytx@FVE@SaveVerbatim
+\def\pytx@InlinePyg{%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\{=1
+    \@ifnextchar[{\endgroup\pytx@InlineOargPyg}{\endgroup\pytx@InlineOargPyg[default]}%
+}%
+\def\pytx@InlineOargPyg[#1]{%
+    \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{_}[\pytx@session]}%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\{=1
+    \catcode`\}=2
+    \@ifnextchar\bgroup
+        {\pytx@InlineMargBgroupPyg}%
+        {\catcode`\{=12
+        \catcode`\}=12
+        \pytx@InlineMargOtherPyg}%
+}%
+\def\pytx@InlineMargBgroupPyg#1{%
+    \endgroup
+    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \pytx@CheckCounter{\pytx@counter}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \pytx@WriteCodefileInfo
+    \immediate\write\pytx@codefile{#1}%
+    \ifdefstring{\pytx@cmd}{inlinec}%
+        {\ifbool{pytx@opt@autoprint}%
+            {\InputIfFileExists{\pytx@outputdir/\pytx@outfile}{}{}}{}}{}%
+    \ifdefstring{\pytx@cmd}{inline}%
+        {\begin{NoHyper}\ref{\pytx@counter @\arabic{\pytx@counter}}\end{NoHyper}}{}%
+    \ifbool{pytx@inline@show}{%
+        \begingroup
+        \pytx@FVSet
+        \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
+            \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+            \BUseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
+            \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \else
+            \textbf{??~\pytx@packagename~??}%
+            \PackageWarning{\pytx@packagename}{Non-existent Pygments content}%
+        \fi
+        \endgroup
+        \boolfalse{pytx@inline@show}%
+    }{}%
+    \stepcounter{\pytx@counter}%
+}%
+\def\pytx@InlineMargOtherPyg#1{%
+    \endgroup
+    \ifstrequal{#1}{\pytx@spacecattwelve}%
+        {\PackageError{\pytx@packagename}%
+            {The space character cannot be used as a delimiting character}%
+            {Choose another delimiting character}}%
+        {\def\pytx@InlineMargOtherGetPyg##1#1{%
+            \endgroup
+            \def\pytx@arg{##1}%
+            \pytx@InlineMargOtherGetPyg@i}}%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\ =\active
+    \pytx@InlineMargOtherGetPyg
+}%
+\def\pytx@InlineMargOtherGetPyg@i{%
+    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \pytx@CheckCounter{\pytx@counter}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \pytx@WriteCodefileInfo
+    \immediate\write\pytx@codefile{\pytx@arg}%
+    \ifdefstring{\pytx@cmd}{inlinec}%
+        {\ifbool{pytx@opt@autoprint}%
+            {\InputIfFileExists{\pytx@outputdir/\pytx@outfile}{}{}}{}}{}%
+    \ifdefstring{\pytx@cmd}{inline}%
+        {\begin{NoHyper}\ref{\pytx@counter @\arabic{\pytx@counter}}\end{NoHyper}}{}%
+    \ifbool{pytx@inline@show}{%
+        \begingroup
+        \pytx@FVSet
+        \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
+            \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+            \BUseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
+            \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \else
+            \textbf{??~\pytx@packagename~??}%
+            \PackageWarning{\pytx@packagename}{Non-existent Pygments content}%
+        \fi
+        \endgroup
+        \boolfalse{pytx@inline@show}%
+    }{}%
+    \stepcounter{\pytx@counter}%
+}%
+\newcommand{\pytx@MakeInlinebPyg}[1]{%
+    \expandafter\newcommand\expandafter{\csname #1b\endcsname}{%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{inlineb}%
+        \pytx@SetStyle
+        \booltrue{pytx@inline@show}%
+        \pytx@InlinePyg
+    }%
+}%
+\newcommand{\pytx@MakeInlinevPyg}[1]{%
+    \expandafter\newcommand\expandafter{\csname #1v\endcsname}{%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{inlinev}%
+        \pytx@SetStyle
+        \booltrue{pytx@inline@show}%
+        \pytx@InlinePyg
+    }%
+}%
+\newcommand{\pytx@MakeInlinecPyg}[1]{%
+    \expandafter\newcommand\expandafter{\csname #1c\endcsname}{%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{inlinec}%
+        \pytx@SetStyle
+        \pytx@InlinePyg
+    }%
+}%
+\newcommand{\pytx@MakeInlinePyg}[1]{%
+    \expandafter\newcommand\expandafter{\csname #1\endcsname}{%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{inline}%
+        \pytx@SetStyle
+        \pytx@InlinePyg
+    }%
+}%
+\newcommand{\pytx@MakePygEnv}[2]{%
+    \expandafter\newenvironment{#1#2}{%
+        \VerbatimEnvironment
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{#2}%
+        \pytx@SetStyle
+        \let\FVB@VerbatimOut\pytx@FVB@VerbatimOut
+        \let\FVE@VerbatimOut\pytx@FVE@VerbatimOut
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BeginEnvPyg}{\endgroup\pytx@BeginEnvPyg[default]}%
+    }%
+    {\end{VerbatimOut}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+    \begingroup
+    \pytx@FVSet
+    \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+    \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
+        \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
+    \else
+        \InputIfFileExists{\pytx@outputdir/\pytx@outfile.pygtex}{}%
+            {\textbf{??~\pytx@packagename~??}%
+                \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
+    \fi
+    \endgroup
+    \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+    }%
+}%
+\def\pytx@BeginEnvPyg[#1]{%
+    \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{_}[\pytx@session]}%
+    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \pytx@CheckCounter{\pytx@counter}%
+    \edef\pytx@linecount{\pytx@counter @line}%
+    \pytx@CheckCounter{\pytx@linecount}%
+    \pytx@WriteCodefileInfo
+    \begingroup
+    \obeylines
+    \@ifnextchar[{\endgroup\pytx@BeginEnvPyg@i}{\endgroup\pytx@BeginEnvPyg@i[]}%
+}%
+\def\pytx@BeginEnvPyg@i[#1]{%
+    \def\pytx@fvopttmp{#1}%
+    \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \begin{VerbatimOut}%
+}%
+\newcommand{\pytx@MakeBlockPyg}[1]{\pytx@MakePygEnv{#1}{block}}
+\newcommand{\pytx@MakeVerbPyg}[1]{\pytx@MakePygEnv{#1}{verb}}
+\let\pytx@MakeCodePyg\pytx@MakeCode
+\newcommand{\makepythontexmacrosfv}[1]{%
+    \IfBeginWith{#1}{PYG}%
+        {\PackageError{\pytx@packagename}%
+            {Attempt to create macros with reserved prefix PYG}{}}{}
+    \pytx@MakeInlineb{#1}
+    \pytx@MakeInlinev{#1}
+    \pytx@MakeInlinec{#1}
+    \pytx@MakeInline{#1}
+    \pytx@MakeBlock{#1}
+    \pytx@MakeVerb{#1}
+    \pytx@MakeCode{#1}
+    \setpythontexfv[#1]{}
+}%
+\@onlypreamble\makepythontexmacrosfv
+\newcommand{\makepythontexmacrospyg}[3]{%
+    \IfBeginWith{#1}{PYG}%
+        {\PackageError{\pytx@packagename}%
+            {Attempt to create macros with reserved prefix PYG}{}}{}
+    \pytx@MakeInlinebPyg{#1}
+    \pytx@MakeInlinevPyg{#1}
+    \pytx@MakeInlinecPyg{#1}
+    \pytx@MakeInlinePyg{#1}
+    \pytx@MakeBlockPyg{#1}
+    \pytx@MakeVerbPyg{#1}
+    \pytx@MakeCodePyg{#1}
+    \setpythontexfv[#1]{}
+    \booltrue{pytx@usedpygments}
+    \expandafter\xdef\csname pytx@pygopt@#1\endcsname{#3}
+    \AtBeginDocument{\immediate\write\pytx@codefile{%
+        \pytx@delimparam pygmentsfamily:#1,#2,%
+        \string{\csname pytx@pygopt@#1\endcsname\string}\pytx@delimchar}%
+    }%
+}%
+\@onlypreamble\makepythontexmacrospyg
+\newcommand{\setpythontexpygopt}[2]{%
+    \ifcsname pytx@pygopt@#1\endcsname
+        \expandafter\xdef\csname pytx@pygopt@#1\endcsname{#2}%
+    \else
+        \PackageError{\pytx@packagename}%
+            {Cannot modify Pygments options for a non-existent family}{}
+    \fi
+}%
+\@onlypreamble\setpythontexpygopt
+\newcommand{\makepythontexmacros}[4][auto]{%
+    \expandafter\xdef\csname pytx@macroformatter@#2\endcsname{#1}
+    \expandafter\xdef\csname pytx@pyglexer@#2\endcsname{#3}
+    \expandafter\xdef\csname pytx@pygopt@#2\endcsname{#4}
+    \AtBeginDocument{%
+        \ifcsstring{pytx@macroformatter@#2}{auto}{%
+            \ifbool{pytx@opt@pygments}%
+                {\makepythontexmacrospyg{#2}{\csname pytx@pyglexer@#2\endcsname}%
+                    {\csname pytx@pygopt@#2\endcsname}}%
+                {\makepythontexmacrosfv{#2}}}{}%
+        \ifcsstring{pytx@macroformatter@#2}{fancyvrb}%
+            {\makepythontexmacrosfv{#2}}{}%
+        \ifcsstring{pytx@macroformatter@#2}{pygments}%
+            {\makepythontexmacrospyg{#2}{\csname pytx@pyglexer@#2\endcsname}%
+                {\csname pytx@pygopt@#2\endcsname}}{}%
+    }%
+}%
+\@onlypreamble\makepythontexmacros
+\newcommand{\setpythontexmacros}[4][auto]{%
+    \ifcsname pytx@macroformatter@#2\endcsname
+        \expandafter\xdef\csname pytx@macroformatter@#2\endcsname{#1}
+        \expandafter\xdef\csname pytx@pyglexer@#2\endcsname{#3}
+        \expandafter\xdef\csname pytx@pygopt@#2\endcsname{#4}
+    \else
+        \PackageError{\pytx@packagename}%
+            {Cannot modify a non-existent family}{}
+    \fi
+}%
+\@onlypreamble\setpythontexmacros
+\def\setpythontexformatter#1#2{%
+    \ifcsname pytx@macroformatter@#1\endcsname
+        \expandafter\xdef\csname pytx@macroformatter@#1\endcsname{#2}
+    \else
+        \PackageError{\pytx@packagename}%
+            {Cannot modify a non-existent family}{}
+    \fi
+}%
+\@onlypreamble\setpythontexformatter
+\def\setpythontexpyglexer#1#2{%
+    \ifcsname pytx@pyglexer@#1\endcsname
+        \expandafter\xdef\csname pytx@pyglexer@#1\endcsname{#2}
+    \else
+        \PackageError{\pytx@packagename}%
+            {Cannot modify a non-existent family}{}
+    \fi
+}%
+\@onlypreamble\setpythontexpyglexer
+\makepythontexmacros{py}{python}{}
+\makepythontexmacros{sympy}{python}{}
+\makepythontexmacros{pylab}{python}{}
+\newbool{pytx@listingenv}
+\def\setpythontexlistingenv#1{
+    \DeclareFloatingEnvironment[fileext=lopytx,listname={List of Listings},name=Listing]{#1}
+    \booltrue{pytx@listingenv}
+}
+\@onlypreamble\setpythontexlistingenv
+\AtBeginDocument{
+    \ifcsname listing\endcsname
+        \ifbool{pytx@listingenv}{}%
+            {\PackageWarning{\pytx@packagename}%
+                {A conflicting listing environment already exists}%
+                {Create a \pytx@packagename\ listing environment with a custom name}}%
+    \else
+        \ifbool{pytx@listingenv}{}{\DeclareFloatingEnvironment[fileext=lopytx]{listing}}
+    \fi
+}%
+\def\pytx@MakePygmentsInlinePyg{%
+    \newcommand{\pygment}[1]{%
+        \edef\pytx@type{PYG##1}%
+        \edef\pytx@cmd{inlinev}%
+        \pytx@SetStyle
+        \booltrue{pytx@inline@show}%
+        \ifcsname pytx@fvsettings@\pytx@type\endcsname
+        \else
+            \expandafter\def\csname pytx@fvsettings@\pytx@type\endcsname{}%
+        \fi
+        \pytx@InlinePyg[]
+    }%
+}%
+\def\pytx@MakePygmentsEnvPyg{%
+    \newenvironment{pygments}{%
+        \VerbatimEnvironment
+        \pytx@SetStyle
+        \let\FVB@VerbatimOut\pytx@FVB@VerbatimOut
+        \let\FVE@VerbatimOut\pytx@FVE@VerbatimOut
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BEPygmentsPyg}{\endgroup\pytx@BEPygmentsPyg[]}%
+    }%
+    {\end{VerbatimOut}%
+        \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+        \begingroup
+        \pytx@FVSet
+        \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+        \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
+            \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
+        \else
+            \InputIfFileExists{\pytx@outputdir/%
+                \pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.pygtex}{}%
+                {\textbf{??~\pytx@packagename~??}%
+                    \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
+        \fi
+        \endgroup
+        \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+        \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \stepcounter{\pytx@counter}%
+    }%
+}%
+\def\pytx@BEPygmentsPyg[#1]{%
+    \def\pytx@fvopttmp{#1}%
+    \begingroup
+    \obeylines
+    \pytx@BEPygmentsPyg@i
+}%
+\def\pytx@BEPygmentsPyg@i#1{%
+    \endgroup
+    \edef\pytx@type{PYG#1}%
+    \edef\pytx@cmd{verb}%
+    \edef\pytx@session{default}%
+    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \pytx@CheckCounter{\pytx@counter}%
+    \edef\pytx@linecount{\pytx@counter @line}%
+    \pytx@CheckCounter{\pytx@linecount}%
+    \pytx@WriteCodefileInfo
+    \ifcsname pytx@fvsettings@\pytx@type\endcsname
+    \else
+        \expandafter\def\csname pytx@fvsettings@\pytx@type\endcsname{}%
+    \fi
+    \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \begin{VerbatimOut}%
+}%
+\def\pytx@MakePygmentsInputPyg{
+    \newcommand{\inputpygments}[3][]{%
+        \edef\pytx@type{PYG##2}%
+        \edef\pytx@cmd{verb}%
+        \pytx@SetStyle
+        \edef\pytx@session{EXT:##3}%
+        \ifcsname pytx@fvsettings@\pytx@type\endcsname
+        \else
+            \expandafter\def\csname pytx@fvsettings@\pytx@type\endcsname{}%
+        \fi
+        \pytx@WriteCodefileInfoExt
+        \IfFileExists{##3}{}{\PackageWarning{\pytx@packagename}%
+            {Input file <##3> does not exist}{}}
+        \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+        \begingroup
+        \pytx@FVSet
+        \fvset{firstnumber=auto}%
+        \ifcsname FV@SV@pytx@\pytx@type @\pytx@session @\pytx@group @0\endcsname
+            \UseVerbatim[##1]{pytx@\pytx@type @\pytx@session @\pytx@group @0}%
+        \else
+            \InputIfFileExists{\pytx@outputdir/##3_##2.pygtex}{}%
+                {\textbf{??~\pytx@packagename~??}%
+                    \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
+        \fi
+        \endgroup
+        \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    }%
+}%
+\def\pytx@MakePygmentsInline{%
+    \newcommand{\pygment}[1]{%
+        \edef\pytx@type{PYG##1}%
+        \edef\pytx@cmd{inlinev}%
+        \pytx@SetStyle
+        \booltrue{pytx@inline@show}%
+        \ifcsname pytx@fvsettings@\pytx@type\endcsname
+        \else
+            \expandafter\def\csname pytx@fvsettings@\pytx@type\endcsname{}%
+        \fi
+        \pytx@Inline[]
+    }%
+}%
+\def\pytx@MakePygmentsEnv{%
+    \newenvironment{pygments}{%
+        \VerbatimEnvironment
+        \pytx@SetStyle
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BEPygments}{\endgroup\pytx@BEPygments[]}%
+    }%
+    {\end{Verbatim}\endgroup%
+        \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+        \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    }%
+}%
+\def\pytx@BEPygments[#1]{%
+    \def\pytx@fvopttmp{#1}%
+    \begingroup
+    \obeylines
+    \pytx@BEPygments@i
+}%
+\def\pytx@BEPygments@i#1{%
+    \endgroup
+    \edef\pytx@type{PYG#1}%
+    \edef\pytx@cmd{verb}%
+    \edef\pytx@session{default}%
+    \edef\pytx@linecount{pytx@\pytx@type @\pytx@session @\pytx@group @line}%
+    \pytx@CheckCounter{\pytx@linecount}%
+    \ifcsname pytx@fvsettings@\pytx@type\endcsname
+    \else
+        \expandafter\def\csname pytx@fvsettings@\pytx@type\endcsname{}%
+    \fi
+    \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+    \begingroup\pytx@FVSet
+    \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+    \begin{Verbatim}%
+}%
+\def\pytx@MakePygmentsInput{
+    \newcommand{\inputpygments}[3][]{%
+        \edef\pytx@type{PYG##2}%
+        \edef\pytx@cmd{verb}%
+        \pytx@SetStyle
+        \edef\pytx@session{EXT:##3}%
+        \ifcsname pytx@fvsettings@\pytx@type\endcsname
+        \else
+            \expandafter\def\csname pytx@fvsettings@\pytx@type\endcsname{}%
+        \fi
+        \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+        \begingroup
+        \pytx@FVSet
+        \fvset{firstnumber=auto}%
+        \IfFileExists{##3}%
+            {\VerbatimInput[##1]{##3}}%
+            {\PackageWarning{\pytx@packagename}{Input file <##3> doesn't exist}}%
+        \endgroup
+        \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    }%
+}%
+\newcommand{\setpygmentsfv}[2][]{%
+    \ifstrempty{#1}%
+        {\gdef\pytx@fvsettings{#2}}%
+        {\expandafter\gdef\csname pytx@fvsettings@PYG#1\endcsname{#2}}%
+}%
+\def\setpygmentspygopt#1#2{%
+    \AtBeginDocument{\immediate\write\pytx@codefile{%
+        \pytx@delimparam pygmentsfamily:PYG#1,#1,%
+        \string{#2\string}\pytx@delimchar}%
+    }%
+}%
+\@onlypreamble\setpygmentspygopt
+\def\setpygmentsformatter#1{\xdef\pytx@macroformatter@PYG{#1}}
+\@onlypreamble\setpygmentsformatter
+\setpygmentsformatter{pygments}
+\def\makepygmentspyg{%
+    \pytx@MakePygmentsInlinePyg
+    \pytx@MakePygmentsEnvPyg
+    \pytx@MakePygmentsInputPyg
+    \booltrue{pytx@usedpygments}
+}%
+\@onlypreamble\makepygmentspyg
+\def\makepygmentsfv{%
+    \pytx@MakePygmentsInline
+    \pytx@MakePygmentsEnv
+    \pytx@MakePygmentsInput
+}%
+\@onlypreamble\makepygmentsfv
+\def\makepygments{%
+    \AtBeginDocument{%
+        \ifdefstring{\pytx@macroformatter@PYG}{auto}%
+            {\ifbool{pytx@opt@pygments}%
+                {\makepygmentspyg}{\makepygmentsfv}}{}
+        \ifdefstring{\pytx@macroformatter@PYG}{pygments}%
+            {\makepygmentspyg}{}
+        \ifdefstring{\pytx@macroformatter@PYG}{fancyvrb}%
+            {\makepygmentsfv}{}
+    }%
+}%
+\@onlypreamble\makepygments
+\makepygments
+\endinput
+%%
+%% End of file `pythontex.sty'.
