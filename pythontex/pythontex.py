@@ -667,10 +667,11 @@ if __name__=='__main__':
     #Print errors, modifying line numbers to correspond with the tex document
     #We also set the hashes corresponding to any (type,session,group)'s with error to null strings.
     #This makes sure they will be executed the next time.
-    print('  Cleaning up and reporting errors...\n')
+    print('  Cleaning up and reporting errors...')
     sys.stdout.flush()
     #Currently, error messages are printed in order of appearance, one (type,session,group) at a time.
     #This has the advantage that all errors from one set of code are together.
+    errorcount=0
     for key in codedict:
         [inputtype,inputsession,inputgroup]=key.split('#')
         basename=inputtype+'_'+inputsession+'_'+inputgroup
@@ -691,6 +692,7 @@ if __name__=='__main__':
             print('\n---- Errors for '+basename+' ----')
             for errline in errfile:
                 if errline.find(basename) and search('line \d+',errline):
+                    errorcount+=1
                     #Offset by one for zero indexing, one for previous line
                     errlinenumber=int(search('line (\d+)',errline).groups()[0])-2
                     offset=0
@@ -730,3 +732,8 @@ if __name__=='__main__':
     f=open(pythontex_info_file,'wb')
     pickle.dump(pythontex_info,f,-1)
     f.close()
+    
+    # Print exit message
+    print('\n--------------------------------------------------')
+    print('PythonTeX: ' + jobnameraw + ' - ' + str(errorcount) + ' error(s)')
+
