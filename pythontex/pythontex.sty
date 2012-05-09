@@ -20,9 +20,9 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2012/4/27 Version~0.9beta PythonTeX]
+    [2012/05/09 Version~0.9beta2 PythonTeX]
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{pythontex}[2012/1/13 v0.8]
+\ProvidesPackage{pythontex}[2012/05/09 v0.9beta2]
 \newcommand{\pytx@packagename}{PythonTeX}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
@@ -265,7 +265,7 @@
     \ifbool{pytx@inline@save}{%
         \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
         \pytx@CheckCounter{\pytx@counter}%
-        \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+        \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.stdout}%
         \pytx@WriteCodefileInfo
         \immediate\write\pytx@codefile{#1}%
         \ifdefstring{\pytx@cmd}{inlinec}%
@@ -305,7 +305,7 @@
     \ifbool{pytx@inline@save}{%
         \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
         \pytx@CheckCounter{\pytx@counter}%
-        \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+        \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.stdout}%
         \pytx@WriteCodefileInfo
         \immediate\write\pytx@codefile{\pytx@arg}%
         \ifdefstring{\pytx@cmd}{inlinec}%
@@ -387,7 +387,7 @@
         \@ifnextchar[{\endgroup\pytx@BeginBlockEnv}{\endgroup\pytx@BeginBlockEnv[default]}%
     }%
     {\end{Verbatim}\endgroup%
-    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.stdout}%
     \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
@@ -450,7 +450,7 @@
         \@ifnextchar[{\endgroup\pytx@BeginCodeEnv}{\endgroup\pytx@BeginCodeEnv[default]}%
     }%
     {\end{VerbatimOut}%
-    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.stdout}%
     \ifbool{pytx@opt@autoprint}{\InputIfFileExists{\pytx@outputdir/\pytx@outfile}{}{}}{}%
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
@@ -509,7 +509,7 @@
     \endgroup
     \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
-    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.stdout}%
     \pytx@WriteCodefileInfo
     \immediate\write\pytx@codefile{#1}%
     \ifdefstring{\pytx@cmd}{inlinec}%
@@ -551,7 +551,7 @@
 \def\pytx@InlineMargOtherGetPyg@i{%
     \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
-    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.stdout}%
     \pytx@WriteCodefileInfo
     \immediate\write\pytx@codefile{\pytx@arg}%
     \ifdefstring{\pytx@cmd}{inlinec}%
@@ -622,7 +622,7 @@
         \@ifnextchar[{\endgroup\pytx@BeginEnvPyg}{\endgroup\pytx@BeginEnvPyg[default]}%
     }%
     {\end{VerbatimOut}%
-    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \xdef\pytx@outfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.stdout}%
     \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
     \begingroup
     \pytx@FVSet

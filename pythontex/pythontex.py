@@ -44,11 +44,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
 
-'''
-FEATURES TO CONSIDER ADDING
-*Location of external files, other than document directory or directory specified with file name
-'''
-
 
 #Imports
 import sys
@@ -98,7 +93,7 @@ def run_code(inputtype,inputsession,inputgroup,outputdir):
         #If the line contains the text '=>PYTHONTEX#PRINT#', we are switching between instances; if so, we need to save any printed content from the last session and get the inputinstance for the current session
         if line.startswith('=>PYTHONTEX#PRINT#'):
             if len(printfile)>0:
-                f=open(path.join(outputdir,basename+'_'+inputinstance+'.tex'),'w')
+                f=open(path.join(outputdir,basename+'_'+inputinstance+'.stdout'),'w')
                 f.write(''.join(printfile))
                 f.close()
             printfile=[]
@@ -107,7 +102,7 @@ def run_code(inputtype,inputsession,inputgroup,outputdir):
             printfile.append(line)
     #After the last line of output is processed, there may be content in the printfile list that has not yet been saved, so we take care of that
     if len(printfile)>0:
-        f=open(path.join(outputdir,basename+'_'+inputinstance+'.tex'),'w')
+        f=open(path.join(outputdir,basename+'_'+inputinstance+'.stdout'),'w')
         f.write(''.join(printfile))
         f.close()
 
@@ -682,6 +677,7 @@ if __name__=='__main__':
             #Reset the hash value, so that the code will be run next time
             hashdict[key]=''
             #Open error and code files
+            # #### Is there any reason not to just use the code that is still in memory?
             f=open(errfilename)
             errfile=f.readlines()
             f.close()
@@ -696,10 +692,10 @@ if __name__=='__main__':
                     #Offset by one for zero indexing, one for previous line
                     errlinenumber=int(search('line (\d+)',errline).groups()[0])-2
                     offset=0
-                    while not codefile[errlinenumber].startswith('pytex.inputline=') and errlinenumber>-1:
+                    while errlinenumber>=0 and not codefile[errlinenumber].startswith('pytex.inputline='):
                         errlinenumber-=1
                         offset+=1
-                    if errlinenumber>-1:
+                    if errlinenumber>=0:
                         codelinenumber=int(match('pytex.inputline=\'(\d+)\'',codefile[errlinenumber]).groups()[0])
                         codelinenumber+=offset
                         print('* PythonTeX code error on line '+str(codelinenumber)+':')

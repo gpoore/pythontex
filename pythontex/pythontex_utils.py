@@ -3,7 +3,7 @@
 
 # Copyright (c) 2012, Geoffrey M. Poore
 # All rights reserved.
-# Licensed under the Modified BSD Licence.
+# Licensed under the Modified BSD License.
 #
 
 from collections import defaultdict
