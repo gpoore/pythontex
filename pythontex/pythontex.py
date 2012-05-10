@@ -687,7 +687,7 @@ if __name__=='__main__':
             #We need to let the user know we are switching code files
             print('\n---- Errors for '+basename+' ----')
             for errline in errfile:
-                if errline.find(basename) and search('line \d+',errline):
+                if basename in errline and search('line \d+',errline):
                     errorcount+=1
                     #Offset by one for zero indexing, one for previous line
                     errlinenumber=int(search('line (\d+)',errline).groups()[0])-2
