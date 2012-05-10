@@ -16,7 +16,7 @@
 import sys
 import platform
 from os import path, mkdir, listdir
-from subprocess import call, check_output
+from subprocess import call, check_output, CalledProcessError
 from shutil import copy
 
 
@@ -42,7 +42,7 @@ except:
 
 # Retrieve the location of a valid TeX tree
 try:
-    texmf_path=check_output('kpsewhich -var-value TEXMFDIST').rstrip('\r\n')
+    texmf_path=check_output('kpsewhich -var-value TEXMFDIST'.split()).rstrip('\r\n')
     texmf_path=path.normcase(texmf_path)
 except CalledProcessError:
     print('Cannot automatically find a valid texmf path.')
@@ -55,6 +55,10 @@ if not path.exists(texmf_path):
 # Now check that all other needed paths are present
 scripts_path=path.join(texmf_path,'scripts')
 bin_path=path.join(path.split(texmf_path)[0],'bin') # bin/ is at the same level as texmf
+if not(path.exists(bin_path)):                      # Hmm, what if it is one level down? (is on macport install)
+    bin_path=path.split(texmf_path)[0]
+    bin_path=path.split(bin_path)[0]
+    bin_path=path.join(bin_path, 'bin')
 if len(listdir(bin_path))>0:
     # We need to find the name of the system-specific subdirectory within bin/ in which binary files are kept
     bin_path=path.join(bin_path,listdir(bin_path)[0])
