@@ -69,11 +69,11 @@ def run_code(inputtype,inputsession,inputgroup,outputdir):
     outfile=open(path.join(outputdir,basename+'.out'),'w')
     errfile=open(path.join(outputdir,basename+'.err'),'w')
     #Use .wait() so that code execution finishes before the next process is started
-    Popen(typedict[inputtype].command+
-            path.join(outputdir,basename+'.'+typedict[inputtype].extension),
-            shell=False,
-            stdout=outfile,
-            stderr=errfile).wait()
+    c= typedict[inputtype].command+path.join(outputdir,basename+'.'+typedict[inputtype].extension)
+    Popen(c.split(),
+          shell=False,
+          stdout=outfile,
+          stderr=errfile).wait()
     outfile.close()
     errfile.close()
     #Process stdout into file(s) that are included into .tex
@@ -413,14 +413,14 @@ if __name__=='__main__':
         oldsaveverbatim_threshold=pythontex_info['saveverbatim_threshold']
         #We need to make sure the path to pythontex_utils.py is still valid
         if not path.exists(path.join(pythontex_info['script_path'],'pythontex_utils.py')):
-            script_path=check_output('kpsewhich -format texmfscripts pythontex_utils.py',shell=False).rstrip('\r\n')
+            script_path=check_output('kpsewhich -format texmfscripts pythontex_utils.py'.split(),shell=False).rstrip('\r\n')
             pythontex_info['script_path']=path.split(script_path)[0]
             if not path.exists(path.join(pythontex_info['script_path'],'pythontex_utils.py')):
                 print('* PythonTeX error\n    Cannot find pythontex_utils.py or cannot execute kpsewhich')
                 sys.exit(1)
     else:
         #We get the path to pythontex_utils.py via kpsewhich.  Then we strip off end of line characters and the end of the path ("/pythontex_utils.py")
-        script_path=check_output('kpsewhich -format texmfscripts pythontex_utils.py',shell=False).rstrip('\r\n')
+        script_path=check_output('kpsewhich -format texmfscripts pythontex_utils.py'.split(),shell=False).rstrip('\r\n')
         pythontex_info['script_path']=path.split(script_path)[0]
         #We need to make sure that we succeeded in getting the path.
         if not path.exists(path.join(pythontex_info['script_path'],'pythontex_utils.py')):
