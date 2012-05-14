@@ -1,20 +1,32 @@
 #!/usr/bin/env python
 
-#This is the main PythonTeX script.
-#It, and the other PythonTeX scripts, are specifically written to run correctly under Python 2.6 and 2.7 as well as under Python 3.x, without modification.
-#They will not run under older versions because, among other things, multiprocessing is required.
+# This is the main PythonTeX script.
 #
-#This script needs to be able to import pythontex_types.py; in general it should be in the same directory.
-#This  script creates scripts that need to be able to import pythontex_types.py and pythontex_utils.py.
-#The location of those imports is determined via the kpsewhich command.
+# It, and the other PythonTeX scripts, are specifically written to run 
+# correctly under Python 2.6 and 2.7 as well as under Python 3.x, without 
+# modification.  They will not run under older versions because, among other 
+# things, multiprocessing is required.
 #
-#Long-term, depending on what languages besides Python are supported, alternative scripts written in another language may be something to consider.
-#Perl ships with many TeX distros, and Perl can use multiple processors, so it would be a logical choice for an alternate implementation.
-#A C version could probably increase speed a great deal, but since it would require compilation and since most time will usually be spent executing code rather than running this script, it probably isn't worth it for most applications.
-#Lua apparently doesn't support multiple processors so as to stay light-weight, so it wouldn't be a good option for a (fast) alternate implementation.
+# This script needs to be able to import pythontex_types.py; in general it 
+# should be in the same directory.  This  script creates scripts that need to 
+# be able to import pythontex_types.py and pythontex_utils.py.  The location 
+# of those two files is determined via the kpsewhich command, which is part of 
+# the Kpathsea library included with some TeX distributions, including TeX Live
+# and MiKTeX.
+#
+# Long-term, depending on what languages besides Python are supported, 
+# alternatives to pythontex.py written in another language may be something to 
+# consider.  Perl is commonly available and can use multiple processors, so 
+# it would be a logical choice for an alternate implementation.  A C version 
+# could probably increase speed a great deal, but since it would require 
+# compilation and since the execution time of this script will in general only
+# be a small fraction of the overall execution time, it probably isn't worth 
+# it for most applications.  Lua apparently doesn't support true parallel 
+# execution so as to stay light-weight, so it wouldn't be a good option for a 
+# (fast) alternate implementation.
 #
 #
-# Licensed under the Modified BSD License:
+# Licensed under the BSD 3-Clause License:
 # 
 '''
 Copyright (c) 2012, Geoffrey M. Poore
@@ -50,7 +62,7 @@ import sys
 from re import match, sub, search
 from os import path, mkdir, listdir, remove, stat
 from collections import defaultdict
-from subprocess import Popen, check_output
+from subprocess import Popen, check_output, CalledProcessError
 import multiprocessing
 from hashlib import sha1
 import cPickle as pickle
@@ -68,12 +80,10 @@ def run_code(inputtype,inputsession,inputgroup,outputdir):
     basename=inputtype+'_'+inputsession+'_'+inputgroup
     outfile=open(path.join(outputdir,basename+'.out'),'w')
     errfile=open(path.join(outputdir,basename+'.err'),'w')
+    exec_cmd=[typedict[inputtype].command, 
+             path.join(outputdir, basename + '.' + typedict[inputtype].extension)]
     #Use .wait() so that code execution finishes before the next process is started
-    Popen(typedict[inputtype].command+
-            path.join(outputdir,basename+'.'+typedict[inputtype].extension),
-            shell=False,
-            stdout=outfile,
-            stderr=errfile).wait()
+    Popen(exec_cmd, stdout=outfile, stderr=errfile).wait()
     outfile.close()
     errfile.close()
     #Process stdout into file(s) that are included into .tex
@@ -413,18 +423,40 @@ if __name__=='__main__':
         oldsaveverbatim_threshold=pythontex_info['saveverbatim_threshold']
         #We need to make sure the path to pythontex_utils.py is still valid
         if not path.exists(path.join(pythontex_info['script_path'],'pythontex_utils.py')):
-            script_path=check_output('kpsewhich -format texmfscripts pythontex_utils.py',shell=False).rstrip('\r\n')
+            exec_cmd=['kpsewhich', '-format', 'texmfscripts', 'pythontex_utils.py']
+            try:
+                script_path=check_output(exec_cmd).rstrip('\r\n')
+            except OSError:
+                print('Your system appears to lack kpsewhich.  Exiting.')
+                sys.exit(1)
+            except CalledProcessError:
+                print('kpsewhich is not happy with its arguments.')
+                print('This command was attempted:')
+                print('    ' + ' '.join(exec_cmd))
+                print('Exiting.')
+                sys.exit(1)
             pythontex_info['script_path']=path.split(script_path)[0]
             if not path.exists(path.join(pythontex_info['script_path'],'pythontex_utils.py')):
-                print('* PythonTeX error\n    Cannot find pythontex_utils.py or cannot execute kpsewhich')
+                print('* PythonTeX error\n    Cannot find pythontex_utils.py')
                 sys.exit(1)
     else:
         #We get the path to pythontex_utils.py via kpsewhich.  Then we strip off end of line characters and the end of the path ("/pythontex_utils.py")
-        script_path=check_output('kpsewhich -format texmfscripts pythontex_utils.py',shell=False).rstrip('\r\n')
+        exec_cmd=['kpsewhich', '-format', 'texmfscripts', 'pythontex_utils.py']
+        try:
+            script_path=check_output(exec_cmd).rstrip('\r\n')
+        except OSError:
+            print('Your system appears to lack kpsewhich.  Exiting.')
+            sys.exit(1)
+        except CalledProcessError:
+            print('kpsewhich is not happy with its arguments.')
+            print('This command was attempted:')
+            print('    ' + ' '.join(exec_cmd))
+            print('Exiting.')
+            sys.exit(1)
         pythontex_info['script_path']=path.split(script_path)[0]
         #We need to make sure that we succeeded in getting the path.
         if not path.exists(path.join(pythontex_info['script_path'],'pythontex_utils.py')):
-            print('* PythonTeX error\n    Cannot find pythontex_utils.py or cannot execute kpsewhich')
+            print('* PythonTeX error\n    Cannot find pythontex_utils.py')
             sys.exit(1)
         oldpygments_settings=defaultdict(tuple)
         oldsaveverbatim_threshold=saveverbatim_threshold
