@@ -80,8 +80,8 @@ def run_code(inputtype,inputsession,inputgroup,outputdir):
     basename=inputtype+'_'+inputsession+'_'+inputgroup
     outfile=open(path.join(outputdir,basename+'.out'),'w')
     errfile=open(path.join(outputdir,basename+'.err'),'w')
-    exec_cmd=[typedict[inputtype].command, 
-             path.join(outputdir, basename + '.' + typedict[inputtype].extension)]
+    exec_cmd=[typedict[inputtype].command.strip(), 
+              path.join(outputdir, basename + '.' + typedict[inputtype].extension)]
     #Use .wait() so that code execution finishes before the next process is started
     Popen(exec_cmd, stdout=outfile, stderr=errfile).wait()
     outfile.close()
