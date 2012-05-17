@@ -53,11 +53,8 @@ typedict['py']=Codetype(
     r'python ',
     '#!/usr/bin/env python',
     ['import os',
-     'import pythontex_utils as pytex',
-     'import sys',
-     'sys.path.append("/Users/ob/Skole/masterThesis/src/")',
-     'from pythonPreamble import *'])
-
+     'import pythontex_utils as pytex']
+    
 typedict['sympy']=deepcopy(typedict['py'])
 typedict['sympy'].imports.extend(['from sympy import *'])
 typedict['sympy'].imports.extend(['pytex.use_sympy_latex_printer=True'])
