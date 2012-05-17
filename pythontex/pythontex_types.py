@@ -53,7 +53,7 @@ typedict['py']=Codetype(
     r'python ',
     '#!/usr/bin/env python',
     ['import os',
-     'import pythontex_utils as pytex']
+     'import pythontex_utils as pytex'])
     
 typedict['sympy']=deepcopy(typedict['py'])
 typedict['sympy'].imports.extend(['from sympy import *'])
