@@ -1,34 +1,35 @@
 #!/usr/bin/env python
+# -*- coding: ascii -*-
 
-# This is the main PythonTeX script.
-#
-# It, and the other PythonTeX scripts, are specifically written to run 
-# correctly under Python 2.6 and 2.7 as well as under Python 3.x, without 
-# modification.  They will not run under older versions because, among other 
-# things, multiprocessing is required.
-#
-# This script needs to be able to import pythontex_types.py; in general it 
-# should be in the same directory.  This  script creates scripts that need to 
-# be able to import pythontex_types.py and pythontex_utils.py.  The location 
-# of those two files is determined via the kpsewhich command, which is part of 
-# the Kpathsea library included with some TeX distributions, including TeX Live
-# and MiKTeX.
-#
-# Long-term, depending on what languages besides Python are supported, 
-# alternatives to pythontex.py written in another language may be something to 
-# consider.  Perl is commonly available and can use multiple processors, so 
-# it would be a logical choice for an alternate implementation.  A C version 
-# could probably increase speed a great deal, but since it would require 
-# compilation and since the execution time of this script will in general only
-# be a small fraction of the overall execution time, it probably isn't worth 
-# it for most applications.  Lua apparently doesn't support true parallel 
-# execution so as to stay light-weight, so it wouldn't be a good option for a 
-# (fast) alternate implementation.
-#
-#
-# Licensed under the BSD 3-Clause License:
-# 
 '''
+This is the main PythonTeX script.
+
+It, and the other PythonTeX scripts, are specifically written to run 
+correctly under Python 2.6 and 2.7 as well as under Python 3.x, without 
+modification.  They will not run under older versions because, among other 
+things, multiprocessing is required.
+
+This script needs to be able to import pythontex_types.py; in general it 
+should be in the same directory.  This  script creates scripts that need to 
+be able to import pythontex_types.py and pythontex_utils.py.  The location 
+of those two files is determined via the kpsewhich command, which is part of 
+the Kpathsea library included with some TeX distributions, including TeX Live
+and MiKTeX.
+
+Long-term, depending on what languages besides Python are supported, 
+alternatives to pythontex.py written in another language may be something to 
+consider.  Perl is commonly available and can use multiple processors, so 
+it would be a logical choice for an alternate implementation.  A C version 
+could probably increase speed a great deal, but since it would require 
+compilation and since the execution time of this script will in general only
+be a small fraction of the overall execution time, it probably isn't worth 
+it for most applications.  Lua apparently doesn't support true parallel 
+execution so as to stay light-weight, so it wouldn't be a good option for a 
+(fast) alternate implementation.
+
+
+Licensed under the BSD 3-Clause License:
+
 Copyright (c) 2012, Geoffrey M. Poore
 
 All rights reserved.
@@ -54,8 +55,13 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 '''
 
+'''
+TO DO:  Set working dir on per-family basis.  Add custom imports on per-family basis.
+Helper function for changing directories in utils.
+'''
 
 #Imports
 import sys
@@ -80,8 +86,10 @@ def run_code(inputtype,inputsession,inputgroup,outputdir):
     basename=inputtype+'_'+inputsession+'_'+inputgroup
     outfile=open(path.join(outputdir,basename+'.out'),'w')
     errfile=open(path.join(outputdir,basename+'.err'),'w')
-    exec_cmd=[typedict[inputtype].command, 
-             path.join(outputdir, basename + '.' + typedict[inputtype].extension)]
+    exec_cmd = [typedict[inputtype].command, 
+                path.join(outputdir, basename + '.' + typedict[inputtype].extension)]
+    if typedict[inputtype].command_options != []:
+        exec_cmd = [exec_cmd[0]] + typedict[inputtype].command_options + [exec_cmd[1]]
     #Use .wait() so that code execution finishes before the next process is started
     Popen(exec_cmd, stdout=outfile, stderr=errfile).wait()
     outfile.close()
@@ -214,7 +222,7 @@ def do_pygments(outputdir, jobname, saveverbatim_threshold, oldsaveverbatim_thre
                     f.close()
                 code=[]
             #Now proceed to extract paramets and prepare for the next code
-            [inputtype,inputsession,inputgroup,inputinstance,inputcmd,inputstyle,inputline]=codeline.split('#')[1:8]
+            [inputtype,inputsession,inputgroup,inputinstance,inputcommand,inputstyle,inputline]=codeline.split('#')[1:8]
             currentkey=inputtype+'#'+inputsession+'#'+inputgroup
             currentinstance=int(inputinstance)
             proceed=True
@@ -222,7 +230,7 @@ def do_pygments(outputdir, jobname, saveverbatim_threshold, oldsaveverbatim_thre
             #We need to ignore any environments and commands that do NOT need their code typeset
             if lastinstance[currentkey]<currentinstance:
                 lastinstance[currentkey]=currentinstance
-                if should_pygmentize[currentkey]==False or inputcmd=='code' or inputcmd=='inline' or inputcmd=='inlinec':
+                if should_pygmentize[currentkey]==False or inputcommand=='code' or inputcommand=='inline' or inputcommand=='inlinec':
                     proceed=False
                 elif inputsession.startswith('EXT:'):
                     extfile=path.normcase(inputsession.replace('EXT:',''))
@@ -461,7 +469,7 @@ if __name__=='__main__':
         oldpygments_settings=defaultdict(tuple)
         oldsaveverbatim_threshold=saveverbatim_threshold
     #Update path for scripts
-    update_types_import(pythontex_info['script_path'])
+    set_utils_location(pythontex_info['script_path'])
     
     
     #Hash the code to see what has changed and needs to be updated
@@ -588,7 +596,7 @@ if __name__=='__main__':
         #Detect if start of new command/environment, and switch variables if so
         if codeline.startswith('=>PYTHONTEX#'):
             switched=True
-            [inputtype,inputsession,inputgroup,inputinstance,inputcmd,inputstyle,inputline]=codeline.split('#')[1:8]
+            [inputtype,inputsession,inputgroup,inputinstance,inputcommand,inputstyle,inputline]=codeline.split('#')[1:8]
             currentkey=inputtype+'#'+inputsession+'#'+inputgroup
             currentinstance=int(inputinstance)
             proceed=True
@@ -598,24 +606,22 @@ if __name__=='__main__':
                 #We need to ignore any verbatim environments and commands
                 #If any are present, they are to be typeset by Pygments, not actually executed as code
                 #Note that we don't have to check for EXT:<file> sessions, because they are never followed by code and thus can't affect the codedict
-                if inputcmd=='verb' or inputcmd=='inlinev':
+                if inputcommand=='verb' or inputcommand=='inlinev':
                     proceed=False
             else:
                 proceed=False
             #We need to know if we are dealing with an inline command, so we can treat it appropriately
-            if inputcmd=='inline':
+            if inputcommand=='inline':
                 inline=True
             else:
                 inline=False
+                inputline=str(int(inputline)+1) #Correct for line numbering in environments; content doesn't really start till next line
         #Only collect for a session (and later write it to a file) if it needs to be updated
         elif proceed:
             #If just switched commands/environments, associate with the input line and check for indentation errors
             if switched:
                 switched=False
-                codedict[currentkey].append(typedict[inputtype].set_inputs(
-                        inputtype,inputsession,inputgroup,inputinstance,inputcmd,inputstyle,inputline))
-                if not inline:
-                    codedict[currentkey].append(typedict[inputtype].set_printing(inputinstance))
+                codedict[currentkey].append(typedict[inputtype].set_inputs_var(inputinstance,inputcommand,inputstyle,inputline))
                 #We need to make sure that each time we switch, we are starting out with no indentation
                 #Technically, we could allow indentation to continue between commands and environments, but that seems like a recipe for disaster.
                 if codeline.startswith(' ') or codeline.startswith('\t'):
@@ -634,17 +640,21 @@ if __name__=='__main__':
                     inputtype+'_'+inputsession+'_'+inputgroup+'.'+typedict[inputtype].extension),'w')
             sessionfile.write(typedict[inputtype].shebang)
             sessionfile.write('\n\n')
-            sessionfile.write('\n'.join(typedict[inputtype].imports))
+            sessionfile.write('\n'.join(typedict[inputtype].default_code))
+            sessionfile.write('\n')            
+            sessionfile.write('\n'.join(typedict[inputtype].utils_code))
             sessionfile.write('\n')
+            # Need to check custom_code for future imports, make sure session file format is visually pleasing
+            sessionfile.write('\n'.join(typedict[inputtype].custom_code))
+            sessionfile.write('\n')
+            sessionfile.write(typedict[inputtype].open_macrofile(outputdir,
+                    inputtype+'_'+inputsession+'_'+inputgroup))
             sessionfile.write(typedict[inputtype].set_workingdir(outputdir))
-            sessionfile.write('\n\n')
-            sessionfile.write(typedict[inputtype].open_reffile(outputdir,
-                    inputtype+'_'+inputsession+'_'+inputgroup))
-            sessionfile.write('\n\n')
+            sessionfile.write(typedict[inputtype].set_inputs_const(inputtype,inputsession,inputgroup))
+            sessionfile.write('\n')            
             sessionfile.write(''.join(codedict[key]))
-            sessionfile.write('\n\n')
-            sessionfile.write(typedict[inputtype].close_reffile(outputdir,
-                    inputtype+'_'+inputsession+'_'+inputgroup))
+            sessionfile.write('\n\n\n\n')
+            sessionfile.write(typedict[inputtype].close_macrofile())
             sessionfile.close()
 
     #Execute code using multiprocessing
@@ -723,7 +733,7 @@ if __name__=='__main__':
                     errorcount+=1
                     #Offset by one for zero indexing, one for previous line
                     errlinenumber=int(search('line (\d+)',errline).groups()[0])-2
-                    offset=0
+                    offset=-1
                     while errlinenumber>=0 and not codefile[errlinenumber].startswith('pytex.inputline='):
                         errlinenumber-=1
                         offset+=1
