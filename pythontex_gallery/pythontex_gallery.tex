@@ -3,13 +3,14 @@
 \usepackage{fullpage}
 \usepackage{graphicx}
 \usepackage[svgnames]{xcolor}
-\usepackage[pygments=true]{pythontex}
+
+\usepackage[stderr]{pythontex}
 \restartpythontexsession{\thesection}
 
 \usepackage[framemethod=TikZ]{mdframed}
 
 \newcommand{\pytex}{Python\TeX}
-\newcommand{\hide}[1]{}
+\renewcommand*{\thefootnote}{\fnsymbol{footnote}}
 
 
 \title{\pytex\ Gallery}
@@ -44,7 +45,24 @@ Or we could access the printed content verbatim (it might contain special charac
 
 Python interaction can also be more complex.  \pyb{print(str(2**2**2) + r'\endinput')} returns \printpythontex.  In this case, the printed results include \LaTeX\ code, which is correctly interpreted by \LaTeX\ to ensure that there is not an extra space after the 16.  Printed output is saved to a file and brought back in via \verb|\input|, and the \verb|\endinput| command prevents \LaTeX\ from treating the newline at the end of the file as justification for a space character.
 
-But we don't have to typeset the code.  It can be hidden.\pyc{mystring=r'\footnotesize\textbf{This is a message from Python}'}  And then we can access it later:  \py{mystring}.
+But we don't have to typeset the code.  It can be hidden.\pyc{mystring=r'\textbf{This is a message from Python}'}  And then we can access it later:  \py{mystring}.
+
+
+\section{Python console environment}
+
+\pytex\ includes an environment that emulates a Python interactive session.  Commands are entered within the environment, each line is treated as input to an interactive session, and the result is typeset.
+
+\begin{pyconsole}[][frame=single]
+x = 123
+y = 345
+z = x + y
+z
+def f(expr):
+    return(expr**4)
+
+f(x)
+print('Python says hi from the console!')
+\end{pyconsole}
 
 
 \section{Basic SymPy interaction}
@@ -126,19 +144,19 @@ from re import sub
 var('x')
 
 #Create a list of functions to include in the table
-funcs = ['sin(x)', 'cos(x)', 'tan(x)', \
-		'sin(x)**2', 'cos(x)**2', 'tan(x)**2', \
-		'asin(x)', 'acos(x)', 'atan(x)', \
-		'sinh(x)', 'cosh(x)', 'tanh(x)']
+funcs = ['sin(x)', 'cos(x)', 'tan(x)', 
+		 'sin(x)**2', 'cos(x)**2', 'tan(x)**2', 
+		 'asin(x)', 'acos(x)', 'atan(x)', 
+		 'sinh(x)', 'cosh(x)', 'tanh(x)']
 
 print(r'\begin{align*}')
 
-for f in funcs:
+for func in funcs:
 	#Put in some vertical space when switching to arc and hyperbolic funcs
-	if f=='asin(x)' or f=='sinh(x)':
+	if func=='asin(x)' or func=='sinh(x)':
 		print(r'\vspace{0.5in}\\')
-	myderiv = 'Derivative(' + f + ', x)'
-	myint = 'Integral(' + f + ', x)'
+	myderiv = 'Derivative(' + func + ', x)'
+	myint = 'Integral(' + func + ', x)'
 	print(latex(eval(myderiv)) + '&=' \
 			+ latex(eval(myderiv+'.doit()')) + r'\quad & \quad')
 	print(latex(eval(myint)) + '&=' \
@@ -194,6 +212,25 @@ print(r'\end{align*}')
 \end{mdframed}
 
 \printpythontex
+
+
+\section{Including stderr}
+
+\pytex\ allows code to be typset next to the stderr it produces.  This requires the package option \verb|stderr|
+
+\begin{pyblock}[errorsession][numbers=left]
+x = 123
+y = 345
+z = x + y +
+\end{pyblock}
+
+This code causes a syntax error:
+
+\stderrpythontex
+
+The file name that appears in the message can be customized using the package option \verb|stderrfilename|.
+
+
 
 
 \end{document}

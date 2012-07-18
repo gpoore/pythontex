@@ -1,6 +1,6 @@
-# -*- coding: ascii -*-
+# -*- coding: utf-8 -*-
 '''
-PythonTeX utilities class for Python scripts
+PythonTeX utilities class for Python scripts.
 
 The utilities class provides variables and methods for the individual 
 Python scripts created and executed by PythonTeX.  An instance of the class 
@@ -14,18 +14,28 @@ Licensed under the BSD 3-Clause License:
 '''
 
 
-# Imports:
-# Imports are only needed for SymPy; these are brought in via "lazy import"
+# Imports
+# Imports are only needed for SymPy; these are brought in via "lazy import."
+# Importing unicode_literals here shouldn't ever be necessary under Python 2.
+# If unicode_literals is imported in the main script, then all strings in this 
+# script will be treated as bytes, and the main script will try to decode the 
+# strings from this script as necessary.  The decoding shouldn't cause any 
+# problems, since all strings in this file may be decoded as valid ascii. 
+# (The actual file is encoded in utf-8, but only characters within the ascii 
+# subset are actually used).
 
 
 class PythontexUtils(object):
     '''
-    A class of PythonTeX utilities
+    A class of PythonTeX utilities.
+    
+    Provides variables for keeping track of TeX-side information, and methods
+    for formatting and saving data.
     '''
     
     def __init__(self, fmtr='str'):
         '''
-        Initialize, optionally setting the formatter
+        Initialize, optionally setting the formatter.
         '''
         self._sympy_latex_is_init = False
         
@@ -33,65 +43,57 @@ class PythontexUtils(object):
         
         # If not using the 'sympy_latex' formatter, set up a dummy interface
         if fmtr != 'sympy_latex':
-            self.set_sympy_latex = self._make_dummy_set_sympy_latex
+            self.set_sympy_latex = self._dummy_set_sympy_latex
             self.sympy_latex = self._dummy_sympy_latex
         
-        '''
-        The following variables and methods will be created within instances 
-        of the class during execution.  They are listed here for bookkeeping 
-        purposes.        
-        
-        String variables for keeping track of TeX information.  Most are 
-        actually needed; the rest are included for completeness.
-            * inputtype
-            * inputsession
-            * inputgroup
-            * inputinstance
-            * inputcommand
-            * inputstyle
-            * inputline
-        
-        Future file handle for output that is saved via macros
-            * macrofile
-        
-        Future formatter function that is used to format output
-            * formatter
-        '''
-    
-    '''
-    We need a context-aware interface to SymPy's latex printer.  The 
-    appearance of typeset math should depend on where it appears in a document.
-    (We will refer to the latex printer, rather than the LaTeX printer, because 
-    the two are separate.  Compare sympy.printing.latex and 
-    sympy.galgebra.latex_ex.)  
 
-    Creating this interface takes some work, since we don't want to import 
-    anything from SymPy unless it is actually used, to keep things clean and 
-    fast.  Part of this involves creating a dummy interface, for when SymPy 
-    isn't available or when the user forgets to import SymPy.
+        # The following variables and methods will be created within instances 
+        # of the class during execution.  They are listed here for bookkeeping 
+        # purposes.        
+        #
+        # String variables for keeping track of TeX information.  Most are 
+        # actually needed; the rest are included for completeness.
+        #     * inputtype
+        #     * inputsession
+        #     * inputgroup
+        #     * inputinstance
+        #     * inputcommand
+        #     * inputcontext
+        #     * inputline
+        #
+        # Future file handle for output that is saved via macros
+        #     * macrofile
+        #
+        # Future formatter function that is used to format output
+        #     * formatter
+
     
-    First we create a tuple containing all LaTeX math styles.  These are the 
-    contexts that SymPy's latex printer must adapt to.  Then we create a dummy 
-    dictionary of settings functions and a dummy interface function.  Both of 
-    these raise UserWarning.  They attempt to proceed if warnings happen to be 
-    suppressed.
-    '''
-    # The order here is significant; it corresponds to that of \mathchoice
+    # We need a context-aware interface to SymPy's latex printer.  The 
+    # appearance of typeset math should depend on where it appears in a 
+    # document.  (We will refer to the latex printer, rather than the LaTeX 
+    # printer, because the two are separate.  Compare sympy.printing.latex 
+    # and sympy.galgebra.latex_ex.)  
+    #
+    # Creating this interface takes some work, since we don't want to import 
+    # anything from SymPy unless it is actually used, to keep things clean and 
+    # fast.  Part of this involves creating a dummy interface, for when SymPy 
+    # isn't available.
+    #
+    # First we create a tuple containing all LaTeX math styles.  These are 
+    # the contexts that SymPy's latex printer must adapt to.  Then we create 
+    # a dummy dictionary of settings functions and a dummy interface 
+    # function.  Both of these raise UserWarning.  They attempt to proceed 
+    # if warnings happen to be suppressed.
+
+    # The style order doesn't matter, but it corresponds to that of \mathchoice
     _sympy_styles = ('display', 'text', 'script', 'scriptscript')
     
-    def _make_dummy_set_sympy_latex(self):
+    def _dummy_set_sympy_latex(self):
         '''
-        Create a dictionary of dummy functions for setting the latex printer
+        A dummy function for setting the latex printer.
         '''
-        self._dummy_set_sympy_latex = dict()
-        def setter(**settings):
-            '''
-            A dummy function for setting the SymPy latex interface
-            '''
-            raise UserWarning("Attempt to use sympy_latex before initializing; use method init_sympy_latex()")
-            pass
-        for style in (self._sympy_styles + ('all',)):
-            self._dummy_set_sympy_latex[style] = setter
+        raise UserWarning("Attempt to use sympy_latex before initializing; use method init_sympy_latex()")
+        pass
     
     def _dummy_sympy_latex(self, expr, **settings):
         '''
@@ -100,20 +102,16 @@ class PythontexUtils(object):
         raise UserWarning("Attempt to use sympy_latex before initializing; use method init_sympy_latex()")
         return str(expr)
     
-    '''
-    Next we create a method that initializes the actual context-aware 
-    interface to SymPy's latex printer.
-    '''    
+    # Next we create a method that initializes the actual context-aware 
+    # interface to SymPy's latex printer.
     def init_sympy_latex(self):
         '''
         Initialize a context-aware interface to SymPy's latex printer.
         
-        This consists of creating a dictionary of context-dependent settings, 
-        creating the set_sympy_latex dictionary of functions that is used 
-        for modifying the context-depending settings, and finally creating the 
+        This consists of creating the dictionary of settings and creating the 
         sympy_latex method that serves as an interface to SymPy's 
         LatexPrinter.  This last step is actually performed by calling 
-        self._make_sympy_latex, which is defined below.
+        self._make_sympy_latex().
         
         The initialization code only runs if initialization hasn't already 
         occurred.
@@ -123,32 +121,31 @@ class PythontexUtils(object):
         else:
             self._sympy_latex_is_init = True
             
-            '''
-            We create dictionaries of settings for different contexts.
-            
-            Currently, the main goal is to use pmatrix (or an equivalent) in
-            \displaystyle contexts, and smallmatrix in \textstyle, 
-            \scriptstyle (superscript or subscript), and \scriptscriptstyle
-            (superscript or subscript of a superscript or subscript) contexts.
-            Basically, we want matrix size to automatically scale based on 
-            context.  It is expected that additional customization may prove 
-            useful as SymPy's LatexPrinter is further developed.
-            
-            The 'fold_frac_powers' option is probably the main other setting 
-            that might sometimes be nice to invoke in a context-dependent 
-            manner.  This folds fractional powers (slash rather than \frac).  
-            Apparently, the folding only applies for powers that are 
-            Rationals; symbolic powers aren't folded.
-            
-            In the default settings below, all matrices are set to use 
-            parentheses rather than square brackets.  This is largely a matter 
-            of personal preference.  The use of parentheses is based on the 
-            rationale that parentheses are less easily confused with the 
-            determinant and are easier to write by hand than are square 
-            brackets.  The settings for 'script' and 'scriptscript' are set
-            to those of 'text', since all of these should in general require a
-            more compact representation of things.
-            '''
+            # Create dictionaries of settings for different contexts.
+            # 
+            # Currently, the main goal is to use pmatrix (or an equivalent) 
+            # in \displaystyle contexts, and smallmatrix in \textstyle, 
+            # \scriptstyle (superscript or subscript), and \scriptscriptstyle
+            # (superscript or subscript of a superscript or subscript) 
+            # contexts.  Basically, we want matrix size to automatically 
+            # scale based on context.  It is expected that additional 
+            # customization may prove useful as SymPy's LatexPrinter is 
+            # further developed.
+            #
+            # The 'fold_frac_powers' option is probably the main other 
+            # setting that might sometimes be nice to invoke in a 
+            # context-dependent manner.  This folds fractional powers (slash 
+            # rather than \frac).  Apparently, the folding only applies for 
+            # powers that are Rationals; symbolic powers aren't folded.
+            #
+            # In the default settings below, all matrices are set to use 
+            # parentheses rather than square brackets.  This is largely a 
+            # matter of personal preference.  The use of parentheses is based 
+            # on the rationale that parentheses are less easily confused with 
+            # the determinant and are easier to write by hand than are square 
+            # brackets.  The settings for 'script' and 'scriptscript' are set
+            # to those of 'text', since all of these should in general 
+            # require a more compact representation of things.
             self._sympy_latex_settings = dict()
             self._sympy_latex_settings['display'] = {
                     'mat_str': 'pmatrix',
@@ -160,49 +157,37 @@ class PythontexUtils(object):
             self._sympy_latex_settings['script'] = self._sympy_latex_settings['text']
             self._sympy_latex_settings['scriptscript'] = self._sympy_latex_settings['text']
             
-            '''
-            Now we create a dictionary of functions for changing these
-            settings.  This involves a little trickery with functions.
-            
-            Note that EVERY time the settings are changed, we must call 
-            self._make_sympy_latex().  This is because the sympy_latex() 
-            method is defined based on the settings, and every time the 
-            settings change, it may need to be redefined.  It would be 
-            possible to define sympy_latex() so that its definition remained 
-            constant, simply drawing on the settings.  But most common 
-            combinations of settings allow more efficient versions of 
-            sympy_latex() to be defined.
-            '''
+            # Now we create a function for updating the settings.
+            #
+            # Note that EVERY time the settings are changed, we must call 
+            # self._make_sympy_latex().  This is because the sympy_latex() 
+            # method is defined based on the settings, and every time the 
+            # settings change, it may need to be redefined.  It would be 
+            # possible to define sympy_latex() so that its definition remained 
+            # constant, simply drawing on the settings.  But most common 
+            # combinations of settings allow more efficient versions of 
+            # sympy_latex() to be defined.            
             self.set_sympy_latex = dict()
-            def make_set_sympy_latex(style):
-                def setter(**settings):
-                    self._sympy_latex_settings[style].update(settings)
-                    self._make_sympy_latex()
-                return setter
-            for style in self._sympy_styles:
-                self.set_sympy_latex[style] = make_set_sympy_latex(style)
-            def make_set_sympy_latex_all():
-                def setter(**settings):
-                    for style in self._sympy_styles:
-                        self._sympy_latex_settings[style].update(settings)
-                    self._make_sympy_latex()
-                return setter
-            self.set_sympy_latex['all'] = make_set_sympy_latex_all()
+            def set_sympy_latex(style, **kwargs):
+                if style in self._sympy_styles:
+                    self._sympy_latex_settings[style].update(kwargs)
+                elif style == 'all':
+                    for s in self._sympy_styles:
+                        self._sympy_latex_settings[s].update(kwargs)
+                else:
+                    raise UserWarning('Unknown LaTeX math style ' + str(style))
+                self._make_sympy_latex()
+            self.set_sympy_latex = set_sympy_latex
             
-            '''
-            Now that the dictionaries of settings have been created, and the 
-            dictionaries of functions for modifying the settings are in place,
-            we are ready to create the actual interface, via the method 
-            defined immediately below this method.
-            '''
+            # Now that the dictionaries of settings have been created, and 
+            # the dictionaries of functions for modifying the settings are in 
+            # place, we are ready to create the actual interface.
             self._make_sympy_latex()
             
-    '''
-    Finally, we create the actual interface to SymPy's LatexPrinter
-    '''
+    # Finally, we create the actual interface to SymPy's LatexPrinter
     def _make_sympy_latex(self):
         '''
-        Create a context-aware interface to SymPy's LatexPrinter class
+        Create a context-aware interface to SymPy's LatexPrinter class.
         
         This is an interface to the LatexPrinter class, rather than 
         to the latex function, because the function is simply a 
@@ -222,9 +207,9 @@ class PythontexUtils(object):
             http://tex.stackexchange.com/questions/1223/is-there-a-test-for-the-different-styles-inside-maths-mode
         
         The interface takes optional settings.  These optional 
-        settings override the default context-specific settings.  
+        settings override the default context-dependent settings.  
         Accomplishing this mixture of settings requires (deep)copying 
-        the default settings, then updating them with the optional 
+        the default settings, then updating the copies with the optional 
         settings.  This leaves the default settings intact, with their 
         original values, for the next usage.
         
@@ -242,29 +227,30 @@ class PythontexUtils(object):
         the LatexPrinter unless we are sure to use it, since the import brings
         along a number of other dependencies from SymPy.  We don't want 
         unnecessary overhead from SymPy imports.
-        '''        
+        '''
         import copy
-        import sys
+        # sys is also needed, but it is part of the default code defined in
+        # pythontex_types*.py, so it will always be present.
         try:
             from sympy.printing.latex import LatexPrinter
         except ImportError:
             sys.exit('Could not import from SymPy')
-        '''
-        Go through a number of possible scenarios, to create a relatively
-        efficient implementation of sympy_latex()
-        '''
+        
+        # Go through a number of possible scenarios, to create an efficient 
+        # implementation of sympy_latex()
         if all(self._sympy_latex_settings[style] == {} for style in self._sympy_styles):
             def sympy_latex(expr, **settings):
                 '''            
-                Deal with the case where there are no context-specific settings
+                Deal with the case where there are no context-specific 
+                settings.
                 '''
                 return LatexPrinter(settings).doprint(expr)
         elif all(self._sympy_latex_settings[style] == self._sympy_latex_settings['display'] for style in self._sympy_styles):
             def sympy_latex(expr, **settings):
                 '''
                 Deal with the case where all settings are identical, and thus 
-                the settings are really only being used to set defaults, rather 
-                than context-specific behavior
+                the settings are really only being used to set defaults, 
+                rather than context-specific behavior.
                 
                 Check for empty settings, so as to avoid deepcopy
                 '''
@@ -277,9 +263,9 @@ class PythontexUtils(object):
         elif all(self._sympy_latex_settings[style] == self._sympy_latex_settings['text'] for style in ('script', 'scriptscript')):
             def sympy_latex(expr, **settings):
                 '''
-                Deal with the case where only 'display' has different settings
+                Deal with the case where only 'display' has different settings.
                 
-                This should be the most common case
+                This should be the most common case.
                 '''
                 if not settings:
                     display = LatexPrinter(self._sympy_latex_settings['display']).doprint(expr)
@@ -299,10 +285,10 @@ class PythontexUtils(object):
             def sympy_latex(expr, **settings):
                 '''
                 If all attempts at simplification fail, create the most 
-                general interface
+                general interface.
                 
                 The main disadvantage here is that LatexPrinter is invoked 
-                four times and we must create many temporary variables
+                four times and we must create many temporary variables.
                 '''
                 if not settings:
                     display = LatexPrinter(self._sympy_latex_settings['display']).doprint(expr)
@@ -328,28 +314,37 @@ class PythontexUtils(object):
                     return r'\mathchoice{' + display + '}{' + text + '}{' + script + '}{' + scriptscript+ '}'
         self.sympy_latex = sympy_latex
     
-    '''
-    Now we are ready to create non-SymPy formatters and a method for setting 
-    formatters
-    '''
+    # Now we are ready to create non-SymPy formatters and a method for 
+    # setting formatters
     def identity_formatter(self, expr):
         '''
         For generality, we need an identity formatter, a formatter that does
-        nothing to its argument and simply returns it unchanged
+        nothing to its argument and simply returns it unchanged.
         '''
         return expr
    
     def set_formatter(self, fmtr='str'):
         '''
-        Set the formatter method
+        Set the formatter method.
         
         This is used to process output that is brought in via macros.  It is 
         also available for the user in formatting printed or saved output.
         '''
+        #// Python 2
+        #if not isinstance(fmtr, basestring):
+        #    raise TypeError('set_formatter() takes a string argument')
+        #\\ End Python 2
+        #// Python 3
         if not isinstance(fmtr, str):
             raise TypeError('set_formatter() takes a string argument')
+        #\\ End Python 3
         if fmtr == 'str':
+            #// Python 2
+            #self.formatter = unicode
+            #\\ End Python 2
+            #// Python 3
             self.formatter = str
+            #\\ End Python 3
         elif fmtr == 'sympy_latex':
             self.init_sympy_latex()
             self.formatter = self.sympy_latex
@@ -358,23 +353,27 @@ class PythontexUtils(object):
         else:
             raise ValueError('Unsupported formatter type')
     
-    '''
-    Finally, we provide a method that saves "printed" content via macros.
-    This is one of the two primary tasks of the class.  (Actually, this is 
-    the primary task when the SymPy latex printer interface isn't needed.)
-    '''
+    # Finally, we provide a method that saves "printed" content via macros.
+    # This is one of the two primary tasks of the class.  (Actually, this is 
+    # the primary task when the SymPy latex printer interface isn't needed.)
     def _print_via_macro(self, expr):
         '''
-        Function for "printing" via macros
+        Function for "printing" via macros.  Convert output to macro form
+        and save it to an external file.
         
-        This function is not intended for general use.  It is specifically for 
-        inline commands without a suffix, which pull in Python content via 
-        macros.  Attempts to use it in other contexts will either fail or 
-        cause unexpected behavior.
+        This function is not intended for general use.  It is specifically 
+        for inline commands without a suffix, which pull in Python content 
+        via macros.  Attempts to use it in other contexts may fail or cause 
+        unexpected behavior.
         '''
-        before = '@'.join(['\\newlabel{pytx', self.inputtype, 
-                            self.inputsession, self.inputgroup, 
-                            self.inputinstance]) + '}{{'
-        after = '}{}{}{}{}}\n'
+        before = (r'\expandafter\long\expandafter\def\csname pytx@MCR@' + 
+                  self.inputtype + '@' + self.inputsession + '@' + 
+                  self.inputgroup + '@' + self.inputinstance + r'\endcsname{')
+        after = '}\n\n'
+        #// Python 2
+        #self.macrofile.write(unicode(before + self.formatter(expr) + after))
+        #\\ End Python 2
+        #// Python 3
         self.macrofile.write(before + self.formatter(expr) + after)
+        #\\ End Python 3
 

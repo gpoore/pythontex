@@ -1,8 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: ascii -*-
+# -*- coding: utf-8 -*-
 
 '''
-Install PythonTeX.
+Install PythonTeX
+
+This script installs one set of PythonTeX scripts for use under Python 2.6-2.7 
+(names end in "2") and another set for user under Python 3 (names end in "3").
+You will need to launch the correct script depending on the default version of
+Python on your system.
 
 This script should work with most TeX distributions.  It is primarily written 
 for TeX Live.  It should work with other TeX distributions that use the 
@@ -41,7 +46,8 @@ except:
 
 
 # Make sure all necessary files are present
-needed_files = ['pythontex.py', 'pythontex_types.py', 'pythontex_utils.py', 
+needed_files = ['pythontex2.py', 'pythontex_types2.py', 'pythontex_utils2.py', 
+                'pythontex3.py', 'pythontex_types3.py', 'pythontex_utils3.py', 
                 'pythontex.sty', 'pythontex.ins', 'pythontex.dtx', 
                 'pythontex.pdf', 'README.rst']
 missing_files = False
@@ -62,7 +68,10 @@ print('\nInstalling PythonTeX...')
 # Retrieve the location of a valid TeX tree
 # Attempt to use kpsewhich; otherwise, resort to manual input 
 try:
-    texmf_path = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).rstrip('\r\n')
+    if sys.version_info[0] == 2:
+        texmf_path = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).rstrip('\r\n')
+    else:
+        texmf_path = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).decode('utf-8').rstrip('\r\n')
 except OSError:
     print('\nYour system appears to lack kpsewhich.')
     print('Cannot automatically find a valid texmf path.')
@@ -112,9 +121,12 @@ copy('pythontex.sty', package_path)
 # Install scripts
 if not path.exists(scripts_path):
     mkdir(scripts_path)
-copy('pythontex.py', scripts_path)
-copy('pythontex_types.py', scripts_path)
-copy('pythontex_utils.py', scripts_path)
+copy('pythontex2.py', scripts_path)
+copy('pythontex_types2.py', scripts_path)
+copy('pythontex_utils2.py', scripts_path)
+copy('pythontex3.py', scripts_path)
+copy('pythontex_types3.py', scripts_path)
+copy('pythontex_utils3.py', scripts_path)
 # Install source
 if not path.exists(source_path):
     mkdir(source_path)
@@ -133,7 +145,8 @@ if platform.system() == 'Windows':
     bin_path = path.join(path.split(texmf_path)[0], 'bin', 'win32') 
     if path.exists(path.join(bin_path, 'runscript.exe')):
         print('\nCreating binary wrapper...')        
-        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex.exe'))
+        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex2.exe'))
+        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex3.exe'))
     else:
         print('\nCould not create a wrapper for launching pythontex.py.')
         print('You will need to create a wrapper manually, or use a batch file.')
@@ -158,6 +171,13 @@ except OSError:
     print('Could not run texhash.  Your system appears to lack texhash.')
     print('Your system may not be aware of newly installed files.')
 
+
+# Alert the user to the need to choose a version
+print('\n\n* * *')
+print('PythonTeX contains separate scripts for Python 2 and Python 3.')
+print('Choose the correct scripts based on your Python installation.')
+print('See the documentation for more information.')
+print('* * *\n')
 
 # Pause so that the user can see any errors or other messages
 input('\n[Press ENTER to exit]')
