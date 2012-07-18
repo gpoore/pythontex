@@ -33,7 +33,7 @@ Licensed under the BSD 3-Clause License:
 # Imports
 import sys
 import platform
-from os import path, mkdir
+from os import path, mkdir, symlink, chmod
 from subprocess import check_call, check_output, CalledProcessError
 from shutil import copy
 
@@ -60,11 +60,6 @@ if missing_files:
     print('Exiting.')
     sys.exit(1)
 
-
-# Print starting message
-print('\nInstalling PythonTeX...')
-
-
 # Retrieve the location of a valid TeX tree
 # Attempt to use kpsewhich; otherwise, resort to manual input 
 try:
@@ -80,6 +75,10 @@ except CalledProcessError:
     print('\nkpsewhich is not happy with its arguments.')
     print('Cannot automatically find a valid texmf path.')
     texmf_path = input('Please enter a valid texmf path: ').rstrip('\r\n')
+
+# Print starting message
+print('\nInstalling PythonTeX into directory ' + texmf_path)
+
 # Make sure path slashes are compatible with the operating system 
 # This is only needed for Windows
 texmf_path = path.normcase(texmf_path)
@@ -154,7 +153,27 @@ if platform.system() == 'Windows':
         print('The bin/ directory in your TeX distribution may be a good location.')
         print('The script pythontex.py is located in the following directory:')
         print('    ' + scripts_path)
-# If not under Windows, we alert the user regarding what is necessary to launch
+elif platform.system() in ['Linux', 'Darwin']: # todo: check for unix (maybe just check to see if os.symlink fails or not?)
+    root_path = path.split(texmf_path)[0]
+    bin_path = path.join(path.split(root_path)[0], 'bin')
+    if path.exists(bin_path):
+        for ver in [2, 3]:
+            link = path.join(bin_path, 'pythontex{0}.py'.format(ver))
+            try:
+                symlink(path.join(scripts_path, 'pythontex{0}.py'.format(ver)), link)
+            except OSError as e:
+                if e.errno == 17:
+                    pass # File exists
+                else:
+                    raise OSError(e)
+            chmod(link, 0775)
+            print('symlink created ' + link)
+    else:
+        print('\nCreating symlink failed, you may wish to create a symlink to pythontex.py.')
+        print('You may also want to make it executable via chmod.')
+        print('The script pythontex.py is located in the following directory:')
+        print('    ' + scripts_path)
+# If not under known system, we alert the user regarding what is necessary to launch
 # pythontex.py
 else:
     print('\nYou may wish to create a symlink to pythontex.py.')
@@ -179,5 +198,6 @@ print('Choose the correct scripts based on your Python installation.')
 print('See the documentation for more information.')
 print('* * *\n')
 
-# Pause so that the user can see any errors or other messages
-input('\n[Press ENTER to exit]')
+if platform.system() == 'Windows':
+    # Pause so that the user can see any errors or other messages
+    input('\n[Press ENTER to exit]')
