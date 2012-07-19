@@ -1742,4 +1742,4 @@ if __name__ == '__main__':
     print('\n--------------------------------------------------')
     print('PythonTeX:  ' + data['raw_jobname'] + ' - ' + str(temp_data['errors']) + ' error(s), ' + str(temp_data['warnings']) + ' warning(s)')
 
-    return temp_data['errors']
+    exit(temp_data['errors'])
