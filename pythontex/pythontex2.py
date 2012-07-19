@@ -983,6 +983,7 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
     # needs to be executed, based on previous testing.
     for key in codedict:
         [inputtype, inputsession, inputgroup] = key.split('#')
+        print('* Pythontex executing', inputtype, inputsession, inputgroup)
         tasks.append(pool.apply_async(run_code, [inputtype,
                                                  inputsession,
                                                  inputgroup,
