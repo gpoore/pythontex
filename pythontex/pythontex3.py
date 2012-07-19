@@ -733,7 +733,10 @@ def hash_code(data, temp_data, old_data, typedict):
     data['pygments_style_defs'] = pygments_style_defs
 
     # Clean up old files, if possible
-    if loaded_old_data:
+    # Check for 'files' and 'pygments_files' keys, for upgrade purposes
+    if (loaded_old_data and
+            'files' in old_data and 
+            'pygments_files' in old_data):
         # Clean up for code that will be run again, and for code that no 
         # longer exists.  We use os.path.normcase() to fix slashes in the path
         # name, in an attempt to make saved paths platform-independent.
@@ -767,7 +770,12 @@ def hash_code(data, temp_data, old_data, typedict):
                     f = os.path.normcase(f)
                     if os.path.isfile(f):
                         os.remove(f)
-
+    elif loaded_old_data:
+        print('* PythonTeX warning')
+        print('    PythonTeX may not have been able to clean up old files.')
+        print('    This should not cause problems.')
+        print('    Delete the PythonTeX directory and run again to remove any unused files.')
+        temp_data['warnings'] += 1
 
 
 
