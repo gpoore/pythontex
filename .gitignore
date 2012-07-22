@@ -1,1 +1,5 @@
 *~
+pythontex-files-pythontex_gallery/
+*.aux
+*.log
+*.pytxcode
