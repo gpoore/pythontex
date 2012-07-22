@@ -3,3 +3,4 @@ pythontex-files-pythontex_gallery/
 *.aux
 *.log
 *.pytxcode
+.DS_Store
