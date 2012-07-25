@@ -1133,7 +1133,7 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
     # Only work with files that have a nonzero size 
     if os.path.isfile(err_file_name) and os.stat(err_file_name).st_size != 0:
         # Reset the hash value, so that the code will be run next time
-        exit_status[currentkey] = ''
+        #exit_status[currentkey] = ''
         # Open error and code files.
         # We can't just use the code in memory, because the full script 
         # file was written but never fully assembled in memory.
