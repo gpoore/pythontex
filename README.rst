@@ -42,9 +42,9 @@ v0.9beta3 (2012/07/17)
   all code after updating to the new version.  Otherwise, you should delete
   the PythonTeX directory and run PythonTeX.
 * Improved installation script.
-* Added package options:  pyfuture, stderr, workingdir, upquote, pyglexer,
-  pyginline.  Renamed the pygextfile option to fvextfile.
-* Added custom code command.
+* Added package options:  pyfuture, stderr, upquote, pyglexer, pyginline. 
+  Renamed the pygextfile option to fvextfile.
+* Added custom code and workingdir commands.
 * Added the console environment and associated options.
 * Rewrote pythontex_utils*.py, creating a new, context-aware interface to
   SymPy's LatexPrinter class.

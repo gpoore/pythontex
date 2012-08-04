@@ -1,4 +1,6 @@
 \documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb}
 \usepackage{fullpage}
 \usepackage{graphicx}
@@ -6,6 +8,7 @@
 
 \usepackage[stderr]{pythontex}
 \restartpythontexsession{\thesection}
+
 
 \usepackage[framemethod=TikZ]{mdframed}
 
@@ -46,6 +49,18 @@ Or we could access the printed content verbatim (it might contain special charac
 Python interaction can also be more complex.  \pyb{print(str(2**2**2) + r'\endinput')} returns \printpythontex.  In this case, the printed results include \LaTeX\ code, which is correctly interpreted by \LaTeX\ to ensure that there is not an extra space after the 16.  Printed output is saved to a file and brought back in via \verb|\input|, and the \verb|\endinput| command prevents \LaTeX\ from treating the newline at the end of the file as justification for a space character.
 
 But we don't have to typeset the code.  It can be hidden.\pyc{mystring=r'\textbf{This is a message from Python}'}  And then we can access it later:  \py{mystring}.
+
+
+\section{Pygments highlighting}
+
+\pytex\ supports syntax highlighting via Pygments.  Any language supported by Pygments can be highlighted.  Unicode is supported.  Consider this snippet copied and pasted from a Python 3 interactive session.  (Using random strings of Unicode for variable names is probably not a good idea, but \pytex\ will happily highlight it for you.)
+
+\begin{pygments}{pycon}
+>>> âæéöø = 123
+>>> ßçñðŠ = 456
+>>> âæéöø + ßçñðŠ
+579
+\end{pygments}
 
 
 \section{Python console environment}
