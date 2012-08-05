@@ -963,7 +963,7 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
     # Add in a Pygments process if applicable
     for key in update_pygments:
         if update_pygments[key] and not key.endswith('cons'):
-            print("* Pythontex pygment processing: " + str(key))
+            print("* Pythontex pygment processing: " + str(key))            
             tasks.append(pool.apply_async(do_pygments, [outputdir,
                                                         jobname,
                                                         fvextfile,

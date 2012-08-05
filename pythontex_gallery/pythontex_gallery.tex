@@ -131,13 +131,18 @@ plot(x, sin(x), label='$\sin(x)$')
 xlabel(r'$x\mathrm{-axis}$')
 ylabel(r'$y\mathrm{-axis}$')
 legend(loc='lower right')
-savefig('myplot.pdf', bbox_inches='tight')
+# asynchronous version of plt.savefig()
+aps.savefig('myplot.pdf', bbox_inches='tight')
 \end{pylabblock}
 
 \begin{center}
 \includegraphics{myplot}
 \end{center}
 
+\subsection{Asynchronous saving of plots}
+The above example also shows the usage of the \pyv{AsyncPylabSave} package which is shipped with \pytex, it works
+the same way as \pyv{plt.savefig()} except that it does not block the main program. Please see the documentation for
+a few multiprocessing caveats.
 
 \section{Basic pylab interaction}
 

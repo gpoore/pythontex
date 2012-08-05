@@ -49,7 +49,7 @@ except:
 needed_files = ['pythontex2.py', 'pythontex_types2.py', 'pythontex_utils2.py', 
                 'pythontex3.py', 'pythontex_types3.py', 'pythontex_utils3.py', 
                 'pythontex.sty', 'pythontex.ins', 'pythontex.dtx', 
-                'pythontex.pdf', 'README.rst']
+                'pythontex.pdf', 'README.rst', 'async_pylab_save.py']
 missing_files = False
 # Print a list of all files that are missing, and exit if any are
 for eachfile in needed_files:
@@ -126,6 +126,7 @@ copy('pythontex_utils2.py', scripts_path)
 copy('pythontex3.py', scripts_path)
 copy('pythontex_types3.py', scripts_path)
 copy('pythontex_utils3.py', scripts_path)
+copy('async_pylab_save.py', scripts_path)
 # Install source
 if not path.exists(source_path):
     mkdir(source_path)
