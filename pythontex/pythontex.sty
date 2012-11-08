@@ -858,8 +858,7 @@
     \ifcsname listing\endcsname
         \ifbool{pytx@listingenv}{}%
             {\PackageWarning{\pytx@packagename}%
-                {A conflicting "listing" environment already exists}%
-                {Use \string\setpythontexlistingenv to create a custom environment}}%
+                {A conflicting "listing" environment already exists}}%
     \else
         \ifbool{pytx@listingenv}{}{\DeclareFloatingEnvironment[fileext=lopytx]{listing}}
     \fi
