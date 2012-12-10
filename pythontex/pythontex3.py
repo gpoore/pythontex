@@ -963,6 +963,7 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
     # Add in a Pygments process if applicable
     for key in update_pygments:
         if update_pygments[key] and not key.endswith('cons'):
+            print("* Pythontex pygment processing: " + str(key))            
             tasks.append(pool.apply_async(do_pygments, [outputdir,
                                                         jobname,
                                                         fvextfile,
@@ -975,6 +976,7 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
     # Add console processes
     for key in consoledict:
         if update_code[key] or update_pygments[key]:
+            print("* Pythontex console processing: " + str(key))            
             tasks.append(pool.apply_async(run_console, [outputdir,
                                                         jobname,
                                                         fvextfile,
@@ -990,6 +992,7 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
     # Add code processes.  Note that everything placed in the codedict 
     # needs to be executed, based on previous testing.
     for key in codedict:
+        print("* Pythontex code processing: " + str(key))
         [inputtype, inputsession, inputgroup] = key.split('#')
         tasks.append(pool.apply_async(run_code, [inputtype,
                                                  inputsession,
@@ -1141,7 +1144,7 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
     # Only work with files that have a nonzero size 
     if os.path.isfile(err_file_name) and os.stat(err_file_name).st_size != 0:
         # Reset the hash value, so that the code will be run next time
-        exit_status[currentkey] = ''
+        #exit_status[currentkey] = ''
         # Open error and code files.
         # We can't just use the code in memory, because the full script 
         # file was written but never fully assembled in memory.
@@ -1749,3 +1752,4 @@ if __name__ == '__main__':
     print('\n--------------------------------------------------')
     print('PythonTeX:  ' + data['raw_jobname'] + ' - ' + str(temp_data['errors']) + ' error(s), ' + str(temp_data['warnings']) + ' warning(s)')
 
+    exit(temp_data['errors'])

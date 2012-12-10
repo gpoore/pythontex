@@ -1,0 +1,17 @@
+*~
+pythontex-files-pythontex_gallery/
+*.aux
+*.log
+*.pytxcode
+.DS_Store
+*.glo
+
+*.idx
+
+*.out
+
+*.toc
+
+*.fdb_latexmk
+
+*.fls

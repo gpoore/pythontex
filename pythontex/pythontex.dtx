@@ -164,7 +164,7 @@
 % \item Installer file |pythontex.ins|
 % \item Documented \LaTeX\ source file |pythontex.dtx|, from which |pythontex.pdf| and |pythontex.sty| are generated
 % \item Main Python scripts |pythontex2.py| and |pythontex3.py|
-% \item Helper scripts |pythontex_utils2.py| and |pythontex_types2.py|, and |pythontex_utils3.py| and |pythontex_types3.py|
+% \item Helper scripts |pythontex_utils2.py|, |pythontex_types2.py|, |pythontex_utils3.py|, |pythontex_types3.py| and |async_pylab_save.py|
 % \item Installation script |pythontex_install_texlive| (for \TeX\ Live)
 % \item README
 % \item Optional batch file |pythontex.bat| for use in launching |pythontex*.py| under Windows 
@@ -183,6 +183,7 @@
 %     \item |pythontex2.py| and |pythontex3.py|
 %     \item |pythontex_types2.py| and |pythontex_types3.py|
 %     \item |pythontex_utils2.py| and |pythontex_utils3.py|
+%     \item |async_pylab_save.py|
 %     \end{itemize}
 % \item \meta{\TeX\ tree root}|/source/latex/pythontex/|
 %     \begin{itemize}
@@ -417,6 +418,20 @@
 % \meta{quoted~list} may \textbf{not} contain \LaTeX\ macros.  \meta{quoted~list} is interpreted as verbatim content, since in general the custom code will not be valid \LaTeX.
 %
 %
+% \subsubsection{Asynchronous saving of plots}
+% To avoid locking up the main program flow when saving figures the utility |async_pylab_save.py| is included.
+%
+% This works by making |asp = AsyncPylabSave()| available in every family and then calling |asp.join()| at the end. Calling 
+% |asp.savefig(...)|
+% will call |plt.savefig(...)|
+% without blocking the main program (using multiprocessing).
+% Or eqvivalently 
+% |asp.savefig(filename, fig=fig, **kwargs)|, where fig is a figure handle,
+% will work as |fig.savefig(filename, **kwargs)|.
+%
+% Please note that the figure will be closed after saving, so manipulation of the figure after calling save will not work. Saving multiple figures to the same filename will of course have unexpected results!
+% 
+% TODO: I guess this feature only makes sense in the pylab family\dots
 % \subsubsection{Formatting of typeset code}
 %
 % \DescribeMacro{\setpythontexfv\oarg{family}\marg{fancyvrb~settings}}

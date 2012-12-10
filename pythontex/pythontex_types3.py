@@ -138,6 +138,11 @@ class Codetype(object):
             pytex = PythontexUtils()
             """
     #\\ End Python 3
+    # Add AsyncPylabSave import
+    utils_string_dict['python'] += """
+            from async_pylab_save import AsyncPylabSave
+            aps = AsyncPylabSave()
+            """
     
     inputs_string_const_dict['python'] = """
             
@@ -191,7 +196,10 @@ class Codetype(object):
             """
     #\\ End Python 3
     
-    close_macrofile_string_dict['python'] = 'pytex.macrofile.close()\n'
+    close_macrofile_string_dict['python'] = """
+            pytex.macrofile.close()
+            aps.join()
+            """
     
     set_workingdir_string_dict['python'] = """
             if os.path.exists('{0}'):
