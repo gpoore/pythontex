@@ -6,7 +6,7 @@ Provides a class for defining the code types that may be executed by default.
 Uses this class to create the default code types.  Provides functions for 
 dealing with the code types.
 
-Copyright (c) 2012, Geoffrey M. Poore
+Copyright (c) 2012-2013, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -32,7 +32,8 @@ class Codetype(object):
     scripts that PythonTeX executes.
     '''
     def __init__(self, language, extension, command, default_code, utils_code, 
-                 command_options=None, shebang='', custom_code=None):        
+                 command_options=None, shebang='', custom_code_begin=None, 
+                 custom_code_end=None):        
         # Process arguments and do some type checking
         
         #// Python 2
@@ -92,12 +93,18 @@ class Codetype(object):
         else:
             raise TypeError("'shebang' must be a string")
                 
-        if custom_code == None:
-            self.custom_code = []
-        elif isinstance(custom_code, list):
-            self.custom_code = custom_code
+        if custom_code_begin == None:
+            self.custom_code_begin = []
+        elif isinstance(custom_code_begin, list):
+            self.custom_code_begin = custom_code_begin
         else:
-            raise TypeError("'custom_code' must be a list")
+            raise TypeError("'custom_code_begin' must be a list")
+        if custom_code_end == None:
+            self.custom_code_end = []
+        elif isinstance(custom_code_end, list):
+            self.custom_code_end = custom_code_end
+        else:
+            raise TypeError("'custom_code_end' must be a list")
         
         # Finish setup by assigning "template strings" based on language
         self._init_strings()
@@ -120,6 +127,7 @@ class Codetype(object):
     encode_stdout_string_dict = dict()    
     open_macrofile_string_dict = dict()
     close_macrofile_string_dict = dict()
+    cleanup_string_dict = dict()
     set_workingdir_string_dict = dict()
     inline_string_dict = dict()
     encoding_string_dict = dict()
@@ -193,6 +201,8 @@ class Codetype(object):
     
     close_macrofile_string_dict['python'] = 'pytex.macrofile.close()\n'
     
+    cleanup_string_dict['python'] = 'pytex._cleanup()\n'
+    
     set_workingdir_string_dict['python'] = """
             if os.path.exists('{0}'):
                 os.chdir('{0}')
@@ -218,6 +228,7 @@ class Codetype(object):
         self.encode_stdout_string = textwrap.dedent(self.encode_stdout_string_dict[self.language])
         self.open_macrofile_string = textwrap.dedent(self.open_macrofile_string_dict[self.language])
         self.close_macrofile_string = textwrap.dedent(self.close_macrofile_string_dict[self.language])
+        self.cleanup_string = textwrap.dedent(self.cleanup_string_dict[self.language])
         self.set_workingdir_string = textwrap.dedent(self.set_workingdir_string_dict[self.language])
         self.inline_string = textwrap.dedent(self.inline_string_dict[self.language])
         self.encoding_string = textwrap.dedent(self.encoding_string_dict[self.language])
@@ -259,6 +270,12 @@ class Codetype(object):
         Create code that will close the macro file.
         '''
         return self.close_macrofile_string
+    
+    def cleanup(self):
+        '''
+        Create code that will close the macro file.
+        '''
+        return self.cleanup_string
 
     def set_workingdir(self, workingdir):
         '''
@@ -276,8 +293,8 @@ class Codetype(object):
 # Create a dictionary of command and environment families
 #
 # Create the py, sympy, and pylab families
-# Families must always define default_code, but never custom_code;
-# custome_code should only contain code from the user.
+# Families must always define default_code, but never custom_code_*;
+# custome_code_* should only contain code from the user.
 
 typedict = dict()
 
@@ -291,8 +308,7 @@ typedict['py'] = Codetype(
     default_code = ['import os', 
                     'import sys', 
                     'import codecs'],
-    utils_code = [],
-    custom_code = [])
+    utils_code = [])
 
 
 typedict['sympy'] = copy.deepcopy(typedict['py'])

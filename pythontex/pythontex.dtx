@@ -1,6 +1,6 @@
 % \iffalse meta-comment
 %
-% Copyright (C) 2012 by Geoffrey M. Poore <gpoore@gmail.com>
+% Copyright (C) 2012-2013 by Geoffrey M. Poore <gpoore@gmail.com>
 % ---------------------------------------------------------------------------
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -26,33 +26,49 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2012/07/17 Version~0.9beta3 PythonTeX]
+    [2013/01/09 Version~0.10beta PythonTeX]
 %</package>
 %
 %<*driver>
 \documentclass{ltxdoc}
+\makeatletter
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{textcomp}
 \usepackage[svgnames]{xcolor}
-\usepackage[fixlr=false]{pythontex} %Need fixlr=false so can demo issue
+\usepackage{environ}
 \usepackage{enumitem}
+\usepackage[fixlr=false]{pythontex} %Need fixlr=false so can demo issue
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,urlcolor=Green,linkcolor=blue}
-\usepackage{textcomp}
 \newcommand{\pytxtodo}[1]{}
 %\newcommand{\pytxtodo}[1]{\textcolor{red}{TO~DO: \scantokens{#1}}}
+\newcommand{\changestext}{}
+\NewEnviron{changelog}[2]{%
+    \g@addto@macro\changestext{\item[#1] (#2) \begin{itemize}}%
+    \expandafter\g@addto@macro\expandafter\changestext\expandafter{\BODY}%
+    \g@addto@macro\changestext{\end{itemize}}%
+}
+\newcommand{\PrintChangelog}{%
+    \addcontentsline{toc}{section}{Version History}
+    \section*{Version History}%
+    \begin{description}%
+    \changestext
+    \end{description}%
+}
 \EnableCrossrefs
 \CodelineIndex
-\RecordChanges
+%\RecordChanges
+\makeatother
 \begin{document}
   \DocInput{pythontex.dtx}
-  \PrintChanges
+  %\PrintChanges
   \PrintIndex
 \end{document}
 %</driver>
 % \fi
 %
-% \CheckSum{1982}
+% \CheckSum{2144}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -71,9 +87,56 @@
 %   Right brace   \}     Tilde         \~}
 %
 %
-% \changes{v0.9beta3}{2012/07/17}{Added Unicode support, which required the Python code to be split into one set for Python 2 and another set for Python 3.  This will require any old installation to be completely removed, and a new installation created from scratch.  Refactoring of Python code.  Documents should automatically re-execute all code after updating to the new version.  Otherwise, you should delete the PythonTeX directory and run PythonTeX.  Improved installation script.  Added package options:  pyfuture, stderr, upquote, pyglexer, pyginline.  Renamed the pygextfile option to fvextfile.  Added custom code and workingdir commands.  Added the console environment and associated options.  Rewrote pythontex\_utils*.py, creating a new, context-aware interface to SymPy's LatexPrinter class.  Content brought in via macros no longer uses labels.  Rather, long defs are used, which allows line breaks.  Pygments highlighting is now default for PythonTeX commands and environments}
-% \changes{v0.9beta2}{2012/05/09}{Changed Python output extension to .stdout.}
-% \changes{v0.9beta}{2012/04/27}{Initial public beta release.}
+% \begin{changelog}{v0.10beta}{2013/01/09}
+% \item Backward-incompatible: Redid treatment of command-line options for \texttt{pythontex*.py}, using Python's \texttt{argparse} module.  Run \texttt{pythontex*.py} with option \texttt{-h} to see new command line options.
+% \item Deprecated: \texttt{\string\setpythontexcustomcode} is deprecated in favor of the \texttt{\string\pythontexcustomc} command and \texttt{pythontexcustomcode} environment.  These allow entry of pure code, unlike \texttt{\string\setpythontexcustomcode}.  These also allow custom code to be added to the beginning or end of a session, via an optional argument.  Improved treatment of errors and warnings associated with custom code.
+% \item The summary of errors and warnings now correctly differentiates errors and warnings produced by user code, rather than treating all of them as errors.  By default, \texttt{pythontex*.py} now returns an exit code of 1 if there were errors.
+% \item The PythonTeX utilities class now allows external file dependencies to be specified via \texttt{pytex.add\_dependencies()}, so that sessions are automatically re-executed when external dependencies are modified (modification is determined via either hash or mtime; this is governed by the new \texttt{hashdependencies} option).
+% \item The PythonTeX utilities class now allows created files to be specified via \texttt{pytex.add\_created()}, so that created files may be automatically cleaned up (deleted) when the code that created them is modified (for example, name change for a saved plot).
+% \item Added the following package options.
+%    \begin{itemize}
+%    \item \texttt{stdout} (or \texttt{print}): Allows input of stdout to be disabled.  Useful for debugging.
+%    \item \texttt{runall}: Executes everything.  Useful when code depends on external data.
+%    \item \texttt{rerun}: Determines when code is re-executed.  Code may be set to always run (same as \texttt{runall} option), or only run when it is modified or when it produces errors or warnings.  By default, code is always re-executed if there are errors or modifications, but not re-executed if there are warnings.
+%    \item \texttt{hashdependencies}: Determines whether external dependencies (data, external code files highlighted with Pygments, etc.) are checked for modification via hashing or modification time.  Modification time is default for performance reasons.
+%    \end{itemize}
+% \item  Added the following new command line options.  The options that are equivalent to package options are overridden by the package options when present.
+%    \begin{itemize}
+%    \item \texttt{-{}-error-exit-code}:  Determines whether an exit code of 1 is returned if there were errors.  On by default, but can be turned off since it is undesirable when working with some editors.
+%    \item \texttt{-{}-runall}: Equivalent to new package option.
+%    \item \texttt{-{}-rerun}:  Equivalent to new package option.
+%    \item \texttt{-{}-hashdependencies}:  Equivalent to new package option.
+%    \end{itemize}
+% \item Modified the \texttt{fixlr} option, so that it only patches commands if they have not already been patched (avoids package conflicts).
+% \item Added \texttt{\string\setpythontexautoprint} command for toggling autoprint on/off within the body of the document.
+% \item Installer now attempts to create symlinks under OS X and Linux with TeX Live, and under OS X with MacPorts Tex Live.
+% \item Performed compatibility testing under lualatex and xelatex (previously, had only tested with pdflatex).  Added documentation for using these TeX engines; at most, slightly different preambles are needed.  Modified the PythonTeX gallery to support all three engines.
+% \item Code commands and environments may now be used in the preamble.  This, combined with the new treatment of custom code, allows PythonTeX to be used in creating LaTeX packages.
+% \item Added documentation for using PythonTeX in LaTeX programming.
+% \item Fixed a bug that sometimes caused incorrect line numbers with \texttt{stderr} content.  Improved processing of stderr.
+% \item Fixed a bug in automatic detection of pre-existing listings environment.
+% \item Improved the detection of imports from \texttt{\_\_future\_\_}.  Detection should now be stricter, faster, and more accurate.
+% \end{changelog}
+%
+% \begin{changelog}{v0.9beta3}{2012/07/17}
+% \item Added Unicode support, which required the Python code to be split into one set for Python 2 and another set for Python 3.  This will require any old installation to be completely removed, and a new installation created from scratch.
+% \item Refactoring of Python code.  Documents should automatically re-execute all code after updating to the new version.  Otherwise, you should delete the PythonTeX directory and run PythonTeX.
+% \item Improved installation script.
+% \item Added package options:  pyfuture, stderr, upquote, pyglexer, pyginline.  Renamed the pygextfile option to fvextfile.
+% \item Added custom code and workingdir commands.
+% \item Added the console environment and associated options.
+% \item Rewrote pythontex\_utils*.py, creating a new, context-aware interface to SymPy's LatexPrinter class.
+% \item Content brought in via macros no longer uses labels.  Rather, long defs are used, which allows line breaks.
+% \item Pygments highlighting is now default for PythonTeX commands and environments
+% \end{changelog}
+%
+% \begin{changelog}{v0.9beta2}{2012/05/09}
+% \item Changed Python output extension to .stdout.
+% \end{changelog}
+%
+% \begin{changelog}{v0.9beta}{2012/04/27}
+% \item Initial public beta release.
+% \end{changelog}
 %
 %
 % \DoNotIndex{\newcommand,\newenvironment}
@@ -93,9 +156,9 @@
 % \maketitle
 %
 % \begin{abstract}
-% \pytex\ allows Python code entered within a \LaTeX\ document to be executed, and the output to be included within the original document.  This provides access to the full power of Python from within \LaTeX, simplifying Python-\LaTeX\ workflow and making possible a range of document customization and automation.  It also allows macro definitions that mix Python and \LaTeX\ code.  In addition, \pytex\ provides syntax highlighting for many programming languages via the Pygments Python package.
+% \pytex\ allows Python code entered within a \LaTeX\ document to be executed, and the output to be included within the original document.  This provides access to the full power of Python from within \LaTeX, simplifying Python-\LaTeX\ workflow and making possible a range of document customization and automation.  It also allows macro definitions that mix Python and \LaTeX\ code.  In addition, \pytex\ provides syntax highlighting for many programming languages via the Pygments syntax highlighter.
 %
-% \pytex\ is fast and user-friendly.  Python code is only executed when it has been modified.  When code is executed, it automatically attempts to run in parallel.  If Python code produces errors, the error message line numbers are synchronized with the \LaTeX\ document line numbers, so that it is easy to find the misbehaving code.
+% \pytex\ is fast and user-friendly.  Python code is only executed when it has been modified.  When code is executed, it automatically attempts to run in parallel.  If Python code produces errors, the error message line numbers are synchronized with the \LaTeX\ document line numbers, so that it is easy to find the misbehaving code.  Code dependencies may be specified so that code is automatically re-executed whenever they change.
 % \end{abstract}
 %
 %
@@ -104,7 +167,7 @@
 %
 %
 % \section*{Package status}
-% \pytex\ is currently in ``beta.''  Almost all features intended for version 0.9 are present, and almost all are fully functional (at least, so far as is known!).  Testing is the main task that remains.  \pytex\ has been primarily developed and tested under Windows with \TeX\ Live and Python 2.7.  It has also been tested with Python 3.2 under Windows, and has been used under OS X (10.7) with MacPort's \TeX\ Live and Python 2.7.
+% \pytex\ is currently in ``beta,'' but a full release and submission to CTAN is very close.  It has been tested under Windows with \TeX\ Live and Python 2.7 and 3.2, under OS X (10.7) with MacPort's \TeX\ Live and Python 2.7, and under Linux (Ubuntu) with TeX Live and Python 2.7.
 % \vfill
 % 
 %
@@ -115,7 +178,7 @@
 %
 % \section{Introduction}
 %
-% \LaTeX\ can do a lot,\footnote{\TeX\ is a Turing-complete language.} but the programming required can sometimes be painful.\footnote{As I learned in creating this package.}  Also, in spite of the many packages available for \LaTeX, the libraries and packages of a general-purpose programming language are lacking.  For these reasons, there have been multiple attempts to allow other languages to be used within \LaTeX.
+% \LaTeX\ can do a lot,\footnote{\TeX\ is a Turing-complete language.} but the programming required can sometimes be painful.\footnote{As I learned in creating this package.}  Also, in spite of the many packages available for \LaTeX, the libraries and packages of a general-purpose programming language are lacking.  For these reasons, there have been multiple attempts to allow other languages to be used within \LaTeX.\footnote{Two additional examples not explicitly discussed here are \href{http://www.stat.uni-muenchen.de/~leisch/Sweave/}{Sweave} and \href{http://yihui.name/knitr/}{knitr}, which combine \LaTeX\ with the R language for tasks such as dynamic report generation.  These are quite sophisticated.  Since they are inspired by noweb (the .tex source is generated from .Rnw), passing information from \LaTeX\ to R can be non-trivial and thus the \TeX\ integration is weaker in that sense.}
 % \begin{itemize}
 % \item \href{http://www.ctan.org/tex-archive/macros/latex/contrib/perltex/}{Perl\TeX} allows the bodies of \LaTeX\ macros to be written in Perl.
 % \item \href{http://www.ctan.org/tex-archive/macros/latex/contrib/sagetex/}{Sage\TeX} allows code for the Sage mathematics software to be executed from within a \LaTeX\ document.
@@ -128,21 +191,20 @@
 % \begin{description}
 % \item[Execution speed]\hfill\\ In the approaches mentioned above, all the non-\LaTeX\ code is executed at every compilation of the \LaTeX\ document (Perl\TeX, Lua\TeX, and |python.sty|), or all the non-\LaTeX\ code is executed every time it is modified (Sage\TeX\ and Sympy\TeX).  However, many tasks such as plotting and data analysis take significant time to execute.  We need a way to fine-tune code execution, so that independent blocks of slow code may be separated into their own sessions and are only executed when modified.  If we are going to split code into multiple sessions, we might as well run these sessions in parallel, further increasing speed.  A byproduct of this approach is that it now becomes much more feasible to include slower code, since we can still have fast compilations whenever the slow code isn't modified.
 % \item[Compiling without executing]\hfill\\ Even with all of these features to boost execution speed, there will be times when we have to run slow code.  Thus, we need the execution of non-\LaTeX\ code to be separated from compiling the \LaTeX\ document.  We need to be able to edit and compile a document containing unexecuted code.  Unexecuted code should be invisible or be replaced by placeholders.  Sage\TeX\ and Sympy\TeX\ have implemented such a separation of compiling and executing.  In contrast, Lua\TeX\ and Perl\TeX\ execute all the code at each compilation---but that is appropriate given their goal of simplifying macro programming.
-% \item[Error messages]\hfill\\ Whenever code is saved from a \LaTeX\ document to an external file and then executed, the line numbers for any error messages will not correspond to the line numbering of the original \LaTeX\ document.  At one extreme, |python.sty| doesn't attempt to deal with this issue, while at the other extreme, Sage\TeX\ uses an ingenous system of |Try|/|Except| statements on every line of code.  We need a system that translates all error messages so that they correspond to the line numbering of the original \LaTeX\ document, with minimal overhead when there are no errors.
-% \item[Syntax highlighting]\hfill\\ Once we begin using non-\LaTeX\ code, sooner or later we will likely wish to typeset some of it, which means we need syntax highlighting.  A number of syntax highlighting packages currently exist for \LaTeX; perhaps the most popular are |listings| and |minted|.  |listings| uses pure \LaTeX.  It has not been updated since 2007, which makes it a less ideal solution in some circumstances.  |minted| uses the Python package Pygments to perform highlighting.  Pygments can provide superior syntax highlighting, but |minted| can be slow because all code must be highlighted at each compilation.  We need syntax highlighting via Pygments that saves all highlighted code, only re-highlighting when there are modifications.  Ideally, we would also like a solution that overcomes some of |minted|'s longstanding issues.\footnote{http://code.google.com/p/minted/issues/list}
-% \item[Context awareness]\hfill\\ It would be nice for the non-\LaTeX\ code to have at least a minimal awareness of its context in the \LaTeX\ document.  For example, it would be nice to know whether code is executing within math mode.
-% \item[Language-independent implementation]\hfill\\ It would be nice to have a system for executing non-\LaTeX\ code that depends very little on the language of the code.  We should not expect to be able to escape all language dependence.  But if the system is designed to be as general as possible, then it may be expanded in the future to support additional languages.
+% \item[Error messages]\hfill\\ Whenever code is saved from a \LaTeX\ document to an external file and then executed, the line numbers for any error messages will not correspond to the line numbering of the original \LaTeX\ document.  At one extreme, |python.sty| doesn't attempt to deal with this issue, while at the other extreme, Sage\TeX\ uses an ingenous system of |Try|/|Except| statements on every chunk of code.  We need a system that translates all error messages so that they correspond to the line numbering of the original \LaTeX\ document, with minimal overhead when there are no errors.
+% \item[Syntax highlighting]\hfill\\ Once we begin using non-\LaTeX\ code, sooner or later we will likely wish to typeset some of it, which means we need syntax highlighting.  A number of syntax highlighting packages currently exist for \LaTeX; perhaps the most popular are |listings| and |minted|.  |listings| uses pure \LaTeX.  It has not been updated since 2007, which makes it a less ideal solution in some circumstances.  |minted| uses the Python-based syntax highlighter Pygments to perform highlighting.  Pygments can provide superior syntax highlighting, but |minted| can be very slow because all code must be highlighted at each compilation and each instance of highlighting involves launching an external Python process.  We need high-speed, user-friendly syntax highlighting via Pygments.
 % \item[Printing]\hfill\\ It would be nice for the |print| statement/function,\footnote{In Python, |print| was a statement until Python 3.0, when it became a function.  The function form is available via import from |\textunderscore\textunderscore future\textunderscore\textunderscore| in Python 2.6 and later.} or its equivalent, to automatically return its output within the \LaTeX\ document.  For example, using |python.sty| it is possible to generate some text while in Python, open a file, save the text to it, close the file, and then |\input| the file after returning to \LaTeX.  But it is much simpler to generate the text and |print| it, since the printed content is automatically included in the \LaTeX\ document.  This was one of the things that |python.sty| really got right.
-% \item[Pure code]\hfill\\ \LaTeX\ has a number of special characters (|# $ % & ~ _ ^ \ { }|), which complicates the entry of code in a non-\LaTeX\ language since these same characters are common in many languages.  Sage\TeX\ and Sympy\TeX\ delimit all inline code with curly braces (|{}|), but this approach fails in the (somewhat unlikely) event that code needs to contain an unmatched brace.  More seriously, they do not allow the percent symbol |%| (modular arithmetic and string formatting in Sage and Python) to be used within inline code.  Rather, a |\percent| macro must be used instead.  This means that code must (sometimes) be entered as a hybrid between \LaTeX\ and the non-\LaTeX\ language.  Lua\TeX\ is somewhat similar:  ``The main thing about Lua code in a TeX document is this: the code is expanded by TeX before Lua gets to it. This means that all the Lua code, even the comments, must be valid TeX!''\footnote{\url{http://wiki.contextgarden.net/Programming_in_LuaTeX}}
+% \item[Pure code]\hfill\\ \LaTeX\ has a number of special characters (|# $ % & ~ _ ^ \ { }|), which complicates the entry of code in a non-\LaTeX\ language since these same characters are common in many languages.  Sage\TeX\ and Sympy\TeX\ delimit all inline code with curly braces (|{}|), but this approach fails in the (somewhat unlikely) event that code needs to contain an unmatched brace.  More seriously, they do not allow the percent symbol |%| (modular arithmetic and string formatting in Sage and Python) to be used within inline code.  Rather, a |\percent| macro must be used instead.  This means that code must (sometimes) be entered as a hybrid between \LaTeX\ and the non-\LaTeX\ language.  Lua\TeX\ is somewhat similar:  ``The main thing about Lua code in a TeX document is this: the code is expanded by TeX before Lua gets to it. This means that all the Lua code, even the comments, must be valid TeX!''\footnote{\url{http://wiki.contextgarden.net/Programming_in_LuaTeX}}  In the case of Lua\TeX, though, there is the |luacode| package that allows for pure Lua.
 %
-% This language hybridization is not terribly difficult to work around in the Sage\TeX\ and Sympy\TeX\ cases, and might even be considered a feature in Lua\TeX\ in some contexts.  But if we are going to create a system for general-purpose access to a non-\LaTeX\ language, we need \textbf{all} valid code to work correctly in \textbf{all} contexts, with no hybridization of any sort required.  We should be able to copy and paste valid code into a \LaTeX\ document, without having to worry about hybridizing it.  Among other things, this means that inline code delimiters other than \LaTeX's default curly braces |{}| must be available.
+% This language hybridization is not terribly difficult to work around in the Sage\TeX\ and Sympy\TeX\ cases, and is actually a Lua\TeX\ feature in many contexts.  But if we are going to create a system for general-purpose access to a non-\LaTeX\ language, we need \textbf{all} valid code to work correctly in \textbf{all} contexts, with no hybridization of any sort required.  We should be able to copy and paste valid code into a \LaTeX\ document, without having to worry about hybridizing it.  Among other things, this means that inline code delimiters other than \LaTeX's default curly braces |{}| must be available.
 % \item[Hybrid code]\hfill\\ Although we need a system that allows input of pure non-\LaTeX\ code, it would also be convenient to allow hybrid code, or code in which \LaTeX\ macros may be present and are expanded before the code is executed.  This allows \LaTeX\ data to be easily passed to the non-\LaTeX\ language, facilitating a tighter integration of the two languages and the use of the non-\LaTeX\ language in macro definitions.
 % \item[Math and science libraries]\hfill\\ The author decided to create \pytex\ after writing a physics dissertation using \LaTeX\ and realizing how frustrating it can be to switch back and forth between a \TeX\ editor and plotting software when fine-tuning figures.  We need access to a non-\LaTeX\ language like Python, MATLAB, or Mathematica that provides strong support for data analysis and visualization.  To maintain broad appeal, this language should primarily involve open-source tools, should have strong cross-platform support, and should also be suitable for general-purpose programming.
+% \item[Language-independent implementation]\hfill\\ It would be nice to have a system for executing non-\LaTeX\ code that depends very little on the language of the code.  We should not expect to be able to escape all language dependence.  But if the system is designed to be as general as possible, then it may be expanded in the future to support additional languages.
 % \end{description}
 %
 % Python was chosen as the language to fulfill these objectives for several reasons.
 % \begin{itemize}
-% \item It is open-source and has good cross-platform support.\footnote{Unfortunately, Sage can only run under Windows within a virtual machine at present; otherwise, an extension of Sage\TeX\ might have been tempting.  Then again, for general computing, an approach that utilizes pure Python is probably superior.}
+% \item It is open-source and has good cross-platform support.
 % \item It has a strong set of scientific, numeric, and visualization packages, including \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}.  Much of the initial motivation for \pytex\ was the ability to create publication-quality plots and perform complex mathematical calculations without having to leave the \TeX\ editor.
 % \item We need a language that is suitable for scripting.  Lua is already available via Lua\TeX, and in any case lacks the math and science tools.\footnote{One could use \href{http://labix.org/lunatic-python}{Lunatic Python}, and some numeric packages for Lua are \href{http://numlua.luaforge.net/}{in development}.}  Perl is already available via Perl\TeX, although Perl\TeX's emphasis on Perl for macro creation makes it rather unsuitable for scientific work using the \href{http://pdl.perl.org/}{Perl Data Language (PDL)} or for more general programming.  Python is one logical choice for scripting.
 % \end{itemize}
@@ -157,7 +219,7 @@
 %
 % \pytex\ requires a \TeX\ installation.  \href{http://www.tug.org/texlive/}{\TeX\ Live} or \href{http://miktex.org/}{MiK\TeX} are preferred.  \pytex\ requires the |Kpathsea| library, which is available in both of these distributions.  The following \LaTeX\ packages, with their dependencies, are also required:  |fancyvrb|, |etex|, |etoolbox|, |xstring|, |pgfopts|, |newfloat|, and |color| or |xcolor|.  If you are creating and importing graphics using Python, you will also need |graphicx|.  The |mdframed| package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors.
 %
-% \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools.  Python 3.1 and later will work as well.  Earlier versions of Python 2 and 3 are not compatible, at least not without some modifications to the \pytex\ scripts.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile or experiment with the \pytex\ gallery file, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}. 
+% \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools.  Python 3.1 and later will work as well.  Earlier versions of Python 2 and 3 are not compatible, at least not without several modifications to the \pytex\ scripts.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile orthe \pytex\ gallery file, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}. 
 %
 % \pytex\ consists of the following files:
 % \begin{itemize}
@@ -166,12 +228,17 @@
 % \item Main Python scripts |pythontex2.py| and |pythontex3.py|
 % \item Helper scripts |pythontex_utils2.py| and |pythontex_types2.py|, and |pythontex_utils3.py| and |pythontex_types3.py|
 % \item Installation script |pythontex_install_texlive| (for \TeX\ Live)
-% \item README
-% \item Optional batch file |pythontex.bat| for use in launching |pythontex*.py| under Windows 
+% \item |README.rst|
+% \item Optional batch files |pythontex2.bat| and |pythontex3.bat| for use in launching |pythontex*.py| under Windows 
 % \end{itemize}
 % The style file |pythontex.sty| may be generated by running \LaTeX\ on |pythontex.ins|.  The documentation you are reading may be generated by running \LaTeX\ on |pythontex.dtx|.  Two versions of all of the Python scipts are supplied, one for Python 2 and one for Python 3.\footnote{Unfortunately, it is not possible to provide full Unicode support for both Python 2 and 3 using a single script.  Currently, all code is written for Python 2, and then the Python 3 version is automatically generated via the |pythontex\_2to3.py| script.  This script comments out code that is only for Python 2, and un-comments code that is only for Python 3.}
 %
-% Until \pytex\ is submitted to CTAN, it must be installed manually.  The \pytex\ files should be installed within the \TeX\ directory structure as follows.
+% Until \pytex\ is submitted to CTAN (or if you always want the absolute latest version), it must be installed manually.  A Python installation script is provided for use with \TeX\ Live.  It has been tested with Windows, Linux, and OS~X, but may need manual input or slight modifications depending on your system.  The installation script performs the steps described below.  Note that you may have to run the script with elevated privileges, and may need to run it using the user's PATH.  For example, under Ubuntu Linux, you may need the following:
+% \begin{verbatim}
+% sudo env PATH=$PATH python pythontex_install_texlive.py
+% \end{verbatim}
+%
+% The \pytex\ files should be installed within the \TeX\ directory structure as follows.
 % \begin{itemize}
 % \item \meta{\TeX\ tree root}|/doc/latex/pythontex/|
 %     \begin{itemize}
@@ -193,17 +260,41 @@
 %     \item |pythontex.sty|
 %     \end{itemize}
 % \end{itemize}
-% After the files are installed, the system must be made aware of their existence.  Run |mktexlsr| or |texhash| to do this.  In order for |pythontex*.py| to be executable, a symlink (\TeX\ Live under Linux), launching wrapper (\TeX\ Live under Windows), or batch file (general Windows) should be created in the |bin/| directory.  For \TeX\ Live under Windows, simply copy |bin/win32/runscript.exe| to |bin/win32/pythontex*.exe| to create the wrapper (replace the |*| with the appropriate version).\footnote{See the output of |runscript -h| under Windows for additional details.}
+% After the files are installed, the system must be made aware of their existence.  Run |mktexlsr| to do this.  In order for |pythontex*.py| to be executable, a symlink (\TeX\ Live under Linux), launching wrapper (\TeX\ Live under Windows), or batch file (general Windows) should be created in the |bin/|\meta{system} directory.  For \TeX\ Live under Windows, simply copy |bin/win32/runscript.exe| to |bin/win32/pythontex*.exe| to create the wrapper (replace the |*| with the appropriate version).\footnote{See the output of |runscript -h| under Windows for additional details.}
 %
-% A Python installation script is provided for use with \TeX\ Live.  It may need to be slightly modified based on your system.  It performs all steps described above, except for creating a symlink under Linux.
 %
 % \subsection{Compiling documents using \pytex}
 %
-% To compile a document that uses \pytex, you should run \LaTeX, then run |pythontex*.py| (preferably via a symlink, wrapper, or batch file, as described above), and finally run \LaTeX\ again.  |pythontex*.py| requires a single command-line argument, which must be passed to it directly or via symlink/wrapper/batch file:  the name of the .tex file.  The filename can be passed with or without the .tex extension, but no extension is preferred.\footnote{|pythontex*.py| will be happy to work with a file that does not have the .tex extension, so long as the file cooperates with |pythontex.sty|.  In this case, the file extension should \textbf{not} be passed to |pythontex*.py|, because it won't be expecting it and won't be able to determine that it is indeed an extension.  |pythontex*.py| just needs to know |\textbackslash jobname|.}  The file name should be wrapped in double quotes |"| to allow for space characters.\footnote{Using spaces in the names of .tex files is apparently frowned upon.  But if you configure things to handle spaces whenever it doesn't take much extra work, then that's one less thing that can go wrong.}  For example, under Windows with \TeX\ Live and Python 2.7 we would create the wrapper |pythontex2.exe|.  Then we could run \pytex\ on a file \meta{file~name}.tex using the command |pythontex2.exe "|\meta{file~name}|"|.  In practice, you will probably want to configure your \TeX\ editor with a shortcut key for running \pytex.
+% Compiling a document with \pytex\ involves three steps:  running a \LaTeX-compatible \TeX\ engine, running |pythontex*.py| (preferably via a symlink, wrapper, or batch file, as described above), and finally running the \TeX\ engine again.  The first \TeX\ run saves code into an external file where \pytex\ can access it.  The second \TeX\ run pulls the \pytex\ output back into the document.
 %
-% A second argument specifying the file encoding may also be passed to \pytex:  |pythontex*.py| \meta{file} |--encoding| \meta{encoding}.  Any encoding supported by Python's \href{http://docs.python.org/library/codecs.html}{codecs} module may be used.  If an encoding is not specified, \pytex\ uses UTF-8.  Note that the encoding \textbf{must} be used consistently; the .tex source, the \pytex\ output, and any external code files that \pytex\ highlights should all use the same encoding.  If support for characters beyond ASCII is required, then the \LaTeX\ packages |fontenc| and |inputenc| should be used.
+% If you plan to use code that contains Unicode characters (or other characters beyond ASCII) you should make sure that your document is properly configured:
+% \begin{itemize}
+% \item Under pdfLaTeX, your documents need |\usepackage[T1]{fontenc}| and |\usepackage[utf8]{inputenc}|, or a similar configuration.
+% \item Under LuaLaTeX, your documents need |\usepackage{fontspec}|, or a similar configuration.
+% \item Under XeLaTeX, your documents need |\usepackage{fontspec}| as well as |\defaultfontfeatures{Ligatures=TeX}|, or a similar configuration.
+% \end{itemize}
+% For an example of a \pytex\ document that will correctly compile under all three engines, see the |pythontex_gallery.tex| source.
 %
-% \pytex\ currently does not provide means to choose between multiple Python installations; it will use the default Python installation.  Support for multiple installations is unlikely to be added, since a cross-platform solution would be required.  If you need to work with multiple installations, you may wish to modify |pythontex_types*.py| to create additional command and environment families that invoke different versions of Python, based on your system.
+% If you use XeLaTeX, and your source code contains tabs, you \textbf{must} invoke XeLaTeX with the |-8bit| option so that tabs will be written to file as actual tab characters rather than as the character sequence |^^I|.\footnote{See \url{http://tex.stackexchange.com/questions/58732/how-to-output-a-tabulation-into-a-file} for more on tabs with XeTeX.}  
+%
+% |pythontex*.py| requires a single command-line argument:  the name of the .tex file.  The filename can be passed with or without the .tex extension, but no extension is preferred.\footnote{|pythontex*.py| will be happy to work with a file that does not have the .tex extension, so long as the file cooperates with |pythontex.sty|.  In this case, the file extension should \textbf{not} be passed to |pythontex*.py|, because it won't be expecting it and won't be able to determine that it is indeed an extension.  |pythontex*.py| just needs to know |\textbackslash jobname|.}  The file name should be wrapped in double quotes |"| to allow for space characters.\footnote{Using spaces in the names of .tex files is apparently frowned upon.  But if you configure things to handle spaces whenever it doesn't take much extra work, then that's one less thing that can go wrong.}  For example, under Windows with \TeX\ Live and Python 2.7 we would create the wrapper |pythontex2.exe|.  Then we could run \pytex\ on a file \meta{file~name}.tex using the command |pythontex2.exe "|\meta{file~name}|"|.  You will probably want to configure your \TeX\ editor with a shortcut key for running \pytex\ automatically.
+%
+% |pythontex*.py| accepts the following optional command-line arguments.  Some of these options duplicate package-level options, so that settings may be configured either within the document or at the command line.  In the event that the command-line and package options conflict, the package options always override the command-line options.  For variations on these options that are acceptable, run |pythontex*.py -h|.
+% \begin{itemize}
+% \item |--encoding=|\meta{encoding} This sets the file encoding.   Any encoding supported by Python's \href{http://docs.python.org/library/codecs.html}{codecs} module may be used.  If an encoding is not specified, \pytex\ uses UTF-8.  Note that the encoding \textbf{must} be used consistently; the .tex source, the \pytex\ output, and any external code files that \pytex\ highlights should all use the same encoding.  If support for characters beyond ASCII is required, then additional \LaTeX\ packages are required; see the discussion of \TeX\ engines above.
+% \item |--error-exit-code={true,false}| By default, |pythontex*.py| returns an exit code of 1 if there were any errors, and an exit code of 0 otherwise.  This may be useful when \pytex\ is used in a scripting or command-line context, since the presence of errors may be easily detected.  It is also useful with some \TeX\ editors.  For example, \href{http://www.tug.org/texworks/}{TeXworks} automatically hides the output of external programs unless there are errors.
+%
+% But in some contexts, returning a nonzero exit code can be redundant.  For example, with the \href{http://winshell.de/}{WinShell} editor under Windows with TeX Live, the complete output of \pytex\ is always available in the ``Output'' view, so it is clear if errors have occurred.  Having a nonzero exit code causes |runscript.exe| to return an additional, redundant error message in the ``Output'' view.  In such situations, it may be desirable to disable the nonzero exit code.
+% \item |--runall=[{true,false}]| This causes all code to be executed, regardless of whether it has been modified.  It is useful when code has not been modified, but a dependency such as a library or external data has changed.  Note that the \pytex\ utilities class also provides a mechanism for automatically re-executing code that depends on external files when those external files are modified.
+%
+% There is an equivalent |runall| package option.  The command-line option |--rerun=all| is also equivalent.
+% \item |--rerun={modified,errors,warnings,all}| This sets the threshold for re-executing code.  By default, \pytex\ will rerun code that has been modified or that produced errors on the last run.  Sometimes, we may wish to have a more lenient setting (only rerun if modified) or a more stringent setting (rerun even for warnings, or just rerun everything).  |modified| only executes code that has been modified (or that has modified dependencies).  |errors| executes all modified code as well as all code that produced errors on the last run; this is the default.  |warnings| executes all modified code, as well as all code that produced errors or warnings.  |all| executes all code and is equivalent to |--runall|.
+%
+% There is an equivalent |rerun| package option.
+% \item |--hashdependencies=[{true,false}]| This determines whether dependencies (external files highlighted by Pygments, code dependencies specified via |pytex.add_dependencies()|, etc.) are considered to be modified based on their hash or modification time.  By default, mtime is used, since it is faster.  The package option |hashdependencies| is equivalent.
+% \end{itemize}
+%
+% \pytex\ currently does not provide means to choose between multiple Python installations; it will use the default Python installation.  Support for multiple installations is unlikely to be added, since a cross-platform solution would be required.\footnote{Python 3.3's \texttt{py} launcher for Windows may make this more feasible.}  If you need to work with multiple installations, you may wish to modify |pythontex_types*.py| to create additional command and environment families that invoke different versions of Python, based on your system.
 %
 % \pytex\ attempts to check for a wide range of errors and return meaningful error messages.  But due to the interaction of \LaTeX\ and Python code, some strange errors are possible.  If you cannot make sense of errors when using \pytex, the simplest thing to try is deleting all files created by \pytex, then recompiling.  By default, these files are stored in a directory called |pythontex-files-|\meta{jobname}, in the same directory as your .tex document.  See Section \ref{sec:troubleshooting} for more details regarding Troubleshooting.
 %
@@ -216,13 +307,53 @@
 % |\usepackage|\oarg{options}|{pythontex}|
 % \end{quote}
 %
-% All options are described as follows.  The option is listed, followed by its possible values.  When a value is not required, \meta{none} is listed as a possible value.  In this case, what \meta{none} does is described.  Each option lists its default setting, if the option is not invoked when the package is loaded.
+% All options are described as follows.  The option is listed, followed by its possible values.  When a value is not required, \meta{none} is listed as a possible value.  In this case, the value to which \meta{none} defaults is also given.  Each option lists its default setting, if the option is not invoked when the package is loaded.
+%
+% Some options have a command-line equivalent.  Package options override command-line options.
+%
+%
+% \DescribeMacro{runall=\meta{none}/true/false default:false \meta{none}=true}
+%
+% This option causes all code to be executed, regardless of whether it has been modified.  This option is primarily useful when code depends on external files, and needs to be re-executed when those external files are modified, even though the code itself may not have changed.  Note that the \pytex\ utilities class also provides a mechanism for automatically re-executing code that depends on external files when those external files are modified.
+%
+% A command-line equivalent |--runall| exists for |pythontex*.py|.  The package option |rerun=all| is also equivelent.
+%
+% 
+% \DescribeMacro{rerun=modified/errors/warnings/all default:errors}
+%
+% This option sets the threshold for re-executing code.  By default, \pytex\ will rerun code that has been modified or that produced errors on the last run.  Sometimes, we may wish to have a more lenient setting (only rerun if modified) or a more stringent setting (rerun even for warnings, or just rerun everything).  |modified| only executes code that has been modified.  |errors| executes all modified code as well as all code that produced errors on the last run; this is the default.  |warnings| executes all modified code, as well as all code that produced errors or warnings.  |all| executes all code and is equivalent to the package option |runall|.
+%
+% A command-line equivalent |--rerun| exists for |pythontex*.py|.
+%
+%
+% \DescribeMacro{hashdependencies=\meta{none}/true/false default:false \meta{none}=true}
+%
+% When external code files are highlighted with Pygments, or external dependencies are specified via the \pytex\ utilities class, they are checked for modification via their modification time (Python's |os.path.getmtime()|).  Usually, this should be sufficient---and it offers superior performance, which is important if data sets are large enough that hashing takes a noticeable amount of time.  However, occasionally hashing may be necessary or desirable, so this option is provided.
+%
+% A command-line equivalent |--hashdependencies| exists for |pythontex*.py|.
+%
 %
 % \DescribeMacro{autoprint=\meta{none}/true/false default:true \meta{none}=true}
 %
-% Whenever a |print| command/statement is used, the printed content will automatically be included in the document, unless the code doing the printing is being typeset.  In that case, the printed content must be included using the |\printpythontex| or |\stdoutpythontex| commands, or one of their variants.
+% Whenever a |print| command/statement is used, the printed content will automatically be included in the document, unless the code doing the printing is being typeset.  In that case, the printed content must be included using the |\printpythontex| or |\stdoutpythontex| commands.
 %
 % Printed content is pulled in directly from the external file in which it is saved, and is interpreted by \LaTeX\ as \LaTeX\ code.  If you wish to avoid this, you should print appropriate \LaTeX\ commands with your content to ensure that it is typeset as you desire.  Alternatively, you may use |\printpythontex| or |\stdoutpythontex| to bring in printed content in verbatim form, using those commands' optional |verb| and |inlineverb| (|v|) options.
+%
+% The |autoprint| option sets autoprint behavior for the entire document.  This may be overridden within the document using the |\setpythontexautoprint| command.
+%
+%
+% \DescribeMacro{print=\meta{none}/true/false default:true \meta{none}=true}
+%
+% \DescribeMacro{stdout=\meta{none}/true/false default:true \meta{none}=true}
+%
+% This option determines whether printed content/content written to stdout is included in the document.  Since printed content should almost \textbf{always} be included, a warning is raised when it is not.  Not including printed content is useful when the printed content contains \LaTeX\ errors, and would cause document compilation to fail.  When the document fails to compile, this can prevent modified Python code from being written to the code file, resulting in an inescapable loop unless printed content is disabled.
+%
+% As is typical for \pytex\ settings dealing with stdout/printing, two equivalent forms are provided based on the names |print| and |stdout|.
+%
+% 
+%
+% Note that since commands like |\py| involve printing, they are also disabled if |print| or |stdout| is set to |false|.
+%
 %
 % \DescribeMacro{stderr=\meta{none}/true/false default:false \meta{none}=true}
 %
@@ -238,7 +369,7 @@
 %
 % \DescribeMacro{pyfuture=none/all/default default:default}
 %
-% Under Python 2, this determines what is imported from |__future__| for all code.  |none| imports nothing from |__future__|; |all| imports everything (|absolute_import|, |division|, |print_function|, and |unicode_literals|); and |default| imports everything except |unicode_literals|, since |unicode_literals| can conflict with some packages.
+% Under Python 2, this determines what is automatically imported from |__future__| for all code.  |none| imports nothing from |__future__|; |all| imports everything available in Python 2.7 (|absolute_import|, |division|, |print_function|, and |unicode_literals|); and |default| imports everything except |unicode_literals|, since |unicode_literals| can conflict with some packages.  Note that imports from |__future__| are also allowed within sessions, so long as they are at the very beginning of the session, as they would have to be in a normal script.
 %
 % This option has no effect under Python 3.
 %
@@ -250,7 +381,7 @@
 %
 % \DescribeMacro{fixlr=\meta{none}/true/false default:true \meta{none}=true}
 %
-% This option fixes extra spacing around |\left| and |\right| in math mode.  See the implementation for details.
+% This option removes extra spacing around |\left| and |\right| in math mode.  This spacing is often undesirable, especially when typesetting functions such as the trig functions.  See the implementation for details.
 %
 % \DescribeMacro{keeptemps=\meta{none}/all/code/none default:none \meta{none}=all} 
 %
@@ -260,9 +391,9 @@
 %
 % This allows the user to determine at the document level whether code is typeset using Pygments rather than |fancyvrb|.
 %
-% Note that the package-level Pygments option can be overridded for individual command and environment families, using the |\setpythontexformatter| macro; the |\setpygmentsformatter| provides equivalent functionality for the Pygments commands and environments.  Overriding is never automatic and should generally be avoided, since using Pygments to highlight only some content results in an inconsistent style.  Keep in mind that Pygment's |text| lexer and/or |bw| style can be used when content needs little or no syntax highlighting.
+% Note that the package-level Pygments option can be overridden for individual command and environment families, using the |\setpythontexformatter| command; the |\setpygmentsformatter| command provides equivalent functionality for the Pygments commands and environments.  Overriding is never automatic and should generally be avoided, since using Pygments to highlight only some content results in an inconsistent style.  Keep in mind that Pygment's |text| lexer and/or |bw| style can be used when content needs little or no syntax highlighting.
 %
-% \DescribeMacro{pyglexer=\marg{pygments~lexer} default:\meta{none}} 
+% \DescribeMacro{pyglexer=\meta{pygments~lexer} default:\meta{none}} 
 %
 % This allows a Pygments lexer to be set at the document level.  In general, this option should \textbf{not} be used.  It overrides the default lexer for all commands and environments, for both \pytex\ and Pygments content, and this is usually not desirable.  It should be useful primarily when all content uses the same lexer, and multiple lexers are  compatible with the content.
 %
@@ -295,7 +426,7 @@
 %                ^
 % SyntaxError: invalid syntax
 % \end{verbatim}
-% The |stdin| option replaces |<name>| with |<stdin>|, as it appears in a standard Python interactive session.  The |console| option uses |<console>| instead, which is the default setting for the Python code module used by \pytex\ to create Python console environments.
+% The |stdin| option replaces |<name>| with |<stdin>|, as it appears in a standard Python interactive session.  The |console| option uses |<console>| instead, which is the default setting for the Python |code| module used by \pytex\ to create Python console environments.
 %
 % \pytxtodo{
 % \DescribeMacro{depythontex=\meta{none}/true/false default:false \meta{none}=true}
@@ -307,6 +438,8 @@
 %
 % \pytex\ provides four types of commands for use with inline code and three environments for use with multiple lines of code, plus a |console| environment.  All commands and environments are named using a base name and a command- or environment-specific suffix.  A complete set of commands and environments with the same base name constitutes a \textbf{command and environment family}.  In what follows, we describe the different commands and environments, using the |py| base name (the |py| family) as an example.
 %
+% Most commands and environments cannot be used in the preamble, because they typeset material and that is allowed in the preamble.  The one exception is the code command and environment.  These can be used to enter code, but need not typeset anything.  This allows you to collect your \pytex\ code in the preamble, if you wish, or even use \pytex\ in package writing.
+%
 % All commands and environments take a session name as an optional argument.  The session name determines the session in which the code is executed.  This allows code to be executed in multiple independent sessions, increasing speed (sessions run in parallel) and preventing naming conflicts.  If a session is not specified, then the |default| session is used.  Session names should use the characters a-z, A-Z, 0-9, the hyphen, and the underscore; all characters used \textbf{must} be valid in file names, since session names are used to create temporary files.  The colon is also allowed, but it is replaced with a hyphen internally, so the sessions |code:1| and |code-1| are identical.
 %
 % In addition, all environments take |fancyvrb| settings as a second, optional argument.  See the \href{http://www.ctan.org/tex-archive/macros/latex/contrib/fancyvrb}{|fancyvrb| documentation} for an explanation of accepted settings.  This second optional argument \textbf{must} be preceeded by the first optional argument (session name).  If a named session is not desired, the optional argument can be left empty (|default| session), but the square brackets |[]| must be present so that the second optional argument may be correctly identified:
@@ -317,17 +450,17 @@
 %
 % \subsubsection{Inline commands} 
 % \pytxtodo{Fix spacing around |\DescribeMacro|!}
-% Inline commands are suitable for single lines of code that need to be executed within the body of a paragraph or within a larger body of text.  The commands use arbitrary code delimiters (like |\verb| does), which allows the code to contain arbitrary characters.  Note that this only works properly when the inline commands are \textbf{not} inside other macros.  If an inline command is used within another macro, the code will be read by the external macro before \pytex\ can read the special code characters (that is, \LaTeX\ will try to expand the code).  The inline commands can work properly within other macros, but only when all that they contain is also valid \LaTeX\ code (and you should stick with curly braces for delimiters in this case).
+% Inline commands are suitable for single lines of code that need to be executed within the body of a paragraph or within a larger body of text.  The commands use arbitrary code delimiters (like |\verb| does), which allows the code to contain arbitrary characters.  Note that this only works properly when the inline commands are \textbf{not} inside other macros.  If an inline command is used within another macro, the code will be read by the external macro before \pytex\ can read the special code characters (that is, \LaTeX\ will tokenize the code).  The inline commands can work properly within other macros, but you should stick with curly braces for delimiters in this case and you may have trouble with the hash |#| and percent |%| characters.
 %
 % \DescribeMacro{\py\oarg{session}\meta{opening~delim}\meta{code}\meta{closing~delim}}
 %
 % This command is used for including variable values or other content that can be converted to a string.  It is an alternative to including content via the |print| statement/function within other commands/environments.
 %
-% The |\py| command sends \meta{code} to Python, and Python returns a string representation of \meta{code}.\pytxtodo{Link to details about Python built-ins}  \meta{opening~delim} and \meta{closing~delim} must be either a pair of identical, non-space characters, or a pair of curly braces.  Thus, |\py{1+1}| sends the code |1+1| to Python, Python evaluates the string representation of this code, and the result is returned to \LaTeX\ and included as |2|.  The commands |\py#1+1#| and |\py@1+1@| would have the same effect.  The command can also be used to access variable values.  For example, if the code |a=1| had been executed previously, then |\py{a}| simply brings the value of |a| back into the document as |1|.  
+% The |\py| command sends \meta{code} to Python, and Python returns a string representation of \meta{code}.\pytxtodo{Link to details about Python built-ins}  \meta{opening~delim} and \meta{closing~delim} must be either a pair of identical, non-space characters, or a pair of curly braces.  Thus, |\py{1+1}| sends the code |1+1| to Python, Python evaluates the string representation of this code, and the result is returned to \LaTeX\ and included as |2|.  The commands |\py#1+1#| and |\py@1+1@| would have the same effect.  The command can also be used to access variable values.  For example, if the code |a=1| had been executed previously, then |\py{a}| simply brings the string represantation of |a| back into the document as |1|.  
 %
 % Assignment is \textbf{not} allowed using |\py|.  For example, |\py{a=1}| is \textbf{not} valid.  This is because assignment cannot be converted to a string.\footnote{It would be simple to allow any code within |\textbackslash py|, including assignment, by using a |try/except| statement.  In this way, the functionality of |\textbackslash py| and |\textbackslash pyc| could be merged.  While that would be simpler to use, it also has serious drawbacks.  If |\textbackslash py| is not exclusively used to typeset string representations of \meta{code}, then it is no longer possible on the \LaTeX\ side to determine whether a command should return a string.  Thus, it is harder to determine, from within a \TeX\ editor, whether |pythontex*.py| needs to be run; warnings for missing Python content could not be issued, because the system wouldn't know (on the \LaTeX\ side) whether content was indeed missing.}
 %
-% The text returned by Python must be valid \LaTeX\ code.  If you need to include complex text within your document, or if you need to include verbatim text, you should use the |print| statement/function within one of the other commands or environments.  The primary reason to use |\py| rather than |print| is that |print| requires an external file to be created for every command or environment in which it is used, while |\py| and equivalents for other families share a single external file.  Thus, use of |\py| minimizes the creation of external files, which is a key design goal for \pytex.\footnote{For |\textbackslash py|, the text returned by Python is stored in macros and thus must be valid \LaTeX\ code, because \LaTeX\ interprets the returned content.  The use of macros for storing returned content means that an external file need not be created for each use of |\textbackslash py|.  Rather, all macros created by |\textbackslash py| and equivalent commands from other families are stored in a single file that is inputted.}
+% The text returned by Python must be valid \LaTeX\ code.  If you need to include complex text within your document, or if you need to include verbatim text, you should use the |print| statement/function within one of the other commands or environments.  The primary reasons to use |\py| rather than |print| are (1) |\py| is more compact and (2) |print| requires an external file to be created for every command or environment in which it is used, while |\py| and equivalents for other families share a single external file.  Thus, use of |\py| minimizes the creation of external files, which is a key design goal for \pytex.\footnote{For |\textbackslash py|, the text returned by Python is stored in macros and thus must be valid \LaTeX\ code, because \LaTeX\ interprets the returned content.  The use of macros for storing returned content means that an external file need not be created for each use of |\textbackslash py|.  Rather, all macros created by |\textbackslash py| and equivalent commands from other families are stored in a single file that is inputted.}
 %
 % \DescribeMacro{\pyc\oarg{session}\meta{opening~delim}\meta{code}\meta{closing~delim}}
 %
@@ -365,8 +498,10 @@
 %
 % When a multi-line command is entered (for example, a function definition), a blank line after the last line of the command may be necessary.
 %
+% Unlike other commands and environments, the console environment currently does not bring in any imports by default and does not load custom code.  This functionality will probably be added in the near future.
 %
-% \subsubsection{Default families, \pytex\ utilities, and custom code}
+%
+% \subsubsection{Default families}
 %
 % By default, three command and environment families are defined.
 % \begin{itemize}
@@ -379,6 +514,7 @@
 %	\begin{itemize}
 %	\item Base name |pylab|:  |\pylab|, |\pylabc|, |\pylabv|, |\pylabb|, |pylabcode|, |pylabverb|, |pylabblock|, |pylabconsole|
 %	\item Imports:  matplotlib's pylab module, which provides access to much of matplotlib and NumPy within a single namespace.  pylab content is brought in via |from pylab import *|.
+%	\item Additional notes:  matplotlib added a \href{http://matplotlib.org/users/pgf.html}{\texttt{pgf} backend} in version 1.2.  You will probably want to use this for creating most plots.  However, this is not currently configured automatically because many users will want to customize font, \TeX\ engine, and other settings.  Using \TeX\ to create plots also introduces a speed penalty.
 %	\end{itemize}
 % \item Python + SymPy
 %	\begin{itemize}
@@ -388,9 +524,40 @@
 %	\end{itemize}
 % \end{itemize}
 %
-% Under Python 2.7, all families import |absolute_import|, |division|, and |print_function| from |__future__| by default.  This may be changed using the package option |pyfuture|.  Keep in mind that importing |unicode_literals| from |__future__| may break compatibility with some packages; this is why it is not imported by default.  Imports from |__future__| are also possible without using the |pyfuture| option.  You may use the |\setpythontexcustomcode| command (described below), or simply enter the import code immediately at the beginning of a session.
-
-%  All families import |pythontex_utils*.py|, and create an instance of the \pytex\ utilities class called |pytex|.  This provides various utilities for interfacing with \LaTeX.  In particular, it provides an interface for determining how Python objects are converted into strings in commands such as |\py|.  The |pytex.set_formatter(|\meta{formatter}|)| method determines the conversion.  Two formatters are provided:
+% Under Python 2.7, all families import |absolute_import|, |division|, and |print_function| from |__future__| by default.  This may be changed using the package option |pyfuture|.  Keep in mind that importing |unicode_literals| from |__future__| may break compatibility with some packages; this is why it is not imported by default.  Imports from |__future__| are also possible without using the |pyfuture| option.  You may use the |\pythontexcustomc| command or |pythontexcustomcode| environment (described below), or simply enter the import commands immediately at the beginning of a session.
+%
+%
+% \subsubsection{Custom code}
+%
+% You may wish to customize the behavior of one or more families within a document by adding custom code to the beginning and end of each session.  The custom code command and environment make this possible.
+%
+% If you wish to share these customizations among several documents, you can create your own document class or package containing custom code commands and environments.
+%
+% While custom code can be added anywhere in a document, it is probably best for organizational reasons to add it in the preamble or at least at the very beginning of the document.
+%
+% Note that custom code is executed, but never typeset.  Only code that is actually entered within a |block| (or |verb|) command or environment is ever typeset.  This means that you should be careful about how you use custom code.  For example, if you are documenting code, you probably want to show absolutely all code that is executed, and in that case using custom code might not be appropriate.  If you are using \pytex\ to create figures or automate text, are using many sessions, and require many imports, then custom code could save some typing by centralizing the imports.
+%
+% \DescribeMacro{\pythontexcustomc\oarg{position}\marg{family}\marg{code}}
+%
+% \pytxtodo{Look into options for setting custom code for an entire language at a time.  It would be possible to have the family be optional, but while that would be good as long as only Python is supported, it would quickly start causing problems as soon as any additional languages are added.  Basically, there needs to be a way to set custom code for all sessions sharing a language.  Perhaps some kind of keyword system, like language:python being used for family.}
+% This macro allows custom code to be added to all sessions within a command and environment family.  \meta{position} should be either |begin| or |end|; it determines whether the custom code is executed at the beginning or end of each session.  By default, custom code is executed at the beginning.  \meta{code} should be a \textbf{single line} of code.  For example, |\pythontexcustomc{py}{a=1; b=2}| would create the variables |a| and |b| within all sessions of the |py| family, by invisibly adding that line of code at the beginning of each session.
+%
+% If you need to add more than a single line of custom code, you could use the command multiple times, but it will be more efficient to use the |pythontexcustomcode| environment.
+%
+% \meta{code} may contain imports from |__future__|.  These must be the first elements in any custom code command or environment, since |__future__| imports are only possible at the very beginning of a Python script and only the very beginning of custom code is checked for them.  If imports from |__future__| are present at the beginning of both custom code and the user's code, all imports will work correctly; the presence of the imports in custom code, before user code, does not turn off checking for |__future__| imports at the very beginning of user code.  However, it is probably best to keep all |__future__| imports in a single location.
+%
+% \meta{code} may \textbf{not} contain \LaTeX\ macros.  \meta{code} is interpreted as verbatim content, since in general the custom code will not be valid \LaTeX.
+%
+% \DescribeEnv{pythontexcustomcode\oarg{position}\marg{family}}
+%
+% This is the environment equivalent of |\pythontexcustomc|.  It is used for adding multi-line custom code to a command and environment family.  In general, the environment should be preferrred to the command unless only a very small amount of custom code is needed.  The environment has the same properties as the command, including the ability to include imports from |__future__|.
+%
+%
+% \subsubsection{\pytex\ utilities class}
+%
+%  All families import |pythontex_utils*.py|, and create an instance of the \pytex\ utilities class called |pytex|.  This provides various utilities for interfacing with \LaTeX\ and \pytex.
+%
+% The utilities class provides an interface for determining how Python objects are converted into strings in commands such as |\py|.  The |pytex.set_formatter(|\meta{formatter}|)| method is used to set the conversion.  Two formatters are provided:
 % \begin{itemize}
 % \item |'str'| converts Python objects to a string, using the |str()| function under Python 3 and the |unicode()| function under Python 2.  (The use of |unicode()| under Python 2 should not cause problems, even if you have not imported |unicode_literals| and are not using unicode strings.  All encoding issues should be taken care of automatically by the utilities class.)
 % \item |'sympy_latex'| uses SymPy's |LatexPrinter| class to return context-sensitive \LaTeX\ representations of SymPy objects.  Separate |LatexPrinter| settings may be created for the following contexts:  |'display'| (displaystyle math), |'text'| (textstyle math), |'script'| (superscripts and subscripts), and |'scriptscript'| (superscripts and subscripts, of superscripts and subscripts).  Settings are created via |pytex.set_sympy_latex(|\meta{context}|,|\meta{settings}|)|.  For example, |pytex.set_sympy_latex('display', mul_symbol='times')| sets multiplication to use a multiplication symbol $\times$, but only when math is in displaystyle.\footnote{Internally, the |'sympy\_latex'| formatter uses the |\textbackslash mathchoice| macro to return multiple representations of a SymPy object, if needed by the current settings.  Then |\textbackslash mathchoice| typesets the correct representation, based on context.}  See the \href{http://docs.sympy.org/dev/modules/printing.html}{SymPy documentation} for a list of possible settings for the |LatexPrinter| class.
@@ -400,21 +567,20 @@
 %
 % The \pytex\ utilities formatter may also be set to a custom function that returns strings, simply by reassigning the |pytex.formatter()| method.  For example, define a formatter function |my_func()|, and then |pytex.formatter=my_func|.
 %
-% The context-sensitive interface to SymPy's |LatexPrinter| is always available via |pytex.sympy_latex()|.  If you wish to use it outside the |sympy| command and environment family, you must initialize it before use via the command |pytex.init_sympy_latex()|.
+% The context-sensitive interface to SymPy's |LatexPrinter| is always available via |pytex.sympy_latex()|.  If you wish to use it outside the |sympy| command and environment family, you must either change the formatter via |pytex.set_formatter('sympy_latex')|, or initialize the method manually via via |pytex.init_sympy_latex()|.
 %
-% \DescribeMacro{\setpythontexcustomcode\marg{family}\marg{quoted~list}}
+% The utilities class also provides methods for tracking dependencies and created files.
+% \begin{itemize}
+% \item |pytex.add_dependencies(|\meta{dependencies}|)|  This adds \meta{dependencies} to a list.  If any dependencies in the list change, code is re-executed, even if the code itself has not changed.  (Changed dependencies are determined via either hash or mtime; see package option |hashdependencies| for details.)  This method is useful for tracking changes in external data and similar files.
+% 
+% \meta{dependencies} should be one or more strings, separated by commas, that are the file names of dependencies.  Dependencies should be given with relative paths from the current working directory, with absolute paths, or with paths based on the user's home directory (that is, starting with a tilde |~|).  Remember that by default, the working directory is the |pythontex-files-|\meta{jobname} directory where all \pytex\ temporary files are stored.  This can be adjusted with |\setpythontexworkingdir|.
+% \item |pytex.add_created(|\meta{created~files}|)|  This adds \meta{created~files} to a list of files created by the current session.  Any time the code for the current session is executed, \textbf{all of these files will be deleted}.  Since this method deletes files, it should be used with care.  It is intended for automating cleanup when code is modified.  For example, if a figure's name is changed, the old figure would be deleted if its name had been added to the list.  By default, \pytex\ can only clean up the temporary files it creates; it knows nothing about user-created files.  This method allows user-created files to be specified, and thus added to \pytex's automatic cleanup.
 %
-% \pytxtodo{Look into options for setting custom code for an entire language at a time.  It would be possible to have the family be optional, but while that would be good as long as only Python is supported, it would quickly start causing problems as soon as any additional languages are added.  Basically, there needs to be a way to set custom code for all sessions sharing a language.  Perhaps some kind of keyword system, like language:python being used for family.}
-% This macro allows custom code to be added to all sessions within a command and environment family.  \meta{quoted~list} should be a comma-separated list of lines of code, each line enclosed in quotes (single or double).  For example, |\setpythontexcustomcode{py}{'a=1', 'b=2'}| would create the variables |a| and |b| within all sessions of the |py| family, by invisibly adding the following lines at the beginning of each session:
-% \begin{verbatim}
-% a=1
-% b=2
-% \end{verbatim}
-% Note that custom code is executed, but never typeset.  Only code that is actually entered within a |block| (or |verb|) command or environment is every typeset.  This means that you should be careful about how you use custom code.  For example, if you are documenting code, you probably want to show absolutely all code that is executed, and in that case using custom code might not be appropriate.  If you are using \pytex\ to create figures or automate text, are using many sessions, and require many imports, then custom code could save some typing by centralizing the imports.
+% \meta{created~files} should be one or more strings, separated by commas, that are the file names of created files.  Paths should be the same as for |pytex.add_dependencies()|:  relative to the working directory, absolute, or based on the user's home directory.
 %
-% \meta{quoted~list} may contain imports from |__future__|.  It is best if these are the first elements in the list, since future imports are only possible at the very beginning of a Python script.  This is not strictly required, however.  When \pytex\ writes the individual scripts that are executed, it checks \meta{quoted~list} for future imports, and automatically moves them to the appropriate location.
-%
-% \meta{quoted~list} may \textbf{not} contain \LaTeX\ macros.  \meta{quoted~list} is interpreted as verbatim content, since in general the custom code will not be valid \LaTeX.
+% Depending on how you use \pytex, this method may not be very beneficial.  If all of the output is contained in the default output directory, or a similar directory of your choosing, then manual cleanup may be simple enough that this method is not needed.
+% \end{itemize}
+% These two methods may be used manually.  However, that is prone to errors, since you will have to modify both a \pytex\ utilities command and an open or save command every time you change a file name or add or remove a dependency or created file.  It may be better to redefine your open and save commands, or define new ones, so that a single command opens (or saves) and adds a dependency (or adds a created file).
 %
 %
 % \subsubsection{Formatting of typeset code}
@@ -432,10 +598,12 @@
 %
 % This should generally not be needed.  It allows the formatter used by \meta{family} to be set.  Valid options for \meta{formatter} are |auto|, |fancyvrb|, and |pygments|.  Using |auto| means that the formatter will be determined based on the package |pygments| option.  Using either of the other two options will force \meta{family} to use that formatter, regardless of the package-level options.  By default, families use the |auto| formatter.
 %
+% Remember that Pygments has a |text| lexer and a |bw| style.  These are an alternative to setting the formatter to use |fancyvrb|.
+%
 %
 % \DescribeMacro{\setpythontexpyglexer\marg{family}\marg{pygments~lexer}}
 %
-% This allows the Pygments lexer to be set for \meta{family}.  \meta{pygments~lexer} should should use a form of the lexer name that does not involve any special characters.  For example, you would want to use the lexer name |csharp| rather than |C#|.  This will be a consideration primarily when using the Pygments commands and environments to typeset code of an arbitrary language.
+% This allows the Pygments lexer to be set for \meta{family}.  \meta{pygments~lexer} should use a form of the lexer name that does not involve any special characters.  For example, you would want to use the lexer name |csharp| rather than |C#|.  This will be a consideration primarily when using the Pygments commands and environments to typeset code of an arbitrary language.
 %
 % \DescribeMacro{\setpythontexpygopt\marg{family}\marg{pygments~options}}
 %
@@ -452,7 +620,7 @@
 %
 % Unless the package option |autoprint| is true, printed content from |code| commands and environments will not be automatically included.  Even when the |autoprint| option is turned on, |block| commands and environments do not automatically include printed content, since we will generally not want printed content immediately after typeset code.  This macro brings in any printed content from the \textbf{last} command or environment.  It is reset after each command/environment, so its scope for accessing particular printed content is very limited.  It will return an error if no printed content exists.
 %
-% By default, printed content is brought in raw---it is pulled in directly from the external file in which it is saved and interpreted as \LaTeX\ code.  If you wish to avoid this, you should print appropriate \LaTeX\ commands with your content to ensure that it is typeset as you desire.  Alternatively, you may consider the |verb| and |inlineverb| (also accesible as |v|) options, which bring in code verbatim.  If code is brought in verbatim, then \meta{fancyvrb~options} are applied to it.
+% By default, printed content is brought in raw---it is pulled in directly from the external file in which it is saved and interpreted as \LaTeX\ code.  If you wish to avoid this, you should print appropriate \LaTeX\ commands with your content to ensure that it is typeset as you desire.  Alternatively, you may supply an optional argument |verb| or |inlineverb| (also accesible as |v|), which brings in content verbatim.  If code is brought in verbatim, then \meta{fancyvrb~options} are applied to it.
 %
 %
 % \DescribeMacro{\saveprintpythontex\marg{name}}
@@ -485,6 +653,10 @@
 %
 % Content written to |stderr| may be saved and accessed anywhere later in the document, just as |stdout| content may be.  These commands should be used with care.  Using Python-generated content at multiple locations within a document may often be appropriate.  But an error message will usually be most meaningful in its context, next to the code that produced it.
 %
+% \DescribeMacro{\setpythontexautoprint\marg{boolean}}
+%
+% This allows autoprint behavior to be modified at various points within the document.  The package-level |autoprint| option is also available for setting autoprint at the document level, but it is overridden by |\setpythontexautoprint|.  \meta{boolean} should be |true| or |false|.
+% 
 %
 % \subsection{Pygments commands and environments}
 %
@@ -520,6 +692,8 @@
 % \DescribeMacro{\setpygmentsformatter\marg{formatter}}
 %
 % This usually should not be needed.  It allows the formatter for Pygments content to be set.  Valid options for \meta{formatter} are |auto|, |fancyvrb|, and |pygments|.  Using |auto| means that the formatter will be determined based on the package |pygments| option.  Using either of the other two options will force Pygments content to use that formatter, regardless of the package-level options.  The |auto| formatter is used by default.
+%
+% Remember that Pygments has a |text| lexer and a |bw| style.  These are an alternative to setting the formatter to use |fancyvrb|.
 %
 %
 % \subsection{General code typesetting}
@@ -565,11 +739,13 @@
 % \begin{quote}
 % |abc = 123  # An important line of code!|
 % \end{quote}
-% If a comment only contains the |\ref| command, then only the comment character |#| would actually be visible in the typeset code.
+% If a comment only contains the |\ref| command, then only the comment character |#| would actually be visible in the typeset code.  If you are typesetting code for instructional purposes, this may be less than ideal.  Unfortunately, Pygments currently does not allow escaping to \LaTeX\ outside of comments (though this feature has been requested).  At the same time, by only allowing references within comments, Pygments does force us to only create code that would actually run.  And in many cases, if a line is important enough to reference, it is also important enough for a brief comment.
 %
 % \subsubsection{Beamer compatibility}
 %
-% \pytex\ is compatible with \href{http://www.ctan.org/pkg/beamer}{Beamer}.  Since \pytex\ typesets code as verbatim content, Beamer's |fragile| option must be used for any frame that contains typeset code.  Beamer's |fragile| option involves saving frame contents to an external file and bringing them back in.  This use of an external file breaks \pytex's error line number synchronization.  A fix is expected in a future version of \pytex.
+% \pytex\ is compatible with \href{http://www.ctan.org/pkg/beamer}{Beamer}.  Since \pytex\ typesets code as verbatim content, Beamer's |fragile| option must be used for any frame that contains typeset code.  Beamer's |fragile| option involves saving frame contents to an external file and bringing it back in.  This use of an external file breaks \pytex's error line number synchronization, since the error line numbers will correspond to the temporary external file rather than to the actual document.
+%
+% If you need to typeset code with Beamer, but don't need to use overlays on the slides containing code, you should use the |fragile=singleslide| option.  This allows verbatim content to be typeset without using an external file, so \pytex's error line syncronization will work correctly.
 %
 %
 % \subsection{Advanced \pytex\ usage}
@@ -578,11 +754,11 @@
 %
 % This macro determines when or if sessions are restarted (or ``subdivided'').  Whenever  \meta{counter~value(s)} change, the session will be restarted.
 %
-% By default, each session corresponds to a single code file that is executed.  But sometimes it might be conventient if the code from each chapter or section or subsection were to run within its own file, as its own session.  For example, we might want each chapter to execute separately, so that changing code within one chapter won't require that all the code from all the other chapters be executed.  But we might not want to have to go to the bother and extra typing of defining a new session for every chapter (like |\py[ch1]{|\meta{code}|}|).  To do that, we could use |\restartpythontexsession{\thechapter}|.  This would cause all sessions to restart whenever the chapter counter changes.  If we wanted sessions to restart at each section within a chapter, we would use |\restartpythontexsession{\thechapter|\meta{delim}|\thesection}|.  \meta{delim} is needed to separate the counter values so that they are not ambiguous (for example, we need to distinguish chapter 11-1 from chapter 1-11).  \meta{delim} should be a hyphen or an underscore; it must be a character that is valid in file names.
+% By default, each session corresponds to a single code file that is executed.  But sometimes it might be convenient if the code from each chapter or section or subsection were to run within its own file, as its own session.  For example, we might want each chapter to execute separately, so that changing code within one chapter won't require that all the code from all the other chapters be executed.  But we might not want to have to go to the bother and extra typing of defining a new session for every chapter (like |\py[ch1]{|\meta{code}|}|).  To do that, we could use |\restartpythontexsession{\thechapter}|.  This would cause all sessions to restart whenever the chapter counter changes.  If we wanted sessions to restart at each section within a chapter, we would use |\restartpythontexsession{\thechapter|\meta{delim}|\thesection}|.  \meta{delim} is needed to separate the counter values so that they are not ambiguous (for example, we need to distinguish chapter 11-1 from chapter 1-11).  Usually \meta{delim} should be a hyphen or an underscore; it must be a character that is valid in file names.
 %
 % Note that \textbf{counter values}, and not counters themselves, must be supplied as the argument.  Also note that the command applies to \textbf{all} sessions.  If it did not, then we would have to keep track of which sessions restarted when, and the lack of uniformity could easily result in errors on the part of the user.
 %
-% Keep in mind that when a session is restarted, all continuity is lost.  It is best not to restart sessions if you need continuity.  If you must restart a session, but also need to keep some data, you could save the data before restarting the session and then load the saved data after the restart.  This approach should be used with \textbf{extreme} caution, since it can result in unanticipated errors due to sessions not staying synchronized.\footnote{For example, suppose sessions are restarted based on chapter.  |session-ch1| saves a data file, and |session-ch2| loads it and uses it.  You write the code, and run \pytex.  Then you realize that |session-ch1| needs to be modified and make some changes.  The next time \pytex\ runs, it will only execute |session-ch1|, since it detects no code changes in |session-ch2|.  This means that |session-ch2| is not updated, at least to the extent that it depends on the data from |session-ch1|.  Again, saving and loading data between restarted sessions, or just between sessions in general, can produce unexpected behavior and should be avoided.}
+% Keep in mind that when a session is restarted, all continuity is lost.  It is best not to restart sessions if you need continuity.  If you must restart a session, but also need to keep some data, you could save the data before restarting the session and then load the saved data after the restart.  This approach should be used with \textbf{extreme} caution, since it can result in unanticipated errors due to sessions not staying synchronized.\footnote{For example, suppose sessions are restarted based on chapter.  |session-ch1| saves a data file, and |session-ch2| loads it and uses it.  You write the code, and run \pytex.  Then you realize that |session-ch1| needs to be modified and make some changes.  The next time \pytex\ runs, it will only execute |session-ch1|, since it detects no code changes in |session-ch2|.  This means that |session-ch2| is not updated, at least to the extent that it depends on the data from |session-ch1|.  Again, saving and loading data between restarted sessions, or just between sessions in general, can produce unexpected behavior and should be avoided.  (Note:  the \texttt{pytex.add\_dependencies()} method does provide a workaround for this scenario.)}
 %
 % This command can only be used in the preamble.
 %
@@ -592,9 +768,71 @@
 %
 % \DescribeMacro{\setpythontexworkingdir\marg{working~directory}}
 %
-% The \pytex\ working directory is the current working directory for \pytex\ scripts.  This is the directory in which any open or save operations will take place, unless a path is explicitly specified.  By default, the working directory is the same as the output directory.  For example, if you are writing |my_file.tex| and save a matplotlib figure with |savefig('my_figure.pdf')|, then |my_figure.pdf| will be created in the output directory |pythontex-files-my_file|.  But maybe you have a directory called |plots| in your document root directory.  In that case, you could leave the working directory unchanged, and simply specify the relative path to |plots|.  Or you could set the working directory to |plots| using |\setpythontexworkingdir{plots}|, so that all content would automatically be saved there.
+% The \pytex\ working directory is the current working directory for \pytex\ 
+%scripts.  This is the directory in which any open or save operations will 
+%take 
+%place, unless a path is explicitly specified.  By default, the working 
+%directory is the same as the output directory.  For example, if you are 
+%writing |my_file.tex| and save a matplotlib figure with 
+%|savefig('my_figure.pdf')|, then |my_figure.pdf| will be created in the 
+%output 
+%directory |pythontex-files-my_file|.  But maybe you have a directory called 
+%|plots| in your document root directory.  In that case, you could leave the 
+%working directory unchanged, and simply specify the relative path to |plots| 
+%when saving.  Or you could set the working directory to |plots| using 
+%|\setpythontexworkingdir{plots}|, so that all content would automatically be 
+%saved there.  If you want your working directory to be the document root directory, you should use a period (|.|) for \meta{working~directory}:  |\setpythontexworkingdir{.}|.
 %
-% If you want your working directory to be the document root directory, you should use a period (|.|) for \meta{working~directory}:  |\setpythontexworkingdir{.}|.
+% Note that in typical use scenarios, you should be able to use the output directory as the working directory.  |graphicx| will automatically look for images and figures in the output directory (this is set via |\graphicspath|).
+%
+% It is also possible to change the working directory from within Python code, via |os.chdir()|.
+%
+%
+% \section{\LaTeX\ programming with \pytex}
+%
+% This section will be expanded in the future.  For now, it offers a brief summary.
+%
+% \subsection{Macro programming with \pytex}
+% 
+% In many situations, you can use \pytex\ commands inside macro definitions without any special consideration.  For example, consider the following macro, for calculating powers.
+% \newcommand{\pow}[2]{\py{#1**#2}}
+% \begin{verbatim}
+% \newcommand{\pow}[2]{\py{#1**#2}}
+% \end{verbatim}
+% Once this is defined, we can calculate |2**8| via |\pow{2}{8}|:  \pow{2}{8}.  Similarly, we can reverse a string.
+% \newcommand{\reverse}[1]{\py{"#1"[::-1]}}
+% \begin{verbatim}
+% \newcommand{\reverse}[1]{\py{"#1"[::-1]}}
+% \end{verbatim}
+% Now we can use |\reverse{``This is some text!''}|:  \reverse{``This is some text!''}.
+%
+% Such approaches will break down when some special \LaTeX\ characters such as percent |%| and hash |#| must be passed as arguments.  In such cases, the arguments need to be captured verbatim.  The |xparse| and |newverbs| packages provide commands for creating macros that capture verbatim arguments.  You could also consult the \pytex\ implementation, particularly the implementation of the inline commands.  In either case, you may need to learn about \TeX's catcodes and tokenization, if you aren't already familiar with them.
+%
+% Of course, there are many cases where macros don't need arguments.  Here is code for creating a macro that generates random polynomials.
+% \begin{verbatim}
+% \begin{sympycode}
+% from sympy.stats import DiscreteUniform, sample
+% x = Symbol('x')
+% a = DiscreteUniform('a', range(-10, 11))
+% b = DiscreteUniform('b', range(-10, 11))
+% c = DiscreteUniform('c', range(-10, 11))
+% def randquad():
+%     return Eq(sample(a)*x**2 + sample(b)*x + sample(c))
+% \end{sympycode}
+% \newcommand\randquad{\sympy{randquad()}}
+% \end{verbatim}
+%
+% If you are considering writing macros that involve \pytex, you should keep a few things in mind.
+% \begin{itemize}
+% \item Do you really need to use \pytex?  If another package already provides the functionality you need, it may be simpler to use an existing tool, particularly if you are working with special characters and thus need to capture verbatim arguments.
+% \item A feature called |depythontex| is currently under development.  Its goal is to create a copy of the original .tex document, and replace all \pytex\ commands in the copy with their output, so that the new document does not depend on \pytex\ at all.  This is primarily of interest for publication, since publishers tend not to like special packages or macros.  It is possible that |depythontex| will support custom user commands beyond those supplied by the \pytex\ package.  If that happens, though, user commands would likely need to be rewritten with new tools supplied by \pytex.  So if you decide to create custom macros now, and expect to need |depythontex| when it is released, you should expect to have to edit your macros before they will work with |depythontex| (assuming that custum user macros will work at all).
+% \end{itemize}
+%
+% \subsection{Package writing with \pytex}
+%
+% As of v0.10beta, the custom code command and environment, and the regular code command and environment, work in the preamble.  This means that it is now possible to write packages that incorporate \pytex!  At this point, packages are probably a good way to keep track of custom code that you use frequently, and maybe some macros that use \pytex.
+%
+% However, you are encouraged not to develop a huge mathematical or scientific package for \LaTeX\ using \pytex.  At least not yet!  As discussed above, |depythontex| may bring many changes to macro programming involving \pytex.  So have fun writing packages if you want---but keep in mind that \pytex\ will keep changing, and some things that are difficult now may be very simple in the future.
 %
 %
 % \section{Questions and answers}
@@ -610,7 +848,7 @@
 %
 % A more extensive troubleshooting section will be added in the future.\pytxtodo{Extend section}
 %
-% If a \pytex\ document will not compile, you may want to delete the directory in which \pytex\ content is stored and try compiling from scratch.  It is possible for \pytex\ to become stuck in an unrecoverable loop.  Suppose you tell Python to print some \LaTeX\ code back to your \LaTeX\ document, but make a fatal \LaTeX\ syntax error in the printed content.  This syntax error prevents \LaTeX\ from compiling.  Now suppose you realize what happened and correct the syntax error.  The problem is that the corrected code cannot be executed until \LaTeX\ correctly compiles and saves the code externally, but \LaTeX\ cannot compile until the corrected code has already been executed.  The simplest solution in such cases is to correct the code, delete all files in the \pytex\ directory, compile the \LaTeX\ document, and then run \pytex\ from scratch.
+% If a \pytex\ document will not compile, you may want to delete the directory in which \pytex\ content is stored and try compiling from scratch.  It is possible for \pytex\ to become stuck in an unrecoverable loop.  Suppose you tell Python to print some \LaTeX\ code back to your \LaTeX\ document, but make a fatal \LaTeX\ syntax error in the printed content.  This syntax error prevents \LaTeX\ from compiling.  Now suppose you realize what happened and correct the syntax error.  The problem is that the corrected code cannot be executed until \LaTeX\ correctly compiles and saves the code externally, but \LaTeX\ cannot compile until the corrected code has already been executed.  The simplest solution in such cases is to correct the code, delete all files in the \pytex\ directory, compile the \LaTeX\ document, and then run \pytex\ from scratch.  You can also disable the inclusion of printed content using the |print| and |stderr| package options.
 %
 % Dollar signs \$ may appear as \textsterling\ in italic code comments typeset by Pygments.  This is a font-related issue.  One fix is to |\usepackage[T1]{fontenc}|.
 %
@@ -627,25 +865,27 @@
 %
 % \subsubsection{Modifications to make}
 % \begin{itemize}
-% \item Fix error line number synchronization with Beamer.  The |filehook| and |currfile| packages may be useful in this.  One approach may be to patch the macros associated with |\beamer@doframeinput| in |beamerbaseframe.sty|.
+% \item |depythontex| --- convert \pytex\ documents into pure, standard \LaTeX\ that doesn't depend on Python or |pythontex.sty|.  This is primarily for publishing and similar situations.
+% \item Console environments currently don't use default code or custom code---they start as standard Python consoles.  Determine if there's a need for default and/or custom code, and if so, determine how to deal with it.  Update documentation either way.
 % \item User-defined custom commands and environments for general Pygments typesetting.
-% \item Testing under Linux.
 % \item Additional documentation for the Python code (Sphinx?).
 % \item Establish a testing framework.
 % \item Keep track of any Pygments errors for future runs, so we know what to run again?  How easy is it to get Pygments errors?  There don't seem to have been any in any of the testing so far.
-% \item It might nice to include some methods in the \pytex\ utilities for formatting numbers (especially with SymPy and Pylab).  Also, it would be nice to have shortcuts for \href{https://github.com/nschloe/matplotlib2tikz}{Matplotlib2tikz} integration.
+% \item It might nice to include some methods in the \pytex\ utilities for formatting numbers (especially with SymPy and Pylab).
+% \item Test the behavior of files brought in via |\input| and |\include| that contain \pytex\ content.
 % \end{itemize}
 %
 % \subsubsection{Modifications to consider}
 % \begin{itemize}
+% \item Consider fixing error line number synchronization with Beamer (and other situations involving error lines in externalized files).  The |filehook| and |currfile| packages may be useful in this.  One approach may be to patch the macros associated with |\beamer@doframeinput| in |beamerbaseframe.sty|.  Note:  Beamer's |fragile=singleslide| option makes this much less of an issue.  This is low priority.
+% \item Consider adding support for implicit multiprocessing within a session.  This would require wrapping all the regular code in a session within an |if __name__ == '__main__'| statement to maintain Windows compability.  This is probably more trouble than it's worth, but using multiprocessing within a session is currently bothersome due to the |if| statement needed under Windows.
 % \item Allow \LaTeX\ in code, and expand \LaTeX\ macros before passing code to |pythontex.py|.  Maybe create an additional set of inline commands with additional |exp| suffix for |expanded|?  This can already be done by creating a macro that contains a \pytex\ macro, though.
 % \item Built-in support for background colors for blocks and verbatim, via |mdframed|?
 % \item Consider support for executing other languages.  It might be nice to support a few additional languages at a basic level by version 1.0.  Languages currently under consideration:  Perl, MATLAB, Mathematica, Lua, Sage, R.  But note that there are ways to interface with many or perhaps all of these from within Python.  Also, consider general command line-access, similar to |\write18|.  The |bashful| package can do some nice command-line things.  But it would probably require some real finesse to get that kind of |bash| access cross-platform.  Probably could figure out a way to access Cygwin's bash or GnuWin32 or MSYS.
 % \item Support for executing external scripts, not just internal code?  It would be nice to be able to typeset an external file, as well as execute it by passing command-line arguments and then pull in its output.
-% \item Is there any reason that saved printed content should be allowed to be brought in before the code that caused it has been typeset?  Are there any cases in which the output should be typeset \textbf{before} the code that created it?  That would require some type of external file for bringing in saved definitions.  Maybe there should be a |\typesetpythontex| command that parallels |\printpythontex|?
+% \item Is there any reason that saved printed content should be allowed to be brought in before the code that caused it has been typeset?  Are there any cases in which the output should be typeset \textbf{before} the code that created it?  That would require some type of external file for bringing in saved definitions.
 % \item Consider some type of primitive line-breaking algorithm for use with Pygments.  Could break at closest space, indent 8 spaces further than parent line (assuming 4-space indents; could auto-detect the correct size), and use \LaTeX\ counter commands to keep the line numbering from being incorrectly incremented.  Such an approach might not be hard and might have some real promise.
 % \item Consider allowing names of files into which scripts are saved to be specified.  This could allow \pytex\ to be used for literate programming, general code documentation, etc.  Also, it could allow writing a document that describes code and also produces the code files, for user modification (see the |bashful| package for the general idea).  Doing something like this would probably require a new, slightly modified interface to preexisting macros.
-% \item Consider methods of taking \pytex\ documents and removing their dependence on |pythontex.sty|.  Something that could convert a \pytex\ document into a document that would be more readily acceptable by a publisher.  Sage\TeX\ has something like this.
 % \end{itemize}
 %
 %
@@ -662,9 +902,8 @@
 %
 % Thanks to Øystein Bjørndal for suggestions and for help with OS X compatibility.
 %
-% 
 %
-% \PrintChanges
+% \PrintChangelog
 %
 % \StopEventually{\PrintIndex}
 %
@@ -682,7 +921,7 @@
 % We begin according to custom by specifying the version of \LaTeX\ that we require and stating the package that we are providing.  We also store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{pythontex}[2012/07/17 v0.9beta3]
+\ProvidesPackage{pythontex}[2013/01/09 v0.10beta]
 \newcommand{\pytx@packagename}{PythonTeX}
 %    \end{macrocode}
 %
@@ -701,6 +940,46 @@
 % \subsection{Package options}
 % We now proceed to define package options, using the |pgfopts| package that provides a package-level interface to |pgfkeys|.  All keys for package-level options are placed in the key tree under the path |/PYTX/pkgopt/|, to prevent conflicts with any other packages that may be using |pgfkeys|.
 %
+%
+% \subsubsection{Runall}
+% \begin{macro}{pytx@opt@rerun}
+% This option causes all code to be executed, regardless of whether it has been modified.  It is primarily useful for re-executing code that has not changed, when the code depends on external files that \textbf{have} changed.  Since it shares functionality with the |rerun| option, both options share a single macro.  Note that the macro is initially set to |default|, rather than the default value of |errors|, so that the Python side can distinguish whether a value was actually set by the user on the \TeX\ side, and thus any potential conflicts between command-line options and package options can be resolved in favor of package options.
+%    \begin{macrocode}
+\def\pytx@opt@rerun{default}
+\pgfkeys{/PYTX/pkgopt/runall/.default=true}
+\pgfkeys{/PYTX/pkgopt/runall/.is choice}
+\pgfkeys{/PYTX/pkgopt/runall/true/.code=\def\pytx@opt@rerun{all}}
+\pgfkeys{/PYTX/pkgopt/runall/false/.code=\relax}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \subsubsection{Rerun}
+%
+% This option determines the conditions under which code is rerun.  It stores its state in a macro shared with |runall|.
+%    \begin{macrocode}
+\pgfkeys{/PYTX/pkgopt/rerun/.is choice}
+\pgfkeys{/PYTX/pkgopt/rerun/modified/.code=\def\pytx@opt@rerun{modified}}
+\pgfkeys{/PYTX/pkgopt/rerun/errors/.code=\def\pytx@opt@rerun{errors}}
+\pgfkeys{/PYTX/pkgopt/rerun/warnings/.code=\def\pytx@opt@rerun{warnings}}
+\pgfkeys{/PYTX/pkgopt/rerun/all/.code=\def\pytx@opt@rerun{all}}
+%    \end{macrocode}
+%
+%
+% \subsubsection{Hashdependencies}
+%
+% \begin{macro}{pytx@opt@hashdependencies}
+% This option determines whether dependencies (either code to be highlighted, or dependencies such as data that have been specified within a session) are checked for modification via modification time or via hashing.
+%    \begin{macrocode}
+\def\pytx@opt@hashdependencies{default}
+\pgfkeys{/PYTX/pkgopt/hashdependencies/.is choice}
+\pgfkeys{/PYTX/pkgopt/hashdependencies/.default=true}
+\pgfkeys{/PYTX/pkgopt/hashdependencies/true/.code=\def\pytx@opt@hashdependencies{true}}
+\pgfkeys{/PYTX/pkgopt/hashdependencies/false/.code=\def\pytx@opt@hashdependencies{false}}
+%    \end{macrocode}
+% \end{macro}
+%
+%
 % \subsubsection{Autoprint}
 % \begin{macro}{pytx@opt@autoprint}
 % The |autoprint| option determines whether content printed within a code command or environment is automatically included at the location of the command or environment.  If the option is not used, |autoprint| is turned on by default.  If the option is used, but without a setting (|\usepackage[autoprint]{pythontex}|), it is true by default.  We use the key handler \meta{key}|/.is choice| to ensure that only true/false values are allowed.  The code for the true branch is redundant, but is included for symmetry.
@@ -711,6 +990,38 @@
 \pgfkeys{/PYTX/pkgopt/autoprint/.is choice}
 \pgfkeys{/PYTX/pkgopt/autoprint/true/.code=\booltrue{pytx@opt@autoprint}}
 \pgfkeys{/PYTX/pkgopt/autoprint/false/.code=\boolfalse{pytx@opt@autoprint}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\setpythontexautoprint}
+% Sometimes it may be useful to switch |autoprint| on and off within different parts of a document, rather than setting it to a single setting for the entire document.  So we provide a command for that purpose.  Note that the command overrides the package-level option.
+%    \begin{macrocode}
+\newcommand{\setpythontexautoprint}[1]{%
+    \ifstrequal{#1}{true}{\booltrue{pytx@opt@autoprint}}{}%
+    \ifstrequal{#1}{false}{\boolfalse{pytx@opt@autoprint}}{}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Print/stdout}
+% \begin{macro}{pytx@opt@stdout}
+% This option determines whether printed content/content written to stdout is included in the document.  Disabling the inclusion of printed content is useful when the printed content contains \LaTeX\ errors that would prevent successful compilation.
+%    \begin{macrocode}
+\newbool{pytx@opt@stdout}
+\booltrue{pytx@opt@stdout}
+\pgfkeys{/PYTX/pkgopt/stdout/.default=true}
+\pgfkeys{/PYTX/pkgopt/stdout/.is choice}
+\pgfkeys{/PYTX/pkgopt/stdout/true/.code=\booltrue{pytx@opt@stdout}}
+\pgfkeys{/PYTX/pkgopt/stdout/false/.code=\boolfalse{pytx@opt@stdout}}
+\pgfkeys{/PYTX/pkgopt/print/.default=true}
+\pgfkeys{/PYTX/pkgopt/print/.is choice}
+\pgfkeys{/PYTX/pkgopt/print/true/.code=\booltrue{pytx@opt@stdout}}
+\pgfkeys{/PYTX/pkgopt/print/false/.code=\boolfalse{pytx@opt@stdout}}
+\AtBeginDocument{%
+    \ifbool{pytx@opt@stdout}{}{%
+        \PackageWarning{\pytx@packagename}{Option stdout/print is set to false}%
+    }%
+}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -866,7 +1177,14 @@
 %    \begin{macrocode}
 \def\pytx@fvextfile{-1}
 \pgfkeys{/PYTX/pkgopt/fvextfile/.default=25}  
-\pgfkeys{/PYTX/pkgopt/fvextfile/.code=\def\pytx@fvextfile{#1}}
+\pgfkeys{/PYTX/pkgopt/fvextfile/.code=\IfInteger{#1}{%
+    \ifnum#1>0\relax
+        \def\pytx@fvextfile{#1}%
+    \else
+        \PackageError{\pytx@packagename}{option fvextfile must be an integer > 0}{}%
+    \fi}%
+    {\PackageError{\pytx@packagename}{option fvextfile must be an integer > 0}{}}%
+}
 %    \end{macrocode}
 % \end{macro}
 % 
@@ -916,13 +1234,15 @@
 \ProcessPgfPackageOptions{/PYTX/pkgopt}
 %    \end{macrocode}
 %
-% The |fixlr| option only affects one thing, so we go ahead and take care of that.
+% The |fixlr| option only affects one thing, so we go ahead and take care of that.  Notice that before we patch |\left| and |\right|, we make sure that they have not already been patched by checking how |\left| is expanded.  This is important if the user has manually patched these commands, is using the |mleftright| package, or accidentally loads \pytex\ twice.
 %    \begin{macrocode}
 \ifbool{pytx@opt@fixlr}{
-    \let\originalleft\left
-    \let\originalright\right
-    \renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}
-    \renewcommand{\right}{\aftergroup\egroup\originalright}
+    \IfStrEq{\detokenize\expandafter{\left}}{\detokenize{\left}}{
+        \let\originalleft\left
+        \let\originalright\right
+        \renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}
+        \renewcommand{\right}{\aftergroup\egroup\originalright}
+    }{}
 }{}
 %    \end{macrocode}
 %
@@ -1028,14 +1348,15 @@
 %
 % The command |\setpythontexoutputdir| stores the name of \pytex's output directory in |\pytx@outputdir|.  If the |graphicx| package is loaded, the output directory is also added to the graphics path, so that files in the output directory may be included within the main document without the necessity of specifying path information.  The command |\setpythontexoutputdir| is only allowed in the preamble, because the location of \pytex\ content must be specified before the body of the document is typeset.  If |\setpythontexoutputdir| is not invoked by the user, then we automatically invoke it at the beginning of the document to set the default directory name.
 %    \begin{macrocode}
+\def\pytx@outputdir{}
 \newcommand{\setpythontexoutputdir}[1]{%
     \def\pytx@outputdir{#1}%
     \AtBeginDocument{\@ifpackageloaded{graphicx}{\graphicspath{{#1/}}}{}}%
 }
 \@onlypreamble\setpythontexoutputdir
 \AtBeginDocument{%
-    \ifcsname pytx@outputdir\endcsname\else
-        \setpythontexoutputdir{pythontex-files-\pytx@jobname}\fi
+    \expandafter\ifstrempty\expandafter{\pytx@outputdir}%
+        {\setpythontexoutputdir{pythontex-files-\pytx@jobname}}{}%
 }
 %    \end{macrocode}
 %
@@ -1086,6 +1407,7 @@
 % We create a new write, named |\pytx@codefile|, to which we will save code.  All the code from the document will be written to this single file, interspersed with information specifying where in the document it came from.  \pytex\ parses this file to separate the code into individual sessions and groups.  These are then executed, and the identifying information is used to tie code output back to the original code in the document.\footnote{The choice to write all code to a single file is the result of two factors.  First, \TeX\ has a limited number of output registers available (16), so having a separate output stream for each group or session is not possible.  The |morewrites| package from Bruno Le Floch potentially removes this obstacle, but since this package is very recent (README from 2011/7/10), we will not consider using additional writes in the immediate future.  Second, one of the design goals of \pytex\ is to minimize the number of persistent files created by a run.  This keeps directories cleaner and makes file synchronization/transfer somewhat simpler.  Using one write per session or group could result in numerous code files, and these could only be cleaned up by |pythontex*.py| since \LaTeX\ cannot delete files itself (well, without unrestricted |write18|).  Using a single output file for code does introduce a speed penalty since the code does not come pre-sorted by session or group, but in typical usage this should be minimal.  Adding an option for single or multiple code files may be something to reconsider at a later date.}
 %     \begin{macrocode}
 \newwrite\pytx@codefile
+\immediate\openout\pytx@codefile=\jobname.pytxcode
 %    \end{macrocode}
 % \end{macro}
 % 
@@ -1110,14 +1432,17 @@
 \edef\pytx@delimsettings{=\string>PYTHONTEX:SETTINGS\string#}
 %    \end{macrocode}
 % \end{macro}
-% Settings need to be written to the code file.  Some of these settings are not final until the beginning of the document, since they may be modified by the user within the preamble.  Thus, all settings should be written at the beginning of the document.  The order in which the settings are written is not significant, but for symmetry it should mirror the order in which they were defined.
+% Settings need to be written to the code file.  Some of these settings are not final until the beginning of the document, since they may be modified by the user within the preamble.  Thus, all settings should be written at the end of the document, so that they will all be together and will not be interspersed with any code that was entered in the preamble.  The order in which the settings are written is not significant, but for symmetry it should mirror the order in which they were defined.
 %    \begin{macrocode}
-\AtBeginDocument{
-    \immediate\openout\pytx@codefile=\jobname.pytxcode
+\AtEndDocument{
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings outputdir=\pytx@outputdir\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings workingdir=\pytx@workingdir\pytx@delimchar}%
+    \immediate\write\pytx@codefile{%
+        \pytx@delimsettings rerun=\pytx@opt@rerun\pytx@delimchar}%
+    \immediate\write\pytx@codefile{%
+        \pytx@delimsettings hashdependencies=\pytx@opt@hashdependencies\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings stderr=%
         \ifbool{pytx@opt@stderr}{true}{false}\pytx@delimchar}%
@@ -1133,7 +1458,7 @@
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings pyglexer=\pytx@pyglexer\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
-        \pytx@delimsettings pygmentsglobal:\string{\pytx@pygopt\string}\pytx@delimchar}%
+        \pytx@delimsettings pygopt=\string{\pytx@pygopt\string}\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings fvextfile=\pytx@fvextfile \pytx@delimchar}%
     \immediate\write\pytx@codefile{%
@@ -1164,12 +1489,6 @@
 %    \end{macrocode}
 % \end{macro}\end{macro}
 %
-% At the end of the document, we need to close the code file, so we go ahead and issue the commands for that.  From now on, we may simply write to the code file when necessary, and need not otherwise concern ourselves with the file.
-%    \begin{macrocode}
-\AtEndDocument{%
-    \immediate\closeout\pytx@codefile
-}
-%    \end{macrocode}
 %
 % \subsubsection{Interface to \texttt{fancyvrb}}
 % The |fancyvrb| package is used to typeset lines of code, and its internals are also used to format inline code snippets.  We need a way for each family of \pytex\ commands and environments to have its own independent |fancyvrb| settings.
@@ -1252,7 +1571,7 @@
 % \end{macro}
 %
 % \begin{macro}{\pytx@FetchStdoutfile}
-% Now we create a generic macro for bringing in the stdout file.  This macro can input the content in verbatim form, applying |fancyvrb| options if present.  Usage:  |\pytx@FetchStdoutfile|\oarg{verbatim~options}\oarg{fancyvrb~options}\marg{file~path}.\pytxtodo{Error handling for invalid options?}
+% Now we create a generic macro for bringing in the stdout file.  This macro can input the content in verbatim form, applying |fancyvrb| options if present.  Usage:  |\pytx@FetchStdoutfile|\oarg{verbatim~options}\oarg{fancyvrb~options}\marg{file~path}.\pytxtodo{Error handling for invalid options?}  We must disable the macro in the event that the |stdout| option is false.
 %    \begin{macrocode}
 \def\pytx@FetchStdoutfile[#1][#2]#3{%
     \IfFileExists{\pytx@outputdir/#3.stdout}{%
@@ -1265,6 +1584,7 @@
     {\textbf{??~\pytx@packagename~??}%
         \PackageWarning{\pytx@packagename}{Non-existent printed content}}%
 }
+\ifbool{pytx@opt@stdout}{}{\def\pytx@FetchStdoutfile[#1][#2]#3{}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1475,9 +1795,6 @@
 %
 %
 % \begin{macro}{\pytx@InlineMargBgroup}
-% \begin{macro}{\pytx@InlineShow}
-% \begin{macro}{\pytx@InlineSave}
-% \begin{macro}{\pytx@InlinePrint}
 % We are now ready to capture code using matched curly braces as delimiters, or to process previously captured code that used another delimiting character.
 %
 % At the very beginning, we must end the group that was left open from |\pytx@InlineOarg| (or by |\pytx@InlineMargOther|), so that catcodes return to normal.
@@ -1502,10 +1819,14 @@
     \stepcounter{\pytx@counter}%
 }%
 %    \end{macrocode}
-% \end{macro}\end{macro}\end{macro}\end{macro}
+% \end{macro}
 %
 %
+% \begin{macro}{\pytx@InlineShow}
+% \begin{macro}{\pytx@InlineSave}
+% \begin{macro}{\pytx@InlinePrint}
 % The three macros |\pytx@InlineShow|, |\pytx@InlineSave|, and |\pytx@InlinePrint| will be |\let| to appropriate values when commands are called.  We must now define the macros to which they may be |\let|.
+% \end{macro}\end{macro}\end{macro}
 %
 %
 % \begin{macro}{\pytx@InlineShowFV}
@@ -1570,18 +1891,23 @@
 %
 %
 % \begin{macro}{\pytx@InlineAutoprint}
-% This macro brings in printed content automatically, if the package |autoprint| option is true.  Otherwise, it does nothing.
+% This macro brings in printed content automatically, if the package |autoprint| option is true.  Otherwise, it does nothing.  We must disable the macro in the event that the |stdout| option is false.  We wait until the beginning of the document to create the real macro, since any code commands and environments in the preamble shouldn't be printing and in any case we can't know what the outputdir is until the beginning of the document.
+%
 %    \begin{macrocode}
-\ifbool{pytx@opt@autoprint}%
-    {\def\pytx@InlineAutoprint{%
-        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}}%
-    {\let\pytx@InlineAutoprint\@empty}
+\let\pytx@InlineAutoprint\@empty
+\AtBeginDocument{
+    \def\pytx@InlineAutoprint{%
+        \ifbool{pytx@opt@autoprint}{%
+            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}{}%
+    }
+    \ifbool{pytx@opt@stdout}{}{\let\pytx@InlineAutoprint\@empty}
+}
 %    \end{macrocode}
 % \end{macro}
 %
 %
 % \begin{macro}{\pytx@InlineMacroprint}
-% This macro brings in ``printed'' content that is brought in via macros in the .pytxmcr file.
+% This macro brings in ``printed'' content that is brought in via macros in the .pytxmcr file.  We must disable the macro in the event that the |stdout| option is false.
 %    \begin{macrocode}
 \def\pytx@InlineMacroprint{%
     \edef\pytx@mcr{pytx@MCR@\pytx@type @\pytx@session @\pytx@group @\arabic{\pytx@counter}}%
@@ -1592,6 +1918,7 @@
         \PackageWarning{\pytx@packagename}{Missing autoprint content}%
     \fi
 }
+\ifbool{pytx@opt@stdout}{}{\let\pytx@InlineMacroprint\@empty}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1699,6 +2026,53 @@
 \let\pytx@MakeInlinePyg\pytx@MakeInlineFV
 %    \end{macrocode}
 % \end{macro}\end{macro}
+%
+%
+%\begin{macro}{\pythontexcustomc}
+% This macro takes a single line of code and adds it to all sessions within a family.  It is the inline version of the |pythontexcustomcode| environment.
+%    \begin{macrocode}
+\newcommand{\pythontexcustomc}[2][begin]{%
+    \ifstrequal{#1}{begin}{}{%
+        \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
+            {Invalid optional argument for \string\pythontexcustomc}{}
+        }%
+    }%
+    \xdef\pytx@type{CC:#2:#1}%
+    \edef\pytx@cmd{inlinec}%
+    \def\pytx@context{}%
+    \def\pytx@group{none}%
+    \let\pytx@InlineShow\@empty
+    \let\pytx@InlineSave\pytx@InlineSaveCode
+    \let\pytx@InlinePrint\@empty
+    \pytx@Inline[none]%
+}%
+%    \end{macrocode}
+% \end{macro}
+%
+%
+%\begin{macro}{\setpythontexcustomcode}
+% This macro is a holdover from 0.9beta3.  It has been deprecated in favor of |\pythontexcustomc| and |pythontexcustomcode|.
+%    \begin{macrocode}
+\def\setpythontexcustomcode#1{%
+    \PackageWarning{\pytx@packagename}{The command
+        \string\setpythontexcustomcode\space has been deprecated;
+        use \string\pythontexcustomc\space or pythontexcustomcode instead}%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\{=1
+    \catcode`\}=2
+    \catcode`\^^M=10\relax
+    \pytx@SetCustomCode{#1}%
+}
+\long\def\pytx@SetCustomCode#1#2{%
+    \endgroup
+    \pythontexcustomc{#1}{pythontexcustomcode=[#2];
+        exec('for expr in pythontexcustomcode: exec(expr)');
+        del(pythontexcustomcode)}
+}
+\@onlypreamble\setpythontexcustomcode
+%    \end{macrocode}
+% \end{macro}
 %
 %
 % \subsection{Environments}
@@ -1956,6 +2330,19 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\pytx@EnvAutoprint}
+% We also need a macro for bringing in autoprint content.  This is a separate macro so that it can be easily disabled by the package option |stdout|.  We wait until the beginning of the document to create the real macro, since any code commands and environments in the preamble shouldn't be printing and in any case we can't know what the outputdir is until the beginning of the document.
+%    \begin{macrocode}
+\let\pytx@EnvAutoprint\@empty
+\AtBeginDocument{
+    \def\pytx@EnvAutoprint{%
+        \ifbool{pytx@opt@autoprint}{%
+            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}{}%
+    }
+    \ifbool{pytx@opt@stdout}{}{\let\pytx@EnvAutoprint\@empty}
+}
+%    \end{macrocode}
+% \end{macro}
 %
 % \begin{macro}{\pytx@MakeCodeFV}
 % Now that the helper macros for the |code| environment have been defined, we are ready to create the macro that makes |code| environments.  Everything at the beginning of the environment is similar to the |block| and |verb| environments.
@@ -1975,8 +2362,7 @@
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
-    \ifbool{pytx@opt@autoprint}%
-        {\InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}{}%
+    \pytx@EnvAutoprint
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
     }%
@@ -2018,6 +2404,29 @@
 % Since the code environment simply saves code for execution and typesets nothing, the Pygments version is identical to the non-Pygments version, so we simply let the former to the latter.
 %    \begin{macrocode}
 \let\pytx@MakeCodePyg\pytx@MakeCodeFV
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{pythontexcustomcode}
+% This environment is used for adding custom code to all sessions within a command and environment family.  It is the environment equivalent of the inline command |\pythontexcustomc|.
+%    \begin{macrocode}
+\newenvironment{pythontexcustomcode}[2][begin]{%
+    \VerbatimEnvironment
+    \ifstrequal{#1}{begin}{}{%
+        \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
+            {Invalid optional argument for pythontexcustomcode}{}
+        }%
+    }%
+    \xdef\pytx@type{CC:#2:#1}%
+    \edef\pytx@cmd{code}%
+    \def\pytx@context{}%
+    \def\pytx@group{none}%
+    \pytx@BeginCodeEnv[none]}%
+{\end{VerbatimOut}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+}%
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2110,11 +2519,11 @@
             {Attempt to create macros with reserved prefix PYG}{}}{}%
     \pytx@MakeInlinebFV{#2}%
     \pytx@MakeInlinevFV{#2}%
-    \pytx@MakeInlinecFV{#2}%
+    %\pytx@MakeInlinecFV{#2}%
     \pytx@MakeInlineFV{#2}%
     \pytx@MakeBlockFV{#2}%
     \pytx@MakeVerbFV{#2}%
-    \pytx@MakeCodeFV{#2}%
+    %\pytx@MakeCodeFV{#2}%
     \ifstrequal{#1}{console}{\pytx@MakeConsFV{#2}}{}%
     \ifstrequal{#1}{all}{\pytx@MakeConsFV{#2}}{}%
     \setpythontexfv[#2]{}%
@@ -2140,18 +2549,18 @@
             \pytx@MakeInlinevPyg{#2}}%
         {\pytx@MakeInlinebFV{#2}%
             \pytx@MakeInlinevFV{#2}}%
-    \pytx@MakeInlinecPyg{#2}%
+    %\pytx@MakeInlinecPyg{#2}%
     \pytx@MakeInlinePyg{#2}%
     \pytx@MakeBlockPyg{#2}%
     \pytx@MakeVerbPyg{#2}%
-    \pytx@MakeCodePyg{#2}%
+    %\pytx@MakeCodePyg{#2}%
     \ifstrequal{#1}{console}{\pytx@MakeConsPyg{#2}}{}%
     \ifstrequal{#1}{all}{\pytx@MakeConsPyg{#2}}{}%
     \setpythontexfv[#2]{}%
     \booltrue{pytx@usedpygments}%
     \expandafter\xdef\csname pytx@pygopt@#2\endcsname{#4}%
-    \AtBeginDocument{\immediate\write\pytx@codefile{%
-        \pytx@delimsettings pygmentsfamily:#2,#3,%
+    \AtEndDocument{\immediate\write\pytx@codefile{%
+        \pytx@delimsettings pygfamily=#2,#3,%
         \string{\csname pytx@pygopt@#2\endcsname\string}\pytx@delimchar}%
     }%
 }
@@ -2194,11 +2603,14 @@
 % While the |\makepythontexfamilyfv| and |\makepythontexfamilypyg| macros allow the creation of families that use |fancyvrb| and Pygments, respectively, we want to be able to create families that can switch between the two possibilities, based on the package option |pygments|.  In some cases, we may want to force a family to use either |fancyvrb| or Pygments, but generally we will want to be able to control the method of typesetting of all families at the package level.  We create a new macro for this purpose.  This macro takes the same arguments that |\makepythontexfamilypyg| does:  the family base name, the lexer to be used by Pygments, and Pygments options for typesetting, plus an optional argument governing the |console| environment.  The actual creation of macros is delayed using |\AtBeginDocument|, so that the user has the option to choose whether |fancyvrb| or Pygments usage should be forced for the family.
 %
 % This macro should always be used for defining new families, unless there is a particular reason to always force |fancyvrb| or Pygments usage.
+% \pytxtodo{Need to redo treatment of code so that it more naturally goes in preamble.}
 %    \begin{macrocode}
 \newcommand{\makepythontexfamily}[4][]{%
     \expandafter\xdef\csname pytx@macroformatter@#2\endcsname{auto}
     \expandafter\xdef\csname pytx@pyglexer@#2\endcsname{#3}
     \expandafter\xdef\csname pytx@pygopt@#2\endcsname{#4}
+    \pytx@MakeInlinecFV{#2}
+    \pytx@MakeCodeFV{#2}
     \AtBeginDocument{%
         \ifcsstring{pytx@macroformatter@#2}{auto}{%
             \ifbool{pytx@opt@pygments}%
@@ -2229,32 +2641,6 @@
     \fi
 }
 \@onlypreamble\setpythontexformatter
-%    \end{macrocode}
-% \end{macro}
-%
-%
-% \begin{macro}{\setpythontexcustomcode}
-% One additional customization macro is needed.  This macro allows custom code to be added to the start of all code for a specified family.  It applies to \textbf{all} commands and environments within a family, including the |console| environment.  Custom code is included as a comma-delimited list of quoted code strings.  Some catcode trickery is required to allow the code to contain arbitrary characters.  Currently, the code may contain anything except unmatched curly braces.
-%
-% There are multiple ways that a custom code macro could be implemented.  The current approach is based on several factors.  Usually, only a few lines of custom code should need to be specified (if you have a lot of code, you should create a separate file and import it).  For this use case, an inline macro taking quoted strings should be adequate.  Also, such a macro is typical of the type of macros that appear in the preamble.  An environment in which verbatim code is written (say, |pythontexcustomcode|) could be created.  This would require that an environment be used in the preamble, which is possible but uncommon.
-%    \begin{macrocode}
-\def\setpythontexcustomcode#1{%
-    \begingroup
-    \let\do\@makeother\dospecials
-    \catcode`\{=1
-    \catcode`\}=2
-    \catcode`\^^M=10\relax
-    \pytx@SetCustomCode{#1}%
-}
-\long\def\pytx@SetCustomCode#1#2{%
-    \endgroup
-    \AtBeginDocument{%
-        \immediate\write\pytx@codefile{%
-            \pytx@delimsettings customcode:#1,%
-            [\detokenize{#2}]\pytx@delimchar}%
-    }%
-}
-\@onlypreamble\setpythontexcustomcode
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2296,8 +2682,9 @@
     \ifcsname listing\endcsname
         \ifbool{pytx@listingenv}{}%
             {\PackageWarning{\pytx@packagename}%
-                {A conflicting "listing" environment already exists}%
-                {Use \string\setpythontexlistingenv to create a custom environment}}%
+                {A "listing" environment already exists \MessageBreak
+                 \pytx@packagename\space will not create one \MessageBreak
+                 Use \string\setpythontexlistingenv to create a custom listing environment}}%
     \else
         \ifbool{pytx@listingenv}{}{\DeclareFloatingEnvironment[fileext=lopytx]{listing}}
     \fi
@@ -2543,7 +2930,7 @@
         \fi
         \pytx@WriteCodefileInfoExt
         \IfFileExists{##3}{}{\PackageWarning{\pytx@packagename}%
-            {Input file <##3> does not exist}{}}
+            {Input file <##3> does not exist}}
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \begingroup
         \pytx@FVSet
@@ -2584,8 +2971,8 @@
 % This macro allows the Pygments option to be set for a lexer.  It takes the lexer name as the first argument and the options as the second argument.  If this macro is used multiple times for a lexer, it will write the settings to the code file multiple times.  But |pythontex*.py| will simply process all settings, and each subsequent set of settings will overwrite any prior settings, so this is not a problem.
 %    \begin{macrocode}
 \def\setpygmentspygopt#1#2{%
-    \AtBeginDocument{\immediate\write\pytx@codefile{%
-        \pytx@delimsettings pygmentsfamily:PYG#1,#1,%
+    \AtEndDocument{\immediate\write\pytx@codefile{%
+        \pytx@delimsettings pygfamily=PYG#1,#1,%
         \string{#2\string}\pytx@delimchar}%
     }%
 }
@@ -2659,7 +3046,13 @@
 %    \end{macrocode}
 %
 %
-%
+% \subsection{Final cleanup}
+% At the end of the document, we need to close the code file.
+%    \begin{macrocode}
+\AfterEndDocument{%
+    \immediate\closeout\pytx@codefile
+}
+%    \end{macrocode}
 %
 %
 % 

@@ -1,6 +1,27 @@
 \documentclass[11pt]{article}
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
+
+% Engine-specific settings
+% Detect pdftex/xetex/luatex, and load appropriate font packages.
+% This is inspired by the approach in the iftex package.
+% pdftex:
+\expandafter\ifx\csname pdfmatch\endcsname\relax
+\else
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\expandafter\ifx\csname XeTeXinterchartoks\endcsname\relax
+\else
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\expandafter\ifx\csname directlua\endcsname\relax
+\else
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
 \usepackage{amsmath,amssymb}
 \usepackage{fullpage}
 \usepackage{graphicx}
@@ -160,22 +181,22 @@ var('x')
 
 #Create a list of functions to include in the table
 funcs = ['sin(x)', 'cos(x)', 'tan(x)', 
-		 'sin(x)**2', 'cos(x)**2', 'tan(x)**2', 
-		 'asin(x)', 'acos(x)', 'atan(x)', 
-		 'sinh(x)', 'cosh(x)', 'tanh(x)']
+         'sin(x)**2', 'cos(x)**2', 'tan(x)**2', 
+         'asin(x)', 'acos(x)', 'atan(x)', 
+         'sinh(x)', 'cosh(x)', 'tanh(x)']
 
 print(r'\begin{align*}')
 
 for func in funcs:
-	#Put in some vertical space when switching to arc and hyperbolic funcs
-	if func=='asin(x)' or func=='sinh(x)':
-		print(r'\vspace{0.5in}\\')
-	myderiv = 'Derivative(' + func + ', x)'
-	myint = 'Integral(' + func + ', x)'
-	print(latex(eval(myderiv)) + '&=' \
-			+ latex(eval(myderiv+'.doit()')) + r'\quad & \quad')
-	print(latex(eval(myint)) + '&=' \
-			+ latex(eval(myint+'.doit()'))+ r'\\')
+    #Put in some vertical space when switching to arc and hyperbolic funcs
+    if func=='asin(x)' or func=='sinh(x)':
+        print(r'\vspace{0.5in}\\')
+    myderiv = 'Derivative(' + func + ', x)'
+    myint = 'Integral(' + func + ', x)'
+    print(latex(eval(myderiv)) + '&=' \
+            + latex(eval(myderiv+'.doit()')) + r'\quad & \quad')
+    print(latex(eval(myint)) + '&=' \
+            + latex(eval(myint+'.doit()'))+ r'\\')
 print(r'\end{align*}')
 \end{sympyblock}
 
@@ -210,11 +231,11 @@ print(latex(left) + '&=' + latex(right)+r'\\')
 # For each step, I move limits from an outer integral to an inner, evaluated 
 # integral until the outer integral is no longer needed
 right = Integral(Integral(f,(z,z_llim,z_ulim)).doit(), (x,x_llim,x_ulim), \
-		(y,y_llim,y_ulim))
+        (y,y_llim,y_ulim))
 print('&=' + latex(right)+r'\\')
 
 right = Integral(Integral(f,(z,z_llim,z_ulim),(y,y_llim,y_ulim)).doit(), \
-		(x,x_llim,x_ulim))
+        (x,x_llim,x_ulim))
 print('&=' + latex(right)+r'\\')
 
 right = Integral(f,(z,z_llim,z_ulim),(y,y_llim,y_ulim),(x,x_llim,x_ulim)).doit()

@@ -8,7 +8,7 @@
 %% 
 %% This is a generated file.
 %% 
-%% Copyright (C) 2012 by Geoffrey M. Poore <gpoore@gmail.com>
+%% Copyright (C) 2012-2013 by Geoffrey M. Poore <gpoore@gmail.com>
 %% --------------------------------------------------------------------------
 %% This work may be distributed and/or modified under the
 %% conditions of the LaTeX Project Public License, either version 1.3
@@ -20,10 +20,9 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2012/07/17 Version~0.9beta3 PythonTeX]
-
+    [2013/01/09 Version~0.10beta PythonTeX]
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{pythontex}[2012/07/17 v0.9beta3]
+\ProvidesPackage{pythontex}[2013/01/09 v0.10beta]
 \newcommand{\pytx@packagename}{PythonTeX}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
@@ -32,12 +31,46 @@
 \RequirePackage{pgfopts}
 \RequirePackage{newfloat}
 \AtBeginDocument{\@ifpackageloaded{color}{}{\RequirePackage{xcolor}}}
+\def\pytx@opt@rerun{default}
+\pgfkeys{/PYTX/pkgopt/runall/.default=true}
+\pgfkeys{/PYTX/pkgopt/runall/.is choice}
+\pgfkeys{/PYTX/pkgopt/runall/true/.code=\def\pytx@opt@rerun{all}}
+\pgfkeys{/PYTX/pkgopt/runall/false/.code=\relax}
+\pgfkeys{/PYTX/pkgopt/rerun/.is choice}
+\pgfkeys{/PYTX/pkgopt/rerun/modified/.code=\def\pytx@opt@rerun{modified}}
+\pgfkeys{/PYTX/pkgopt/rerun/errors/.code=\def\pytx@opt@rerun{errors}}
+\pgfkeys{/PYTX/pkgopt/rerun/warnings/.code=\def\pytx@opt@rerun{warnings}}
+\pgfkeys{/PYTX/pkgopt/rerun/all/.code=\def\pytx@opt@rerun{all}}
+\def\pytx@opt@hashdependencies{default}
+\pgfkeys{/PYTX/pkgopt/hashdependencies/.is choice}
+\pgfkeys{/PYTX/pkgopt/hashdependencies/.default=true}
+\pgfkeys{/PYTX/pkgopt/hashdependencies/true/.code=\def\pytx@opt@hashdependencies{true}}
+\pgfkeys{/PYTX/pkgopt/hashdependencies/false/.code=\def\pytx@opt@hashdependencies{false}}
 \newbool{pytx@opt@autoprint}
 \booltrue{pytx@opt@autoprint}
 \pgfkeys{/PYTX/pkgopt/autoprint/.default=true}
 \pgfkeys{/PYTX/pkgopt/autoprint/.is choice}
 \pgfkeys{/PYTX/pkgopt/autoprint/true/.code=\booltrue{pytx@opt@autoprint}}
 \pgfkeys{/PYTX/pkgopt/autoprint/false/.code=\boolfalse{pytx@opt@autoprint}}
+\newcommand{\setpythontexautoprint}[1]{%
+    \ifstrequal{#1}{true}{\booltrue{pytx@opt@autoprint}}{}%
+    \ifstrequal{#1}{false}{\boolfalse{pytx@opt@autoprint}}{}%
+}
+\newbool{pytx@opt@stdout}
+\booltrue{pytx@opt@stdout}
+\pgfkeys{/PYTX/pkgopt/stdout/.default=true}
+\pgfkeys{/PYTX/pkgopt/stdout/.is choice}
+\pgfkeys{/PYTX/pkgopt/stdout/true/.code=\booltrue{pytx@opt@stdout}}
+\pgfkeys{/PYTX/pkgopt/stdout/false/.code=\boolfalse{pytx@opt@stdout}}
+\pgfkeys{/PYTX/pkgopt/print/.default=true}
+\pgfkeys{/PYTX/pkgopt/print/.is choice}
+\pgfkeys{/PYTX/pkgopt/print/true/.code=\booltrue{pytx@opt@stdout}}
+\pgfkeys{/PYTX/pkgopt/print/false/.code=\boolfalse{pytx@opt@stdout}}
+\AtBeginDocument{%
+    \ifbool{pytx@opt@stdout}{}{%
+        \PackageWarning{\pytx@packagename}{Option stdout/print is set to false}%
+    }%
+}
 \newbool{pytx@opt@stderr}
 \pgfkeys{/PYTX/pkgopt/stderr/.default=true}
 \pgfkeys{/PYTX/pkgopt/stderr/.is choice}
@@ -96,7 +129,14 @@
 \pgfkeys{/PYTX/pkgopt/pyginline/false/.code=\boolfalse{pytx@opt@pyginline}}
 \def\pytx@fvextfile{-1}
 \pgfkeys{/PYTX/pkgopt/fvextfile/.default=25}
-\pgfkeys{/PYTX/pkgopt/fvextfile/.code=\def\pytx@fvextfile{#1}}
+\pgfkeys{/PYTX/pkgopt/fvextfile/.code=\IfInteger{#1}{%
+    \ifnum#1>0\relax
+        \def\pytx@fvextfile{#1}%
+    \else
+        \PackageError{\pytx@packagename}{option fvextfile must be an integer > 0}{}%
+    \fi}%
+    {\PackageError{\pytx@packagename}{option fvextfile must be an integer > 0}{}}%
+}
 \def\pytx@opt@pyconbanner{none}
 \pgfkeys{/PYTX/pkgopt/pyconbanner/.is choice}
 \pgfkeys{/PYTX/pkgopt/pyconbanner/none/.code=\def\pytx@opt@pyconbanner{none}}
@@ -114,10 +154,12 @@
 \pgfkeys{/PYTX/pkgopt/depythontex/false/.code=\boolfalse{pytx@opt@depythontex}}
 \ProcessPgfPackageOptions{/PYTX/pkgopt}
 \ifbool{pytx@opt@fixlr}{
-    \let\originalleft\left
-    \let\originalright\right
-    \renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}
-    \renewcommand{\right}{\aftergroup\egroup\originalright}
+    \IfStrEq{\detokenize\expandafter{\left}}{\detokenize{\left}}{
+        \let\originalleft\left
+        \let\originalright\right
+        \renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}
+        \renewcommand{\right}{\aftergroup\egroup\originalright}
+    }{}
 }{}
 \ifbool{pytx@opt@upquote}{\RequirePackage{upquote}}{}
 \def\pytx@CheckCounter#1{%
@@ -157,14 +199,15 @@
 \StrSubstitute{\jobname}{ }{-}[\pytx@jobname]
 \StrSubstitute{\pytx@jobname}{"}{}[\pytx@jobname]
 \StrSubstitute{\pytx@jobname}{*}{-}[\pytx@jobname]
+\def\pytx@outputdir{}
 \newcommand{\setpythontexoutputdir}[1]{%
     \def\pytx@outputdir{#1}%
     \AtBeginDocument{\@ifpackageloaded{graphicx}{\graphicspath{{#1/}}}{}}%
 }
 \@onlypreamble\setpythontexoutputdir
 \AtBeginDocument{%
-    \ifcsname pytx@outputdir\endcsname\else
-        \setpythontexoutputdir{pythontex-files-\pytx@jobname}\fi
+    \expandafter\ifstrempty\expandafter{\pytx@outputdir}%
+        {\setpythontexoutputdir{pythontex-files-\pytx@jobname}}{}%
 }
 \newcommand{\setpythontexworkingdir}[1]{%
     \def\pytx@workingdir{#1}%
@@ -183,15 +226,19 @@
     \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}{}%
 }
 \newwrite\pytx@codefile
+\immediate\openout\pytx@codefile=\jobname.pytxcode
 \edef\pytx@delimchar{\string#}
 \edef\pytx@delim{=\string>PYTHONTEX\string#}
 \edef\pytx@delimsettings{=\string>PYTHONTEX:SETTINGS\string#}
-\AtBeginDocument{
-    \immediate\openout\pytx@codefile=\jobname.pytxcode
+\AtEndDocument{
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings outputdir=\pytx@outputdir\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings workingdir=\pytx@workingdir\pytx@delimchar}%
+    \immediate\write\pytx@codefile{%
+        \pytx@delimsettings rerun=\pytx@opt@rerun\pytx@delimchar}%
+    \immediate\write\pytx@codefile{%
+        \pytx@delimsettings hashdependencies=\pytx@opt@hashdependencies\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings stderr=%
         \ifbool{pytx@opt@stderr}{true}{false}\pytx@delimchar}%
@@ -207,7 +254,7 @@
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings pyglexer=\pytx@pyglexer\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
-        \pytx@delimsettings pygmentsglobal:\string{\pytx@pygopt\string}\pytx@delimchar}%
+        \pytx@delimsettings pygopt=\string{\pytx@pygopt\string}\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings fvextfile=\pytx@fvextfile \pytx@delimchar}%
     \immediate\write\pytx@codefile{%
@@ -229,9 +276,6 @@
         \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
         0\pytx@delimchar\pytx@cmd\pytx@delimchar%
         \pytx@context\pytx@delimchar\the\inputlineno\pytx@delimchar#1}%
-}
-\AtEndDocument{%
-    \immediate\closeout\pytx@codefile
 }
 \newcommand{\setpythontexfv}[2][]{%
     \ifstrempty{#1}%
@@ -281,6 +325,7 @@
     {\textbf{??~\pytx@packagename~??}%
         \PackageWarning{\pytx@packagename}{Non-existent printed content}}%
 }
+\ifbool{pytx@opt@stdout}{}{\def\pytx@FetchStdoutfile[#1][#2]#3{}}
 \def\stdoutpythontex{%
     \@ifnextchar[{\pytx@Stdout}{\pytx@Stdout[]}%
 }
@@ -438,10 +483,14 @@
     \pytx@WriteCodefileInfo
     \immediate\write\pytx@codefile{\pytx@argdetok}%
 }
-\ifbool{pytx@opt@autoprint}%
-    {\def\pytx@InlineAutoprint{%
-        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}}%
-    {\let\pytx@InlineAutoprint\@empty}
+\let\pytx@InlineAutoprint\@empty
+\AtBeginDocument{
+    \def\pytx@InlineAutoprint{%
+        \ifbool{pytx@opt@autoprint}{%
+            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}{}%
+    }
+    \ifbool{pytx@opt@stdout}{}{\let\pytx@InlineAutoprint\@empty}
+}
 \def\pytx@InlineMacroprint{%
     \edef\pytx@mcr{pytx@MCR@\pytx@type @\pytx@session @\pytx@group @\arabic{\pytx@counter}}%
     \ifcsname\pytx@mcr\endcsname
@@ -451,6 +500,7 @@
         \PackageWarning{\pytx@packagename}{Missing autoprint content}%
     \fi
 }
+\ifbool{pytx@opt@stdout}{}{\let\pytx@InlineMacroprint\@empty}
 \newcommand{\pytx@MakeInlinebFV}[1]{%
     \expandafter\newcommand\expandafter{\csname #1b\endcsname}{%
         \xdef\pytx@type{#1}%
@@ -525,6 +575,39 @@
     }%
 }%
 \let\pytx@MakeInlinePyg\pytx@MakeInlineFV
+\newcommand{\pythontexcustomc}[2][begin]{%
+    \ifstrequal{#1}{begin}{}{%
+        \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
+            {Invalid optional argument for \string\pythontexcustomc}{}
+        }%
+    }%
+    \xdef\pytx@type{CC:#2:#1}%
+    \edef\pytx@cmd{inlinec}%
+    \def\pytx@context{}%
+    \def\pytx@group{none}%
+    \let\pytx@InlineShow\@empty
+    \let\pytx@InlineSave\pytx@InlineSaveCode
+    \let\pytx@InlinePrint\@empty
+    \pytx@Inline[none]%
+}%
+\def\setpythontexcustomcode#1{%
+    \PackageWarning{\pytx@packagename}{The command
+        \string\setpythontexcustomcode\space has been deprecated;
+        use \string\pythontexcustomc\space or pythontexcustomcode instead}%
+    \begingroup
+    \let\do\@makeother\dospecials
+    \catcode`\{=1
+    \catcode`\}=2
+    \catcode`\^^M=10\relax
+    \pytx@SetCustomCode{#1}%
+}
+\long\def\pytx@SetCustomCode#1#2{%
+    \endgroup
+    \pythontexcustomc{#1}{pythontexcustomcode=[#2];
+        exec('for expr in pythontexcustomcode: exec(expr)');
+        del(pythontexcustomcode)}
+}
+\@onlypreamble\setpythontexcustomcode
 \begingroup
 \catcode`\^^M=\active
 \gdef\pytx@FancyVerbGetLine#1^^M{%
@@ -659,6 +742,14 @@
     \let\@noligs\relax
     \FV@Scan}%
 \def\pytx@FVE@VerbatimOut{\endgroup\@esphack}%
+\let\pytx@EnvAutoprint\@empty
+\AtBeginDocument{
+    \def\pytx@EnvAutoprint{%
+        \ifbool{pytx@opt@autoprint}{%
+            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}{}%
+    }
+    \ifbool{pytx@opt@stdout}{}{\let\pytx@EnvAutoprint\@empty}
+}
 \newcommand{\pytx@MakeCodeFV}[1]{%
     \expandafter\newenvironment{#1code}{%
         \VerbatimEnvironment
@@ -672,8 +763,7 @@
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
-    \ifbool{pytx@opt@autoprint}%
-        {\InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}{}%
+    \pytx@EnvAutoprint
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
     }%
@@ -694,6 +784,22 @@
     \begin{VerbatimOut}%
 }%
 \let\pytx@MakeCodePyg\pytx@MakeCodeFV
+\newenvironment{pythontexcustomcode}[2][begin]{%
+    \VerbatimEnvironment
+    \ifstrequal{#1}{begin}{}{%
+        \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
+            {Invalid optional argument for pythontexcustomcode}{}
+        }%
+    }%
+    \xdef\pytx@type{CC:#2:#1}%
+    \edef\pytx@cmd{code}%
+    \def\pytx@context{}%
+    \def\pytx@group{none}%
+    \pytx@BeginCodeEnv[none]}%
+{\end{VerbatimOut}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+}%
 \newcommand{\pytx@MakeConsFV}[1]{%
     \expandafter\newenvironment{#1console}{%
         \VerbatimEnvironment
@@ -747,11 +853,11 @@
             {Attempt to create macros with reserved prefix PYG}{}}{}%
     \pytx@MakeInlinebFV{#2}%
     \pytx@MakeInlinevFV{#2}%
-    \pytx@MakeInlinecFV{#2}%
+    %\pytx@MakeInlinecFV{#2}%
     \pytx@MakeInlineFV{#2}%
     \pytx@MakeBlockFV{#2}%
     \pytx@MakeVerbFV{#2}%
-    \pytx@MakeCodeFV{#2}%
+    %\pytx@MakeCodeFV{#2}%
     \ifstrequal{#1}{console}{\pytx@MakeConsFV{#2}}{}%
     \ifstrequal{#1}{all}{\pytx@MakeConsFV{#2}}{}%
     \setpythontexfv[#2]{}%
@@ -766,18 +872,18 @@
             \pytx@MakeInlinevPyg{#2}}%
         {\pytx@MakeInlinebFV{#2}%
             \pytx@MakeInlinevFV{#2}}%
-    \pytx@MakeInlinecPyg{#2}%
+    %\pytx@MakeInlinecPyg{#2}%
     \pytx@MakeInlinePyg{#2}%
     \pytx@MakeBlockPyg{#2}%
     \pytx@MakeVerbPyg{#2}%
-    \pytx@MakeCodePyg{#2}%
+    %\pytx@MakeCodePyg{#2}%
     \ifstrequal{#1}{console}{\pytx@MakeConsPyg{#2}}{}%
     \ifstrequal{#1}{all}{\pytx@MakeConsPyg{#2}}{}%
     \setpythontexfv[#2]{}%
     \booltrue{pytx@usedpygments}%
     \expandafter\xdef\csname pytx@pygopt@#2\endcsname{#4}%
-    \AtBeginDocument{\immediate\write\pytx@codefile{%
-        \pytx@delimsettings pygmentsfamily:#2,#3,%
+    \AtEndDocument{\immediate\write\pytx@codefile{%
+        \pytx@delimsettings pygfamily=#2,#3,%
         \string{\csname pytx@pygopt@#2\endcsname\string}\pytx@delimchar}%
     }%
 }
@@ -804,6 +910,8 @@
     \expandafter\xdef\csname pytx@macroformatter@#2\endcsname{auto}
     \expandafter\xdef\csname pytx@pyglexer@#2\endcsname{#3}
     \expandafter\xdef\csname pytx@pygopt@#2\endcsname{#4}
+    \pytx@MakeInlinecFV{#2}
+    \pytx@MakeCodeFV{#2}
     \AtBeginDocument{%
         \ifcsstring{pytx@macroformatter@#2}{auto}{%
             \ifbool{pytx@opt@pygments}%
@@ -828,23 +936,6 @@
     \fi
 }
 \@onlypreamble\setpythontexformatter
-\def\setpythontexcustomcode#1{%
-    \begingroup
-    \let\do\@makeother\dospecials
-    \catcode`\{=1
-    \catcode`\}=2
-    \catcode`\^^M=10\relax
-    \pytx@SetCustomCode{#1}%
-}
-\long\def\pytx@SetCustomCode#1#2{%
-    \endgroup
-    \AtBeginDocument{%
-        \immediate\write\pytx@codefile{%
-            \pytx@delimsettings customcode:#1,%
-            [\detokenize{#2}]\pytx@delimchar}%
-    }%
-}
-\@onlypreamble\setpythontexcustomcode
 \makepythontexfamily[all]{py}{python}{}
 \makepythontexfamily[all]{sympy}{python}{}
 \makepythontexfamily[all]{pylab}{python}{}
@@ -858,8 +949,9 @@
     \ifcsname listing\endcsname
         \ifbool{pytx@listingenv}{}%
             {\PackageWarning{\pytx@packagename}%
-                {A conflicting "listing" environment already exists}%
-                {Use \string\setpythontexlistingenv to create a custom environment}}%
+                {A "listing" environment already exists \MessageBreak
+                 \pytx@packagename\space will not create one \MessageBreak
+                 Use \string\setpythontexlistingenv to create a custom listing environment}}%
     \else
         \ifbool{pytx@listingenv}{}{\DeclareFloatingEnvironment[fileext=lopytx]{listing}}
     \fi
@@ -1019,7 +1111,7 @@
         \fi
         \pytx@WriteCodefileInfoExt
         \IfFileExists{##3}{}{\PackageWarning{\pytx@packagename}%
-            {Input file <##3> does not exist}{}}
+            {Input file <##3> does not exist}}
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \begingroup
         \pytx@FVSet
@@ -1041,8 +1133,8 @@
         {\expandafter\gdef\csname pytx@fvsettings@PYG#1\endcsname{#2}}%
 }%
 \def\setpygmentspygopt#1#2{%
-    \AtBeginDocument{\immediate\write\pytx@codefile{%
-        \pytx@delimsettings pygmentsfamily:PYG#1,#1,%
+    \AtEndDocument{\immediate\write\pytx@codefile{%
+        \pytx@delimsettings pygfamily=PYG#1,#1,%
         \string{#2\string}\pytx@delimchar}%
     }%
 }
@@ -1078,6 +1170,9 @@
 }%
 \@onlypreamble\makepygments
 \makepygments
+\AfterEndDocument{%
+    \immediate\closeout\pytx@codefile
+}
 \endinput
 %%
 %% End of file `pythontex.sty'.

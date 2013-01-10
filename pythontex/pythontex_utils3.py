@@ -6,7 +6,7 @@ The utilities class provides variables and methods for the individual
 Python scripts created and executed by PythonTeX.  An instance of the class 
 named "pytex" is automatically created in each individual script.
 
-Copyright (c) 2012, Geoffrey M. Poore
+Copyright (c) 2012-2013, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -353,7 +353,7 @@ class PythontexUtils(object):
         else:
             raise ValueError('Unsupported formatter type')
     
-    # Finally, we provide a method that saves "printed" content via macros.
+    # We provide a method that saves "printed" content via macros.
     # This is one of the two primary tasks of the class.  (Actually, this is 
     # the primary task when the SymPy latex printer interface isn't needed.)
     def _print_via_macro(self, expr):
@@ -376,4 +376,41 @@ class PythontexUtils(object):
         #// Python 3
         self.macrofile.write(before + self.formatter(expr) + after)
         #\\ End Python 3
-
+    
+    # We need a way to keep track of dependencies
+    # We create a list that stores specified dependencies, and a method that
+    # adds dependencies to the list.  The contents of this list must be 
+    # written to stdout at the end of the file, to be transmitted back to the 
+    # main script.  So we create a method that prints them to stdout.  This is
+    # called via a generic cleanup method that is always invoked at the end of 
+    # the script.
+    _dependencies = list()
+    def add_dependencies(self, *args):
+        self._dependencies.extend(list(args))
+    def _save_dependencies(self):
+        if self._dependencies:
+            print('=>PYTHONTEX:DEPENDENCIES#')
+            for dep in self._dependencies:
+                print(dep)
+    
+    # We need a way to keep track of created files, so that they can be 
+    # automatically cleaned up.  By default, all files are created within the
+    # pythontex-files_<jobname> folder, and are thus contained.  If a custom
+    # working directory is used, or files are otherwise created in a custom
+    # location, it may be desirable to track them and keep them cleaned up.
+    # Furthermore, even when files are contained in the default directory, it
+    # may be desirable to delete files when they are no longer needed due to
+    # program changes, renaming, etc.
+    _created = list()
+    def add_created(self, *args):
+        self._created.extend(list(args))
+    def _save_created(self):
+        if self._created:
+            print('=>PYTHONTEX:CREATED#')
+            for creation in self._created:
+                print(creation)
+    
+    def _cleanup(self):
+        self._save_dependencies()
+        self._save_created()
+        

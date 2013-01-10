@@ -4,23 +4,26 @@
 '''
 Install PythonTeX
 
-This script installs one set of PythonTeX scripts for use under Python 2.6-2.7 
-(names end in "2") and another set for user under Python 3 (names end in "3").
-You will need to launch the correct script depending on the default version of
-Python on your system.
+This script installs one set of PythonTeX scripts for use under Python 2.7 
+(names end in "2") and another set for use under Python 3.1+ (names end in 
+"3").  You will need to launch the correct script depending on the version of 
+Python you are using.
 
-This script should work with most TeX distributions.  It is primarily written 
-for TeX Live.  It should work with other TeX distributions that use the 
-Kpathsea library (such as MiKTeX), though with reduced functionality in some 
-cases.  It should work with additional distributions as well, but will require 
-manual input when Kpathsea is not present.  When the script cannot find TeX 
-Live-style functionality, it alerts the user and attempts to proceed.
+This installation script should work with most TeX distributions.  It is 
+primarily written for TeX Live.  It should work with other TeX distributions 
+that use the Kpathsea library (such as MiKTeX), though with reduced 
+functionality in some cases.  It will require manual input when used with a 
+distribution that does not include Kpathsea.  When the script cannot use a 
+TeX Live-style approach, it alerts the user and attempts to proceed.
 
 The script will overwrite (and thus update) all previously installed PythonTeX 
 files.  During automated installation (Kpathsea), files are NOT installed in 
 the LOCAL texmf tree, because we want auto-updating once PythonTeX is added to 
-CTAN.  The texhash command (if present) is executed to make the system aware 
-of any new files.
+CTAN (this will occur once it leaves beta).  The mktexlsr command is executed 
+(if present) to make the system aware of any new files.
+
+The script attempts to create a binary wrapper (Windows) or symlink 
+(Linux and OS X) for launching the PythonTeX scripts.
 
 Copyright (c) 2012, Geoffrey M. Poore
 All rights reserved.
@@ -34,7 +37,11 @@ Licensed under the BSD 3-Clause License:
 import sys
 import platform
 from os import path, mkdir
-from subprocess import check_call, check_output, CalledProcessError
+if platform.system() != 'Windows':
+    # Only create symlinks if not under Windows 
+    # (os.symlink doesn't exist under Windows)
+    from os import symlink, chmod, unlink
+from subprocess import call, check_call, check_output
 from shutil import copy
 
 
@@ -61,27 +68,37 @@ if missing_files:
     sys.exit(1)
 
 
-# Print starting message
-print('\nInstalling PythonTeX...')
-
-
 # Retrieve the location of a valid TeX tree
 # Attempt to use kpsewhich; otherwise, resort to manual input 
+should_exit = False #Can't use sys.exit() in try, cause it will trigger except
 try:
     if sys.version_info[0] == 2:
         texmf_path = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).rstrip('\r\n')
     else:
         texmf_path = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).decode('utf-8').rstrip('\r\n')
-except OSError:
-    print('\nYour system appears to lack kpsewhich.')
+    # If the TeX tree isn't the standard TeX Live tree, make sure it's the
+    # tree the user wants
+    if '/texlive/' not in texmf_path:
+        print('The following texmf path was located:')
+        print('    ' + texmf_path)
+        print('This does not appear to be a standard TeX Live path.')
+        print('You may have a customized TeX Live installation or may not be using TeX Live.')
+        print('Or you may need to run this script with elevated permissions and/or specify the environment.')
+        print('(For example, you may need "sudo env PATH=$PATH")\n')
+        choice = input('Do you wish to use this path [y], exit [n], or manually enter another path [m]?\n')
+        if choice != 'y':
+            if choice == 'm':
+                texmf_path = input('Please enter a valid texmf path:\n')
+            else:
+                should_exit = True
+except:
     print('Cannot automatically find a valid texmf path.')
-    texmf_path = input('Please enter a valid texmf path: ').rstrip('\r\n')
-except CalledProcessError:
-    print('\nkpsewhich is not happy with its arguments.')
-    print('Cannot automatically find a valid texmf path.')
-    texmf_path = input('Please enter a valid texmf path: ').rstrip('\r\n')
-# Make sure path slashes are compatible with the operating system 
-# This is only needed for Windows
+    print('The Kpathsea library does not exist or could not be used.')
+    texmf_path = input('Please enter a valid texmf path:\n')
+if should_exit:
+    sys.exit()
+# Make sure path slashes are compatible with the operating system
+# Kpathsea returns forward slashes, but Windows needs back slashes
 texmf_path = path.normcase(texmf_path)
 # Check to make sure the path is valid 
 # This is only really needed for manual input 
@@ -89,6 +106,8 @@ texmf_path = path.normcase(texmf_path)
 if texmf_path == '' or not path.exists(texmf_path):
     print('Invalid texmf path.  Exiting.')
     sys.exit(1)
+    
+
 # Now check that all other needed paths are present
 doc_path = path.join(texmf_path, 'doc', 'latex')
 package_path = path.join(texmf_path, 'tex', 'latex')
@@ -109,66 +128,126 @@ scripts_path = path.join(scripts_path, 'pythontex')
 source_path = path.join(source_path, 'pythontex')
 
 
-#Install docs
-if not path.exists(doc_path):
-    mkdir(doc_path)
-copy('pythontex.pdf', doc_path)
-copy('README.rst', doc_path)
-# Install package
-if not path.exists(package_path):
-    mkdir(package_path)
-copy('pythontex.sty', package_path)
-# Install scripts
-if not path.exists(scripts_path):
-    mkdir(scripts_path)
-copy('pythontex2.py', scripts_path)
-copy('pythontex_types2.py', scripts_path)
-copy('pythontex_utils2.py', scripts_path)
-copy('pythontex3.py', scripts_path)
-copy('pythontex_types3.py', scripts_path)
-copy('pythontex_utils3.py', scripts_path)
-# Install source
-if not path.exists(source_path):
-    mkdir(source_path)
-copy('pythontex.ins', source_path)
-copy('pythontex.dtx', source_path)
+# Install files
+# Use a try/except in case elevated permissions are needed (Linux and OS X)
+print('PythonTeX will be installed in \n    ' + texmf_path)
+try:
+    # Install docs
+    if not path.exists(doc_path):
+        mkdir(doc_path)
+    copy('pythontex.pdf', doc_path)
+    copy('README.rst', doc_path)
+    # Install package
+    if not path.exists(package_path):
+        mkdir(package_path)
+    copy('pythontex.sty', package_path)
+    # Install scripts
+    if not path.exists(scripts_path):
+        mkdir(scripts_path)
+    for ver in [2, 3]:
+        copy('pythontex{0}.py'.format(ver), scripts_path)
+        copy('pythontex_types{0}.py'.format(ver), scripts_path)
+        copy('pythontex_utils{0}.py'.format(ver), scripts_path)
+    # Install source
+    if not path.exists(source_path):
+        mkdir(source_path)
+    copy('pythontex.ins', source_path)
+    copy('pythontex.dtx', source_path)
+except OSError as e:
+    if e.errno == 13:
+        print('Insufficient permission to install PythonTeX')
+        print('(For example, you may need sudo, or possibly "sudo env PATH=$PATH")\n')
+        sys.exit(1)
+    else:
+        raise        
 
 
-# Install "binaries" or suggest the cretaion of binaries/batch files/symlinks
-# This part is operating-system dependent
-#
-# If under Windows, we create a binary wrapper if under TeX Live and otherwise
-# alert the user regarding the need for a wrapper or batch file
+# Install binary wrappers, create symlinks, or suggest the creation of 
+# wrappers/batch files/symlinks.  This part is operating system dependent.
 if platform.system() == 'Windows':
-    # Assembly the binary path, assuming TeX Live
+    # If under Windows, we create a binary wrapper if under TeX Live and 
+    # otherwise alert the user regarding the need for a wrapper or batch file.
+    
+    # Assemble the binary path, assuming TeX Live
     # The directory bin/ should be at the same level as texmf
     bin_path = path.join(path.split(texmf_path)[0], 'bin', 'win32') 
     if path.exists(path.join(bin_path, 'runscript.exe')):
-        print('\nCreating binary wrapper...')        
-        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex2.exe'))
-        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex3.exe'))
+        for ver in [2, 3]:
+            copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex{0}.exe'.format(ver)))
+        print('\nCreated binary wrapper...')
     else:
-        print('\nCould not create a wrapper for launching pythontex.py.')
+        print('\nCould not create a wrapper for launching pythontex*.py.')
         print('You will need to create a wrapper manually, or use a batch file.')
-        print('The wrapper or batch file should be placed somewhere on the Windows PATH.')
+        print('Sample batch files are included with the main PythonTeX files.')
+        print('The wrapper or batch file should be in a location on the Windows PATH.')
         print('The bin/ directory in your TeX distribution may be a good location.')
-        print('The script pythontex.py is located in the following directory:')
+        print('The scripts pythontex*.py are located in the following directory:')
         print('    ' + scripts_path)
-# If not under Windows, we alert the user regarding what is necessary to launch
-# pythontex.py
 else:
-    print('\nYou may wish to create a symlink to pythontex.py.')
-    print('You may also want to make it executable via chmod.')
-    print('The script pythontex.py is located in the following directory:')
-    print('    ' + scripts_path)
+    # Optimistically proceed as if every system other than Windows can share
+    # one set of code.
+    root_path = path.split(texmf_path)[0]
+    # Create a list of all possible subdirectories of bin/ for TeX Live
+    # Source:  http://www.tug.org/texlive/doc/texlive-en/texlive-en.html#x1-250003.2.1
+    texlive_platforms = ['alpha-linux', 'amd64-freebsd', 'amd64-kfreebsd',
+                         'armel-linux', 'i386-cygwin', 'i386-freebsd',
+                         'i386-kfreebsd', 'i386-linux', 'i386-solaris',
+                         'mips-irix', 'mipsel-linux', 'powerpc-aix', 
+                         'powerpc-linux', 'sparc-solaris', 'universal-darwin',
+                         'x86_64-darwin', 'x86_64-linux', 'x86_64-solaris']
+    symlink_created = False
+    # Try to create a symlink in the standard TeX Live locations
+    for pltfrm in texlive_platforms:
+        bin_path = path.join(root_path, 'bin', pltfrm)
+        if path.exists(bin_path):
+            for ver in [2, 3]:
+                link = path.join(bin_path, 'pythontex{0}.py'.format(ver))
+                # Unlink any old symlinks if they exist, and create new ones
+                # Not doing this gave permissions errors under Ubuntu
+                if path.exists(link):
+                    unlink(link)
+                symlink(path.join(scripts_path, 'pythontex{0}.py'.format(ver)), link)
+                chmod(link, 0o775)
+                symlink_created = True
+    
+    # If the standard TeX Live bin/ locations didn't work, try the typical 
+    # location for MacPorts TeX Live.  This should typically be 
+    # /opt/local/bin, but instead of assuming that location, we just climb 
+    # two levels up from texmf-dist and then look for a bin/ directory that
+    # contains a tex executable.  (For MacPorts, texmf-dist should be at 
+    # /opt/local/share/texmf-dist.)
+    if not symlink_created and platform.system() == 'Darwin':
+        bin_path = path.join(path.split(root_path)[0], 'bin')
+        if path.exists(bin_path):
+            try:
+                # Make sure this bin/ is the bin/ we're looking for, by
+                # seeing if pdftex exists
+                check_output([path.join(bin_path, 'pdftex'), '--version'])
+                # Create symlinks
+                for ver in [2, 3]:
+                    link = path.join(bin_path, 'pythontex{0}.py'.format(ver))
+                    if path.exists(link):
+                        unlink(link)
+                    symlink(path.join(scripts_path, 'pythontex{0}.py'.format(ver)), link)
+                    chmod(link, 0o775)
+                    symlink_created = True
+            except:
+                pass
+    if symlink_created:
+        print("\nCreated symlink in Tex's bin/ directory...")
+    else:
+        print('\nCould not automatically create a symlink to pythontex*.py.')
+        print('You may wish to create one manually, and make it executable via chmod.')
+        print('The scripts pythontex*.py are located in the following directory:')
+        print('    ' + scripts_path)
 
 
-# Alert TeX to the existence of the package via texhash
-print('\nRunning texhash...')
+# Alert TeX to the existence of the package via mktexlsr
 try:
-    check_call(['texhash'])
-except OSError:
-    print('Could not run texhash.  Your system appears to lack texhash.')
+    print('\nRunning mktexlsr to make TeX aware of new files...')
+    check_call(['mktexlsr'])
+except: 
+    print('Could not run mktexlsr.')
     print('Your system may not be aware of newly installed files.')
 
 
@@ -179,5 +258,8 @@ print('Choose the correct scripts based on your Python installation.')
 print('See the documentation for more information.')
 print('* * *\n')
 
-# Pause so that the user can see any errors or other messages
-input('\n[Press ENTER to exit]')
+
+if platform.system() == 'Windows':
+    # Pause so that the user can see any errors or other messages
+    # input('\n[Press ENTER to exit]')
+    call(['pause'], shell=True)
