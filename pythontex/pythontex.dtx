@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2013/01/09 Version~0.10beta PythonTeX]
+    [2013/01/23 Version~0.10beta2 PythonTeX]
 %</package>
 %
 %<*driver>
@@ -86,6 +86,17 @@
 %   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
 %
+%
+% \begin{changelog}{v0.10beta2}{2013/01/23}
+% \item Improved \texttt{pythontex*.py}'s handling of the name of the file being processed.  A warning is no longer raised if the name is given with an extension; extensions are now processed (stripped) automatically.  The filename may now contain a path to the file, so you need not run \texttt{pythontex*.py} from within the document's directory.
+% \item Added command-line option \texttt{-{}-verbose} for more verbose output.  Currently, this prints a list of all processes that are launched.
+% \item Fixed a bug that could crash \texttt{pythontex*.py} when the package option \texttt{pygments=false}.
+% \item Added documentation about \texttt{autoprint} behavior in the preamble.  Summary:  \texttt{code} commands and environments are allowed in the preamble as of v0.10beta.  \texttt{autoprint} only applies to the body of the document, because nothing can be typeset in the preamble.  Content printed in the preamble can be brought in by explicitly using \texttt{\string\printpythontex}, but this should be used with great care.
+% \item Revised \texttt{\string\stdoutpythontex} and \texttt{\string\printpythontex} so that they work in the preamble.  Again, this should be used with great care if at all.
+% \item Revised treatment of any content that custom code attempts to print.  Custom code is not allowed to print to the document (see documentation).  If custom code attempts to print, a warning is raised, and the printed content is included in the \texttt{pythontex*.py} run summary.
+% \item One-line entries in stderr, such as those produced by Python's \texttt{warnings.warn()}, were not previously parsed because they are of the form \texttt{:<linenumber>:} rather than \texttt{line~<linenumber>}.  These are now parsed and synchronized with the document.  They are also correctly parsed for inclusion in the document via \texttt{\string\stderrpythontex}.
+% \item If the package option \texttt{stderrfilename} is changed, all sessions that produced errors or warnings are now re-executed automatically, so that their stderr content is properly updated with the new filename.
+% \end{changelog}
 %
 % \begin{changelog}{v0.10beta}{2013/01/09}
 % \item Backward-incompatible: Redid treatment of command-line options for \texttt{pythontex*.py}, using Python's \texttt{argparse} module.  Run \texttt{pythontex*.py} with option \texttt{-h} to see new command line options.
@@ -277,7 +288,7 @@
 %
 % If you use XeLaTeX, and your source code contains tabs, you \textbf{must} invoke XeLaTeX with the |-8bit| option so that tabs will be written to file as actual tab characters rather than as the character sequence |^^I|.\footnote{See \url{http://tex.stackexchange.com/questions/58732/how-to-output-a-tabulation-into-a-file} for more on tabs with XeTeX.}  
 %
-% |pythontex*.py| requires a single command-line argument:  the name of the .tex file.  The filename can be passed with or without the .tex extension, but no extension is preferred.\footnote{|pythontex*.py| will be happy to work with a file that does not have the .tex extension, so long as the file cooperates with |pythontex.sty|.  In this case, the file extension should \textbf{not} be passed to |pythontex*.py|, because it won't be expecting it and won't be able to determine that it is indeed an extension.  |pythontex*.py| just needs to know |\textbackslash jobname|.}  The file name should be wrapped in double quotes |"| to allow for space characters.\footnote{Using spaces in the names of .tex files is apparently frowned upon.  But if you configure things to handle spaces whenever it doesn't take much extra work, then that's one less thing that can go wrong.}  For example, under Windows with \TeX\ Live and Python 2.7 we would create the wrapper |pythontex2.exe|.  Then we could run \pytex\ on a file \meta{file~name}.tex using the command |pythontex2.exe "|\meta{file~name}|"|.  You will probably want to configure your \TeX\ editor with a shortcut key for running \pytex\ automatically.
+% |pythontex*.py| requires a single command-line argument:  the name of the .tex file to process.  The filename can be passed with or without an extension; the script really only needs the |\jobname|, so any extension is stripped off.\footnote{Thus, \pytex\ works happily with .tex, .ltx, .dtx, and any other extension.}  The filename may include the path to the file; you do not have to be in the same directory as the file to run \pytex.  If you are configuring your editor to run \pytex\ automatically via a shortcut, you may want to wrap the filename in double quotes |"| to allow for space characters.\footnote{Using spaces in the names of .tex files is apparently frowned upon.  But if you configure things to handle spaces whenever it doesn't take much extra work, then that's one less thing that can go wrong.}  For example, under Windows with \TeX\ Live and Python 2.7 we would create the wrapper |pythontex2.exe|.  Then we could run \pytex\ on a file \meta{file~name}.tex using the command |pythontex2.exe "|\meta{file~name}|"|.
 %
 % |pythontex*.py| accepts the following optional command-line arguments.  Some of these options duplicate package-level options, so that settings may be configured either within the document or at the command line.  In the event that the command-line and package options conflict, the package options always override the command-line options.  For variations on these options that are acceptable, run |pythontex*.py -h|.
 % \begin{itemize}
@@ -292,6 +303,8 @@
 %
 % There is an equivalent |rerun| package option.
 % \item |--hashdependencies=[{true,false}]| This determines whether dependencies (external files highlighted by Pygments, code dependencies specified via |pytex.add_dependencies()|, etc.) are considered to be modified based on their hash or modification time.  By default, mtime is used, since it is faster.  The package option |hashdependencies| is equivalent.
+%
+% \item |--verbose| This gives more verbose output, including a list of all processes that are launched.
 % \end{itemize}
 %
 % \pytex\ currently does not provide means to choose between multiple Python installations; it will use the default Python installation.  Support for multiple installations is unlikely to be added, since a cross-platform solution would be required.\footnote{Python 3.3's \texttt{py} launcher for Windows may make this more feasible.}  If you need to work with multiple installations, you may wish to modify |pythontex_types*.py| to create additional command and environment families that invoke different versions of Python, based on your system.
@@ -335,12 +348,11 @@
 %
 % \DescribeMacro{autoprint=\meta{none}/true/false default:true \meta{none}=true}
 %
-% Whenever a |print| command/statement is used, the printed content will automatically be included in the document, unless the code doing the printing is being typeset.  In that case, the printed content must be included using the |\printpythontex| or |\stdoutpythontex| commands.
+% Whenever a |print| command/statement is used, the printed content will automatically be included in the document, unless the code doing the printing is being typeset.\footnote{Note that |autoprint| only works within the body of the document.  The |code| command and environment can be used in the preamble, but |autoprint| is disabled there.  It is usually a not a good idea to print in the preamble, because nothing can be typeset; the only thing that could be validly printed is \LaTeX\ commands that do not typeset content, such as macro definitions.  Thus, it is appropriate that printed content is only brought in while in the preamble if it is explicitly requested via |\string\printpythontex|. This approach is also helpful for writing packages using \pytex, since the author does not have to worry about any \LaTeX\ commands printed by the package either not being included (if |autoprint| is relied upon, but the user turns it off) or being included twice (if |\string\printpythontex| is used and |autoprint| is enabled).  Printing should only be used in the preamble with great care.}  In that case, the printed content must be included using the |\printpythontex| or |\stdoutpythontex| commands.
 %
 % Printed content is pulled in directly from the external file in which it is saved, and is interpreted by \LaTeX\ as \LaTeX\ code.  If you wish to avoid this, you should print appropriate \LaTeX\ commands with your content to ensure that it is typeset as you desire.  Alternatively, you may use |\printpythontex| or |\stdoutpythontex| to bring in printed content in verbatim form, using those commands' optional |verb| and |inlineverb| (|v|) options.
 %
 % The |autoprint| option sets autoprint behavior for the entire document.  This may be overridden within the document using the |\setpythontexautoprint| command.
-%
 %
 % \DescribeMacro{print=\meta{none}/true/false default:true \meta{none}=true}
 %
@@ -438,7 +450,7 @@
 %
 % \pytex\ provides four types of commands for use with inline code and three environments for use with multiple lines of code, plus a |console| environment.  All commands and environments are named using a base name and a command- or environment-specific suffix.  A complete set of commands and environments with the same base name constitutes a \textbf{command and environment family}.  In what follows, we describe the different commands and environments, using the |py| base name (the |py| family) as an example.
 %
-% Most commands and environments cannot be used in the preamble, because they typeset material and that is allowed in the preamble.  The one exception is the code command and environment.  These can be used to enter code, but need not typeset anything.  This allows you to collect your \pytex\ code in the preamble, if you wish, or even use \pytex\ in package writing.
+% Most commands and environments cannot be used in the preamble, because they typeset material and that is not possible in the preamble.  The one exception is the |code| command and environment.  These can be used to enter code, but need not typeset anything.  This allows you to collect your \pytex\ code in the preamble, if you wish, or even use \pytex\ in package writing.  Note that the package option |autoprint| is never active in the preamble, so even if a |code| command or environment did print in the preamble, printed content would never be inputted unless |\printpythontex| or |\stdoutpythontex| were used.
 %
 % All commands and environments take a session name as an optional argument.  The session name determines the session in which the code is executed.  This allows code to be executed in multiple independent sessions, increasing speed (sessions run in parallel) and preventing naming conflicts.  If a session is not specified, then the |default| session is used.  Session names should use the characters a-z, A-Z, 0-9, the hyphen, and the underscore; all characters used \textbf{must} be valid in file names, since session names are used to create temporary files.  The colon is also allowed, but it is replaced with a hyphen internally, so the sessions |code:1| and |code-1| are identical.
 %
@@ -533,9 +545,15 @@
 %
 % If you wish to share these customizations among several documents, you can create your own document class or package containing custom code commands and environments.
 %
-% While custom code can be added anywhere in a document, it is probably best for organizational reasons to add it in the preamble or at least at the very beginning of the document.
+% While custom code can be added anywhere in a document, it is probably best for organizational reasons to add it in the preamble or near the beginning of the document.
 %
 % Note that custom code is executed, but never typeset.  Only code that is actually entered within a |block| (or |verb|) command or environment is ever typeset.  This means that you should be careful about how you use custom code.  For example, if you are documenting code, you probably want to show absolutely all code that is executed, and in that case using custom code might not be appropriate.  If you are using \pytex\ to create figures or automate text, are using many sessions, and require many imports, then custom code could save some typing by centralizing the imports.
+%
+% Any errors or warnings due to custom code will be correctly synchronized with the document, just like normal errors and warnings.  Any errors or warnings will be specifically identified as originating in custom code.
+%
+% Custom code is not allowed to print or write to stdout.  It would be pointless for custom code at the beginning of a session to print, because all printed content would be identical since custom code at the beginning comes before any regular code that might make the output session-specific.  In addition, it is not obvious where printed content from custom code would be included, especially for custom code at the end of a session.  Furthermore, custom code may be in the preamble, where nothing can be typeset.
+%
+% If custom code does attempt to print, a warning is raised and the printed content is included in the \pytex\ run summary.  This gives you access to the printed content, while not including it in the document.  This can be useful in cases where you cannot control whether content prints (for example, if a library automatically prints debugging information).
 %
 % \DescribeMacro{\pythontexcustomc\oarg{position}\marg{family}\marg{code}}
 %
@@ -764,7 +782,7 @@
 %
 % \DescribeMacro{\setpythontexoutputdir\marg{output~directory}}
 %
-% By default, \pytex\ saves all automatically generated content in a directory called |pythontex-files-|\meta{sanitized jobname}, where \meta{sanitized jobname} is just |\jobname| with any space characters or asterisks replaced with hyphens.  This directory will be created by |pythontex*.py|.  If we wish to specify another directory (for example, if |\jobname| is long and complex, and there is no danger of two files trying to use the same directory), then we can use the |\setpythontexoutputdir| macro to redefine the output directory.
+% By default, \pytex\ saves all automatically generated content in a directory called |pythontex-files-|\meta{sanitized jobname}, where \meta{sanitized jobname} is just |\jobname| with any space characters or asterisks replaced with hyphens.  This directory will be created by |pythontex*.py|.  If we wish to specify another directory (for example, if |\jobname| is long and complex, and there is no danger of two files trying to use the same directory), then we can use the |\setpythontexoutputdir| macro to redefine the output directory.\footnote{In the rare event that both |\string\setpythontexoutputdir| is used and |\string\printpythontex| is needed in the preamble, |\string\setpythontexoutputdir| must be used first, so that |\string\printpythontex| will know where to look for output.}
 %
 % \DescribeMacro{\setpythontexworkingdir\marg{working~directory}}
 %
@@ -900,7 +918,9 @@
 %
 % \section*{Acknowledgements}
 %
-% Thanks to Øystein Bjørndal for suggestions and for help with OS X compatibility.
+% Thanks to Nicholas Lu Chee Seng for help testing the earliest versions.
+%
+% Thanks to Øystein Bjørndal for many suggestions and for help with OS X compatibility.
 %
 %
 % \PrintChangelog
@@ -921,7 +941,7 @@
 % We begin according to custom by specifying the version of \LaTeX\ that we require and stating the package that we are providing.  We also store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{pythontex}[2013/01/09 v0.10beta]
+\ProvidesPackage{pythontex}[2013/01/23 v0.10beta2]
 \newcommand{\pytx@packagename}{PythonTeX}
 %    \end{macrocode}
 %
@@ -1346,18 +1366,12 @@
 % \begin{macro}{\pytx@outputdir}\begin{macro}{\setpythontexoutputdir}
 % To keep things tidy, all \pytex\ files are stored in a directory that is created in the document root directory.  By default, this directory is called |pythontex-files-|\meta{sanitized~jobname}, but we want to provide the user with the option to customize this.  For example, when \meta{sanitized~jobname} is very long, it might be convenient to use |pythontex-|\meta{abbreviated~name}.
 %
-% The command |\setpythontexoutputdir| stores the name of \pytex's output directory in |\pytx@outputdir|.  If the |graphicx| package is loaded, the output directory is also added to the graphics path, so that files in the output directory may be included within the main document without the necessity of specifying path information.  The command |\setpythontexoutputdir| is only allowed in the preamble, because the location of \pytex\ content must be specified before the body of the document is typeset.  If |\setpythontexoutputdir| is not invoked by the user, then we automatically invoke it at the beginning of the document to set the default directory name.
+% The command |\setpythontexoutputdir| stores the name of \pytex's output directory in |\pytx@outputdir|.  If the |graphicx| package is loaded, the output directory is also added to the graphics path at the beginning of the document, so that files in the output directory may be included within the main document without the necessity of specifying path information.  The command |\setpythontexoutputdir| is only allowed in the preamble, because the location of \pytex\ content should be specified before the body of the document is typeset.
 %    \begin{macrocode}
-\def\pytx@outputdir{}
-\newcommand{\setpythontexoutputdir}[1]{%
-    \def\pytx@outputdir{#1}%
-    \AtBeginDocument{\@ifpackageloaded{graphicx}{\graphicspath{{#1/}}}{}}%
-}
+\newcommand{\setpythontexoutputdir}[1]{\def\pytx@outputdir{#1}}
+\setpythontexoutputdir{pythontex-files-\pytx@jobname}
+\AtBeginDocument{\@ifpackageloaded{graphicx}{\graphicspath{{\pytx@outputdir/}}}{}}
 \@onlypreamble\setpythontexoutputdir
-\AtBeginDocument{%
-    \expandafter\ifstrempty\expandafter{\pytx@outputdir}%
-        {\setpythontexoutputdir{pythontex-files-\pytx@jobname}}{}%
-}
 %    \end{macrocode}
 %
 %
@@ -1571,8 +1585,9 @@
 % \end{macro}
 %
 % \begin{macro}{\pytx@FetchStdoutfile}
-% Now we create a generic macro for bringing in the stdout file.  This macro can input the content in verbatim form, applying |fancyvrb| options if present.  Usage:  |\pytx@FetchStdoutfile|\oarg{verbatim~options}\oarg{fancyvrb~options}\marg{file~path}.\pytxtodo{Error handling for invalid options?}  We must disable the macro in the event that the |stdout| option is false.
+% Now we create a generic macro for bringing in the stdout file.  This macro can input the content in verbatim form, applying |fancyvrb| options if present.  Usage:  |\pytx@FetchStdoutfile|\oarg{verbatim~options}\oarg{fancyvrb~options}\marg{file~path}.\pytxtodo{Error handling for invalid options?}  We must disable the macro in the event that the |stdout| option is false.  Also, the warning text should not be included if we are in the preamble.
 %    \begin{macrocode}
+\def\pytx@stdout@warntext{}
 \def\pytx@FetchStdoutfile[#1][#2]#3{%
     \IfFileExists{\pytx@outputdir/#3.stdout}{%
         \ifstrequal{#1}{}{\input{\pytx@outputdir/#3.stdout}}{}%
@@ -1581,10 +1596,11 @@
         \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
         \ifstrequal{#1}{v}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
     }%
-    {\textbf{??~\pytx@packagename~??}%
+    {\pytx@stdout@warntext
         \PackageWarning{\pytx@packagename}{Non-existent printed content}}%
 }
 \ifbool{pytx@opt@stdout}{}{\def\pytx@FetchStdoutfile[#1][#2]#3{}}
+\AtBeginDocument{\def\pytx@stdout@warntext{\textbf{??~\pytx@packagename~??}}}
 %    \end{macrocode}
 % \end{macro}
 %

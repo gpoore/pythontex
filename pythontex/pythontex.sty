@@ -20,9 +20,9 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2013/01/09 Version~0.10beta PythonTeX]
+    [2013/01/23 Version~0.10beta2 PythonTeX]
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{pythontex}[2013/01/09 v0.10beta]
+\ProvidesPackage{pythontex}[2013/01/23 v0.10beta2]
 \newcommand{\pytx@packagename}{PythonTeX}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
@@ -199,16 +199,10 @@
 \StrSubstitute{\jobname}{ }{-}[\pytx@jobname]
 \StrSubstitute{\pytx@jobname}{"}{}[\pytx@jobname]
 \StrSubstitute{\pytx@jobname}{*}{-}[\pytx@jobname]
-\def\pytx@outputdir{}
-\newcommand{\setpythontexoutputdir}[1]{%
-    \def\pytx@outputdir{#1}%
-    \AtBeginDocument{\@ifpackageloaded{graphicx}{\graphicspath{{#1/}}}{}}%
-}
+\newcommand{\setpythontexoutputdir}[1]{\def\pytx@outputdir{#1}}
+\setpythontexoutputdir{pythontex-files-\pytx@jobname}
+\AtBeginDocument{\@ifpackageloaded{graphicx}{\graphicspath{{\pytx@outputdir/}}}{}}
 \@onlypreamble\setpythontexoutputdir
-\AtBeginDocument{%
-    \expandafter\ifstrempty\expandafter{\pytx@outputdir}%
-        {\setpythontexoutputdir{pythontex-files-\pytx@jobname}}{}%
-}
 \newcommand{\setpythontexworkingdir}[1]{%
     \def\pytx@workingdir{#1}%
 }
@@ -314,6 +308,7 @@
 \let\FVB@SaveVerbatim\pytx@FVB@SaveVerbatim
 \let\FVE@SaveVerbatim\pytx@FVE@SaveVerbatim
 \def\pytx@stdfile{}
+\def\pytx@stdout@warntext{}
 \def\pytx@FetchStdoutfile[#1][#2]#3{%
     \IfFileExists{\pytx@outputdir/#3.stdout}{%
         \ifstrequal{#1}{}{\input{\pytx@outputdir/#3.stdout}}{}%
@@ -322,10 +317,11 @@
         \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
         \ifstrequal{#1}{v}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
     }%
-    {\textbf{??~\pytx@packagename~??}%
+    {\pytx@stdout@warntext
         \PackageWarning{\pytx@packagename}{Non-existent printed content}}%
 }
 \ifbool{pytx@opt@stdout}{}{\def\pytx@FetchStdoutfile[#1][#2]#3{}}
+\AtBeginDocument{\def\pytx@stdout@warntext{\textbf{??~\pytx@packagename~??}}}
 \def\stdoutpythontex{%
     \@ifnextchar[{\pytx@Stdout}{\pytx@Stdout[]}%
 }

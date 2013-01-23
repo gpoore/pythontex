@@ -9,7 +9,7 @@
 
 :Author: Geoffrey Poore
 
-:Version: 0.10beta
+:Version: 0.10beta2
 
 :License:  LPPL_ (LaTeX code) and `BSD 3-Clause`_ (Python code)
 
@@ -26,7 +26,7 @@ See ``pythontex.pdf`` for installation instructions.  See ``pythontex_gallery.pd
 Current status
 --------------
 
-The 0.10beta release will become the first full release with only minor tweaks 
+The 0.10beta series will become the first full release with only minor tweaks 
 by the end of January, unless major bugs are discovered.  As soon as the full 
 release is out, PythonTeX will be submitted to CTAN.
 
@@ -35,6 +35,18 @@ Upcoming development will focus on ``depythontex``.
 
 Version History
 ---------------
+
+v0.10beta2 (2013/01/23)
+
+* Improved ``pythontex*.py``'s handling of the name of the file being processed.  A warning is no longer raised if the name is given with an extension; extensions are now processed (stripped) automatically.  The filename may now contain a path to the file, so you need not run ``pythontex*.py`` from within the document's directory.
+* Added command-line option ``--verbose`` for more verbose output.  Currently, this prints a list of all processes that are launched.
+* Fixed a bug that could crash ``pythontex*.py`` when the package option ``pygments=false``.
+* Added documentation about ``autoprint`` behavior in the preamble.  Summary:  ``code`` commands and environments are allowed in the preamble as of v0.10beta.  ``autoprint`` only applies to the body of the document, because nothing can be typeset in the preamble.  Content printed in the preamble can be brought in by explicitly using ``\printpythontex``, but this should be used with great care.
+* Revised ``\stdoutpythontex`` and ``\printpythontex`` so that they work in the preamble.  Again, this should be used with great care if at all.
+* Revised treatment of any content that custom code attempts to print.  Custom code is not allowed to print to the document (see documentation).  If custom code attempts to print, a warning is raised, and the printed content is included in the ``pythontex*.py`` run summary.
+* One-line entries in stderr, such as those produced by Python's ``warnings.warn()``, were not previously parsed because they are of the form ``:<linenumber>:`` rather than ``line <linenumber>``.  These are now parsed and synchronized with the document.  They are also correctly parsed for inclusion in the document via ``\stderrpythontex``.
+* If the package option ``stderrfilename`` is changed, all sessions that produced errors or warnings are now re-executed automatically, so that their stderr content is properly updated with the new filename.
+
 
 v0.10beta (2013/01/09)
 

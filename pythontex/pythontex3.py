@@ -81,7 +81,7 @@ import pickle
 
 # Script parameters
 # Version
-version = '0.10beta'
+version = '0.10beta2'
 
 
 
@@ -96,7 +96,8 @@ def process_argv(data, temp_data):
     
     # Create a command line argument parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('basename', help='base file name (no .tex extension; TeX jobname)')
+    parser.add_argument('TEXNAME',
+                        help='LaTeX file, with or without .tex extension')
     parser.add_argument('--version', action='version', 
                         version='PythonTeX {0}'.format(data['version']))                    
     parser.add_argument('--encoding', default='utf-8', 
@@ -114,6 +115,8 @@ def process_argv(data, temp_data):
     parser.add_argument('--hashdependencies', nargs='?', default='false', 
                         const='true', choices=('true', 'false'),                          
                         help='hash dependencies (such as external data) to check for modification, rather than using mtime; equivalent to package option')
+    parser.add_argument('-v', '--verbose', default=False, action='store_true',
+                       help='verbose output')
     args = parser.parse_args()
     
     # Store the parsed argv in data and temp_data          
@@ -131,17 +134,25 @@ def process_argv(data, temp_data):
         temp_data['hashdependencies'] = True
     else:
         temp_data['hashdependencies'] = False
+    temp_data['verbose'] = args.verbose
     
-    if args.basename is not None:
-        raw_jobname = args.basename
-        # Strip off the .tex extension if it was passed, since we need the 
-        # TeX \jobname
-        if raw_jobname.endswith('.tex'):
+    if args.TEXNAME is not None:
+        # Determine if we a dealing with a raw basename or filename, or a
+        # path to it.  If there's a path, we need to make the document 
+        # directory the current working directory.
+        dir, raw_jobname = os.path.split(args.TEXNAME)
+        dir = os.path.expanduser(os.path.normcase(dir))
+        if len(dir) > 0:
+            os.chdir(dir)
+        # If necessary, strip off an extension to find the raw jobname that
+        # corresponds to the .pytxcode.
+        if not os.path.exists(raw_jobname + '.pytxcode'):
             raw_jobname = raw_jobname.rsplit('.', 1)[0]
-            print('* PythonTeX warning')
-            print('    File names should be passed to PythonTeX without extensions.')
-            print('    (PythonTeX just needs the TeX jobname.)')
-            temp_data['warnings'] += 1
+            if not os.path.exists(raw_jobname + '.pytxcode'):
+                print('* PythonTeX error')
+                print('    Code file ' + raw_jobname + '.pytxcode does not exist.')
+                print('    Run LaTeX to create it.')
+                return sys.exit(1)
         
         # We need a "sanitized" version of the jobname, with spaces and 
         # asterisks replaced with hyphens.  This is done to avoid TeX issues 
@@ -159,18 +170,27 @@ def process_argv(data, temp_data):
         # lead to a collision with a file that already has that name, so that 
         # two files attempt to use the same PythonTeX folder.
         # 
-        # If <jobname>.tex and <raw_jobname>.tex both exist, we exit.
+        # If <jobname>.<ext> and <raw_jobname>.<ext> both exist, where <ext>
+        # is a common LaTeX extension, we exit.  We operate under the 
+        # assumption that there should only be a single file <jobname> in the 
+        # document root directory that has a common LaTeX extension.  That 
+        # could be false, but if so, the user probably has worse things to 
+        # worry about than a potential PythonTeX output collision.
         # If <jobname>* and <raw_jobname>* both exist, we issue a warning but 
         # attempt to proceed.
         if jobname != raw_jobname:
-            if os.path.isfile(raw_jobname + '.tex'):
-                if os.path.isfile(jobname + '.tex'):
-                    print('* PythonTeX error')
-                    print('    Directory naming collision between the following files:')
-                    print('      ' + raw_jobname + '.tex')
-                    print('      ' + jobname + '.tex')
-                    return sys.exit(1)
-            else:
+            resolved = False
+            for ext in ('.tex', '.ltx', '.dtx'):
+                if os.path.isfile(raw_jobname + ext):
+                    if os.path.isfile(jobname + ext):
+                        print('* PythonTeX error')
+                        print('    Directory naming collision between the following files:')
+                        print('      ' + raw_jobname + ext)
+                        print('      ' + jobname + ext)
+                        return sys.exit(1)
+                    resolved = True
+                    break
+            if not resolved:
                 ls = os.listdir('.')
                 for file in ls:
                     if file.startswith(jobname):
@@ -597,9 +617,19 @@ def hash_code(data, temp_data, old_data, typedict):
             return True
     # We need a function for determining if exit status requires rerun
     # The 'all' and 'modified' cases are technically resolved without actually
-    # using the function.
+    # using the function.  We also rerun all sessions that produced errors or
+    # warnings the last time if the stderrfilename has changed.
+    # #### There is probably a better way to handlestderrfilename, perhaps by 
+    # modifying rerun based on it.
     def make_do_not_rerun():
-        if rerun == 'modified':
+        if (loaded_old_data and 
+                data['settings']['stderrfilename'] != old_data['settings']['stderrfilename']):
+            def func(status):
+                if status[0] != 0 or status[1] != 0:
+                    return False
+                else:
+                    return True     
+        elif rerun == 'modified':
             def func(status):
                 return True
         elif rerun == 'errors':
@@ -755,15 +785,14 @@ def hash_code(data, temp_data, old_data, typedict):
                         data['settings']['pyconfilename'] != old_data['settings']['pyconfilename']):
                     update_code[key] = True
     # The global Pygments settings are no longer needed, so we delete them.
-    # They are always present to be deleted, even if Pygments isn't used, 
-    # because they are automatically created on the TeX side.
     # #### Might be a better place to do this, if things earlier are rearranged
     # #### Also, this needs list due to Python 3 ... may be a better approach
     k = list(pygments_settings.keys())
     for s in k:
         if s != '#GLOBAL':
             pygments_settings[s].update(pygments_settings['#GLOBAL'])
-    del pygments_settings['#GLOBAL']
+    if '#GLOBAL' in pygments_settings:
+        del pygments_settings['#GLOBAL']
     
     # Now we create a dictionary of whether pygments content needs updating.
     # The first set of conditions is identical to that for update_code,
@@ -1112,6 +1141,8 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
     dependencies = data['dependencies']
     exit_status = data['exit_status']
     workingdir = data['settings']['workingdir']
+    verbose = temp_data['verbose']
+    
     # Set maximum number of concurrent processes for multiprocessing
     # Accoding to the docs, cpu_count() may raise an error
     try:
@@ -1120,6 +1151,11 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
         max_processes = 1
     pool = multiprocessing.Pool(max_processes)
     tasks = []
+    
+    # If verbose, print a list of processes
+    if verbose:
+        print('\n* PythonTeX will run the following processes:')
+    
     # Add in a Pygments process if applicable
     for key in update_pygments:
         if update_pygments[key] and not key.endswith('cons'):
@@ -1130,6 +1166,8 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
                                                         update_pygments,
                                                         pytxcode,
                                                         encoding]))
+            if verbose:
+                print('    - Pygments process')
             break
 
     # Add console processes
@@ -1145,6 +1183,8 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
                                                         data['settings']['pyconbanner'],
                                                         data['settings']['pyconfilename'],
                                                         encoding]))
+            if verbose:
+                print('    - Console process')
             break
     
     # Add code processes.  Note that everything placed in the codedict 
@@ -1165,6 +1205,8 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
                                                      encoding,
                                                      temp_data['hashdependencies'],
                                                      workingdir]))
+            if verbose:
+                print('    - Code process ' + ':'.join([inputtype, inputsession, inputgroup]))
     
     # Execute the processes
     pool.close()
@@ -1244,6 +1286,11 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
     warnings = 0
     messages = []
     dependencies = dict()
+    
+    # We need to let the user know we are switching code files
+    # We check at the end to see if there were indeed any errors and warnings
+    # and if not, clear messages.
+    messages.append('\n----  Errors and Warnings for ' + ':'.join([inputtype, inputsession, inputgroup]) + '  ----')
     
     # Open files for stdout and stderr, run the code, then close the files
     basename = inputtype + '_' + inputsession + '_' + inputgroup
@@ -1350,17 +1397,20 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                 # Take care of any printed content from the last block
                 if printfile:
                     if inputinstance == 'customcode':
-                        messages.append('* PythonTeX error:')
+                        messages.append('* PythonTeX warning:')
                         messages.append('    Custom code for "' + inputtype + '" attempted to print or write to stdout')
-                        messages.append('    This is not allowed, since custom code is generally in the preamble')
-                        errors += 1
+                        messages.append('    This is not supported; use a normal code command or environment')
+                        messages.append('    The following content was written:')
+                        messages.append('')
+                        messages.extend(['    ' + printline.rstrip('\r\n') for printline in printfile])
+                        warnings += 1
                     else:
                         fname = os.path.join(outputdir, basename + '_' + inputinstance + '.stdout')
                         files.append(fname)
                         f = open(fname, 'w', encoding=encoding)
                         f.write(''.join(printfile))
                         f.close()
-                        printfile = []
+                    printfile = []
                 inputinstance = line.split('#', 2)[1]
             else:
                 printfile.append(line)
@@ -1368,16 +1418,20 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
         # the printfile list that has not yet been saved, so we take care of that.
         if printfile:
             if inputinstance == 'customcode':
-                messages.append('* PythonTeX error:')
-                messages.append('    Attempt to print from within custom code for code type ' + inputtype)
-                errors += 1
+                messages.append('* PythonTeX warning:')
+                messages.append('    Custom code for "' + inputtype + '" attempted to print or write to stdout')
+                messages.append('    This is not supported; use a normal code command or environment')
+                messages.append('    The following content was written:')
+                messages.append('')
+                messages.extend(['    ' + printline.rstrip('\r\n') for printline in printfile])
+                warnings += 1
             else:
                 fname = os.path.join(outputdir, basename + '_' + inputinstance + '.stdout')
                 files.append(fname)
                 f = open(fname, 'w', encoding=encoding)
                 f.write(''.join(printfile))
                 f.close()
-                printfile = []
+            printfile = []
     
     # Load the macros
     macrofile = os.path.join(outputdir, basename + '.pytxmcr')
@@ -1402,10 +1456,9 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
         code_file = f.readlines()
         f.close()
         
-        # We need to let the user know we are switching code files
-        messages.append('\n----  Errors and Warnings for ' + ':'.join([inputtype, inputsession, inputgroup]) + '  ----')
         for n, errline in enumerate(err_file):
-            if basename in errline and search('line \d+', errline):
+            if (basename in errline and 
+                    (search('line \d+', errline) or search(':\d+:', errline))):
                 # Try to determine if we are dealing with a warning or an 
                 # error.
                 index = n
@@ -1424,7 +1477,10 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                     type = 'error (?)'
                 # Find source of error or warning in code
                 # Offset by one for zero indexing, one for previous line
-                errlinenumber = int(search('line (\d+)', errline).groups()[0]) - 2
+                try:
+                    errlinenumber = int(search('line (\d+)', errline).groups()[0]) - 2
+                except:
+                    errlinenumber = int(search(':(\d+):', errline).groups()[0]) - 2
                 offset = -1
                 while errlinenumber >= 0 and not code_file[errlinenumber].startswith('pytex.inputline = '):
                     errlinenumber -= 1
@@ -1435,12 +1491,16 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                     messages.append('* PythonTeX code ' + type + ' on line ' + str(codelinenumber) + codelineextra + ':')
                 else:
                     messages.append('* PythonTeX code error.  Error line cannot be determined.')
-                    messages.append('* Error is likely due to system and/or PythonTeX-generated code.')
+                    messages.append('  Error is likely due to system and/or PythonTeX-generated code.')
             messages.append('  ' + errline.rstrip('\r\n'))
         # Take care of saving .stderr, if needed
         if stderr:
-            # Need to keep track of whether successfully set name and line number
-            found = False
+            # Need to keep track of whether successfully found a name and line number
+            errkey = None
+            # Need a dict for storing processed results
+            # Especially in the case of warnings, there may be stderr content
+            # for multiple code snippets
+            errdict = defaultdict(list)
             # Loop through the error file
             for (n, errline) in enumerate(err_file):
                 # When the basename is found with a line number, determine
@@ -1451,10 +1511,18 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                 # is not typeset.  If it isn't in a code or block 
                 # environment, where it could have line numbers, it 
                 # doesn't count.
-                if basename in errline and search('line \d+', errline):
-                    found = True
+                if (basename in errline and 
+                        (search('line \d+', errline) or search(':\d+:', errline))):
+                    if search('line \d+', errline):
+                        lineform = True
+                    else:
+                        lineform = False
                     # Get the inputinstance
-                    errlinenumber = int(search('line (\d+)', errline).groups()[0]) - 2
+                    if lineform:
+                        errlinenumber = int(search('line (\d+)', errline).groups()[0]) - 2
+                    else:
+                        errlinenumber = int(search(':(\d+):', errline).groups()[0]) - 2
+                    stored_errlinenumber = errlinenumber
                     while errlinenumber >= 0 and not code_file[errlinenumber].startswith('pytex.inputinstance = '):
                         errlinenumber -= 1
                     if errlinenumber >= 0:
@@ -1464,7 +1532,8 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                         messages.append('    Could not parse stderr into a .stderr file')
                         messages.append('    The offending file was ' + err_file_name)
                         errors += 1
-                    errlinenumber = int(search('line (\d+)', errline).groups()[0]) - 2
+                        break
+                    errlinenumber = stored_errlinenumber
                     while errlinenumber >= 0 and not code_file[errlinenumber].startswith('pytex.inputcommand = '):
                         errlinenumber -= 1
                     if errlinenumber >= 0:
@@ -1474,19 +1543,22 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                             messages.append('    Inline commands do not have proper line numbers for stderr')
                             messages.append('    The offending session was ' + ':'.join([inputtype, inputsession, inputgroup]))
                             errors += 1
+                            break
                     else:
                         messages.append('* PythonTeX error')
                         messages.append('    Could not parse stderr into a .stderr file')
                         messages.append('    The offending file was ' + err_file_name)
                         errors += 1
+                        break
                     # Get the fixed line number
                     should_count = False
                     fixedline = 0
                     # Need to stop counting when we reach the "real" line
-                    # number of the error.  Need -1 to offset for zero 
-                    # indexing.  All of this depends on the precise 
+                    # number of the error.  Need +1 because stored_errlinenumber
+                    # was the zero-index line before the error actually 
+                    # occurred.  All of this depends on the precise 
                     # spacing in the automatically generated scripts.
-                    breaklinenumber = int(search('line (\d+)', errline).groups()[0]) - 1
+                    breaklinenumber = stored_errlinenumber + 1
                     for (m, line) in enumerate(code_file):
                         if line.startswith('pytex.inputinstance = '):
                             if should_count:
@@ -1503,26 +1575,36 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                     # appears in .stderr
                     fullbasename = os.path.join(outputdir, basename)
                     if stderrfilename == 'full':
-                        err_file[n] = errline.replace(fullbasename, basename)
+                        errline = errline.replace(fullbasename, basename)
                     elif stderrfilename == 'session':
-                        err_file[n] = errline.replace(fullbasename, inputsession)
+                        errline = errline.replace(fullbasename, inputsession)
                     elif stderrfilename == 'genericfile':
-                        err_file[n] = errline.replace(fullbasename + '.' + typedict[inputtype].extension, '<file>')
+                        errline = errline.replace(fullbasename + '.' + typedict[inputtype].extension, '<file>')
                     elif stderrfilename == 'genericscript':
-                        err_file[n] = errline.replace(fullbasename + '.' + typedict[inputtype].extension, '<script>')
-                    err_file[n] = sub('line \d+', 'line ' + str(fixedline), err_file[n])
-            if found:
-                stderr_file_name = os.path.join(outputdir, basename + '_' + inputinstance + '.stderr')
-                f = open(stderr_file_name, 'w', encoding=encoding)
-                f.write(''.join(err_file))
-                f.close()
-                files.append(stderr_file_name)
-            else:
-                messages.append('* PythonTeX warning')
-                messages.append('    Could not parse stderr into a .stderr file')
-                messages.append('    The offending file was ' + err_file_name)
-                messages.append('    Remember that .stderr files are only possible for block and code environments')
-                warnings += 1
+                        errline = errline.replace(fullbasename + '.' + typedict[inputtype].extension, '<script>')
+                    if lineform:
+                        errline = sub('line \d+', 'line ' + str(fixedline), errline)
+                    else:
+                        errline = sub(':\d+:', ':' + str(fixedline) + ':', errline)
+                    errkey = basename + '_' + inputinstance
+                    errdict[errkey].append(errline)
+                elif errkey is not None:
+                    errdict[errkey].append(errline)
+                else:
+                    messages.append('* PythonTeX warning')
+                    messages.append('    Could not parse stderr into a .stderr file')
+                    messages.append('    The offending file was ' + err_file_name)
+                    messages.append('    Remember that .stderr files are only possible for block and code environments')
+                    warnings += 1
+                    break
+            if errdict:
+                for key in errdict:
+                    stderr_file_name = os.path.join(outputdir, key + '.stderr')
+                    f = open(stderr_file_name, 'w', encoding=encoding)
+                    f.write(''.join(errdict[key]))
+                    f.close()
+                    files.append(stderr_file_name)
+
 
     # Clean up temp files, and update the list of existing files
     if keeptemps == 'none':
@@ -1539,6 +1621,10 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
     elif keeptemps == 'all':
         for ext in [typedict[inputtype].extension, 'pytxmcr', 'out', 'err']:
             files.append(os.path.join(outputdir, basename + '.' + ext))
+
+    # If there were no errors or warnings, clear the default message header
+    if len(messages) == 1:
+        messages = []
     
     # Return a dict of dicts of results
     return {'process': 'code',
