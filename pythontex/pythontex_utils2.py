@@ -366,10 +366,10 @@ class PythontexUtils(object):
         via macros.  Attempts to use it in other contexts may fail or cause 
         unexpected behavior.
         '''
-        before = (r'\expandafter\long\expandafter\def\csname pytx@MCR@' + 
+        before = (r'\pytx@SVMCR{pytx@MCR@' + 
                   self.inputtype + '@' + self.inputsession + '@' + 
-                  self.inputgroup + '@' + self.inputinstance + r'\endcsname{')
-        after = '}\n\n'
+                  self.inputgroup + '@' + self.inputinstance + '}\n')
+        after = '\\endpytx@SVMCR\n\n'
         #// Python 2
         self.macrofile.write(unicode(before + self.formatter(expr) + after))
         #\\ End Python 2

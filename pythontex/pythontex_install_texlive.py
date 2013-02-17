@@ -23,9 +23,11 @@ CTAN (this will occur once it leaves beta).  The mktexlsr command is executed
 (if present) to make the system aware of any new files.
 
 The script attempts to create a binary wrapper (Windows) or symlink 
-(Linux and OS X) for launching the PythonTeX scripts.
+(Linux and OS X) for launching the main PythonTeX scripts, pythontex*.py and
+depythontex*.py
 
-Copyright (c) 2012, Geoffrey M. Poore
+
+Copyright (c) 2012-2013, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -55,6 +57,7 @@ except:
 # Make sure all necessary files are present
 needed_files = ['pythontex2.py', 'pythontex_types2.py', 'pythontex_utils2.py', 
                 'pythontex3.py', 'pythontex_types3.py', 'pythontex_utils3.py', 
+                'depythontex2.py', 'depythontex3.py',
                 'pythontex.sty', 'pythontex.ins', 'pythontex.dtx', 
                 'pythontex.pdf', 'README.rst']
 missing_files = False
@@ -148,6 +151,7 @@ try:
         copy('pythontex{0}.py'.format(ver), scripts_path)
         copy('pythontex_types{0}.py'.format(ver), scripts_path)
         copy('pythontex_utils{0}.py'.format(ver), scripts_path)
+        copy('depythontex{0}.py'.format(ver), scripts_path)
     # Install source
     if not path.exists(source_path):
         mkdir(source_path)
@@ -156,7 +160,7 @@ try:
 except OSError as e:
     if e.errno == 13:
         print('Insufficient permission to install PythonTeX')
-        print('(For example, you may need sudo, or possibly "sudo env PATH=$PATH")\n')
+        print('(For example, you may need "sudo", or possibly "sudo env PATH=$PATH")\n')
         sys.exit(1)
     else:
         raise        
@@ -174,9 +178,10 @@ if platform.system() == 'Windows':
     if path.exists(path.join(bin_path, 'runscript.exe')):
         for ver in [2, 3]:
             copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex{0}.exe'.format(ver)))
+            copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'depythontex{0}.exe'.format(ver)))
         print('\nCreated binary wrapper...')
     else:
-        print('\nCould not create a wrapper for launching pythontex*.py.')
+        print('\nCould not create a wrapper for launching pythontex*.py and depythontex*.py.')
         print('You will need to create a wrapper manually, or use a batch file.')
         print('Sample batch files are included with the main PythonTeX files.')
         print('The wrapper or batch file should be in a location on the Windows PATH.')
@@ -201,12 +206,19 @@ else:
         bin_path = path.join(root_path, 'bin', pltfrm)
         if path.exists(bin_path):
             for ver in [2, 3]:
+                # Create symlink for pythontex*.py
                 link = path.join(bin_path, 'pythontex{0}.py'.format(ver))
                 # Unlink any old symlinks if they exist, and create new ones
                 # Not doing this gave permissions errors under Ubuntu
                 if path.exists(link):
                     unlink(link)
                 symlink(path.join(scripts_path, 'pythontex{0}.py'.format(ver)), link)
+                chmod(link, 0o775)
+                # Now repeat for depythontex*.py
+                link = path.join(bin_path, 'depythontex{0}.py'.format(ver))
+                if path.exists(link):
+                    unlink(link)
+                symlink(path.join(scripts_path, 'depythontex{0}.py'.format(ver)), link)
                 chmod(link, 0o775)
                 symlink_created = True
     
@@ -230,15 +242,20 @@ else:
                         unlink(link)
                     symlink(path.join(scripts_path, 'pythontex{0}.py'.format(ver)), link)
                     chmod(link, 0o775)
+                    link = path.join(bin_path, 'depythontex{0}.py'.format(ver))
+                    if path.exists(link):
+                        unlink(link)
+                    symlink(path.join(scripts_path, 'depythontex{0}.py'.format(ver)), link)
+                    chmod(link, 0o775)
                     symlink_created = True
             except:
                 pass
     if symlink_created:
         print("\nCreated symlink in Tex's bin/ directory...")
     else:
-        print('\nCould not automatically create a symlink to pythontex*.py.')
+        print('\nCould not automatically create a symlink to pythontex*.py and depythontex*.py.')
         print('You may wish to create one manually, and make it executable via chmod.')
-        print('The scripts pythontex*.py are located in the following directory:')
+        print('The scripts pythontex*.py and depythontex*.py are located in the following directory:')
         print('    ' + scripts_path)
 
 

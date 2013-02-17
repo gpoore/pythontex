@@ -9,7 +9,7 @@
 
 :Author: Geoffrey Poore
 
-:Version: 0.10beta2
+:Version: 0.11beta
 
 :License:  LPPL_ (LaTeX code) and `BSD 3-Clause`_ (Python code)
 
@@ -18,7 +18,7 @@
 .. _`BSD 3-Clause`: http://www.opensource.org/licenses/BSD-3-Clause
 
 
-PythonTeX provides fast, user-friendly access to Python from within LaTeX.  It allows Python code entered within a LaTeX document to be executed, and the results to be included within the original document.  It also provides syntax highlighting for code within LaTeX documents via the Pygments package.
+PythonTeX provides fast, user-friendly access to Python from within LaTeX.  It allows Python code entered within a LaTeX document to be executed, and the results to be included within the original document.  It also provides syntax highlighting for code within LaTeX documents via the Pygments syntax highlighter.
 
 See ``pythontex.pdf`` for installation instructions.  See ``pythontex_gallery.pdf`` for examples of what is possible with PythonTeX.
 
@@ -26,15 +26,29 @@ See ``pythontex.pdf`` for installation instructions.  See ``pythontex_gallery.pd
 Current status
 --------------
 
-The 0.10beta series will become the first full release with only minor tweaks 
-by the end of January, unless major bugs are discovered.  As soon as the full 
-release is out, PythonTeX will be submitted to CTAN.
+Immediate development will focus on finishing the first full release.  This was delayed to incorporate depythontex, which had made unexpectedly rapid progress.
 
-Upcoming development will focus on ``depythontex``.
+Upcoming development will focus on refactoring.  This has two goals:
+
+* Better support for macro programming with PythonTeX.
+* Creating a simple way to add basic support for additional programming languages beyond Python.
 
 
 Version History
 ---------------
+
+
+v0.11beta (2013/02/17)
+
+* Commands like ``\py`` can now bring in any valid LaTeX code, including verbatim content, under the pdfTeX and XeTeX engines.  Verbatim content was not allowed previously.  LuaTeX cannot bring in verbatim, due to a known bug.
+* Added package option ``depythontex`` and scripts ``depythontex*.py``.  These allow a PythonTeX document to be converted into a pure LaTeX document, with no Python dependency.  The package option creates an auxiliary file with extension ``.depytx``.  The ``depythontex*.py`` scripts take this auxiliary file and the original LaTeX document, and combine the two to produce a new document that does not rely on the PythonTeX package.  All PythonTeX commands and environments are replaced by their output.   All Python-generated content is substituted directly into the document.  By default, all typeset code is wrapped in ``\verb`` and ``verbatim``, but ``depythontex*.py`` has a ``--listing`` option that allows ``fancyvrb``, ``listings``, ``minted``, or ``pythontex`` to be used instead.
+* The current PythonTeX version is now saved in the ``.pytxcode``.  If this does not match the version of the PythonTeX scripts, a warning is issued.  This makes it easier to determine errors due to version mismatches.
+* Fixed an incompatibility with the latest release of ``xstring`` (version 1.7, 2013/01/13).
+* Fixed a bug in the ``console`` environment that could cause problems when switching from Pygments highlighting to ``fancyvrb`` when using the ``fvextfile`` option.  Fixed a bug introduced in the v0.10beta series that prevented the ``console`` environment from working with ``fancyvrb``.
+* Fixed a bug with PythonTeX verbatim commands and environments that use Pygments.  The verbatim commands and environments were incorrectly treated as if they had the attributes of executed code in the v0.10beta series.
+* Fixed a bug from the v0.10beta series that sometimes prevented imports from ``__future__`` from working when there were multiple sessions.
+* Fixed a bug related to hashing dependencies' mtime under Python 3.
+
 
 v0.10beta2 (2013/01/23)
 

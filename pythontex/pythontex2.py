@@ -55,6 +55,7 @@ from __future__ import unicode_literals
 #\\ End Python 2
 import sys
 import os
+import copy
 import argparse
 import codecs
 from hashlib import sha1
@@ -81,7 +82,7 @@ from io import open
 
 # Script parameters
 # Version
-version = '0.10beta2'
+version = 'v0.11beta'
 
 
 
@@ -227,7 +228,7 @@ def load_code_get_settings(data, temp_data):
     # Determine the number of settings lines in the code file.
     # Create a list of settings, and save the code for later processing.
     n = len(pytxcode) - 1
-    while pytxcode[n].startswith('=>PYTHONTEX:SETTINGS#'):
+    while n >= 0 and pytxcode[n].startswith('=>PYTHONTEX:SETTINGS#'):
         n -= 1
     pytxsettings = pytxcode[n+1:]
     temp_data['pytxcode'] = pytxcode[:n+1]
@@ -347,6 +348,7 @@ def load_code_get_settings(data, temp_data):
                                         'texcomments': texcomments,
                                         'mathescape': mathescape,
                                         'commandprefix': 'PYG' + style} 
+    settingsfunc['version'] = set_kv_data
     settingsfunc['outputdir'] = set_kv_data
     settingsfunc['workingdir'] = set_kv_data
     settingsfunc['rerun'] = set_kv_temp_data_if_not_default()
@@ -376,6 +378,14 @@ def load_code_get_settings(data, temp_data):
             print('* PythonTeX warning')
             print('    Unknown option "' + content + '"')
             temp_data['warnings'] += 1
+
+    # Check for compatility between the .pytxcode and the script
+    if 'version' not in settings or settings['version'] != data['version']:
+        print('* PythonTeX warning')
+        print('    The version of the PythonTeX scripts does not match')
+        print('    the last code saved by the document--run LaTeX to create')
+        print('    an updated version.  Attempting to proceed.')
+        sys.stdout.flush()
     
     # Store all results that haven't already been stored.
     data['settings'] = settings
@@ -516,7 +526,7 @@ def hash_code(data, temp_data, old_data, typedict):
                     hasher[currentkey].update(f.read())
                     f.close()
                 else:
-                    hasher[currentkey].update(str(os.path.getmtime(extfile)))
+                    hasher[currentkey].update(str(os.path.getmtime(extfile)).encode(encoding))
             # If not dealing with an external file, hash part of code info
             else:
                 # We need to hash most of the code info, because code needs 
@@ -602,7 +612,7 @@ def hash_code(data, temp_data, old_data, typedict):
                     dependencies_hasher[dep].update(f.read())
                     f.close()
                 else:
-                    dependencies_hasher[dep].update(str(os.path.getmtime(dep_file)))
+                    dependencies_hasher[dep].update(str(os.path.getmtime(dep_file)).encode(encoding))
             dependencies_hashdict = dict()
             for dep in dependencies_hasher:
                 dependencies_hashdict[dep] = dependencies_hasher[dep].hexdigest()
@@ -676,7 +686,7 @@ def hash_code(data, temp_data, old_data, typedict):
         for key in hashdict:
             if key.startswith('CC:'):
                 pass
-            elif (key.startswith('PYG') and 
+            elif ((key.startswith('PYG') or key.endswith('verb')) and 
                     key in old_hashdict and 
                     hashdict[key] == old_hashdict[key]):
                 update_code[key] = False
@@ -1021,14 +1031,15 @@ def parse_code_write_scripts(data, temp_data, typedict):
             # Write all future imports.  The approach here should be modified if 
             # languages other than Python are ever supported.
             in_docstring = False 
-            for n, line in enumerate(typedict[inputtype].default_code):
+            default_code = copy.copy(typedict[inputtype].default_code)
+            for n, line in enumerate(default_code):
                 # Detect __future__ imports
                 if (line.startswith('from __future__') or 
                         line.startswith('import __future__') and 
                         not in_docstring):
                     sessionfile.write(line)
                     sessionfile.write('\n')
-                    typedict[inputtype].default_code[n] = ''
+                    default_code[n] = ''
                 # Ignore comments, empty lines, and lines with complete docstrings
                 elif (line.startswith('\n') or line.startswith('#') or 
                         line.isspace() or
@@ -1043,14 +1054,15 @@ def parse_code_write_scripts(data, temp_data, typedict):
                 elif not in_docstring:
                     break
             in_docstring = False
-            for n, line in enumerate(typedict[inputtype].custom_code_begin):
+            custom_code_begin = copy.copy(typedict[inputtype].custom_code_begin)
+            for n, line in enumerate(custom_code_begin):
                 # Detect __future__ imports
                 if (line.startswith('from __future__') or 
                         line.startswith('import __future__') and 
                         not in_docstring):
                     sessionfile.write(line)
                     sessionfile.write('\n')
-                    typedict[inputtype].custom_code_begin[n] = ''
+                    custom_code_begin[n] = ''
                 # Ignore comments, empty lines, and lines with complete docstrings
                 elif (line.startswith('\n') or line.startswith('#') or 
                         line.isspace() or
@@ -1089,7 +1101,7 @@ def parse_code_write_scripts(data, temp_data, typedict):
                 elif not in_docstring:
                     break
             # Write the remainder of the default code
-            for code in typedict[inputtype].default_code:
+            for code in default_code:
                 sessionfile.write(code)
                 sessionfile.write('\n')
             sessionfile.write(typedict[inputtype].set_stdout_encoding(encoding))
@@ -1102,7 +1114,7 @@ def parse_code_write_scripts(data, temp_data, typedict):
             sessionfile.write(typedict[inputtype].set_inputs_const(inputtype, inputsession, inputgroup))
             sessionfile.write('\n')        
             # Write all custom code not involving __future__
-            for code in typedict[inputtype].custom_code_begin:
+            for code in custom_code_begin:
                 sessionfile.write(code)
             sessionfile.write(''.join(codedict[key]))
             sessionfile.write('\n')
@@ -1236,8 +1248,8 @@ def do_multiprocessing(data, temp_data, old_data, typedict):
             warnings += result['warnings']
             messages.extend(result['messages'])        
         elif result['process'] == 'console':
-            files.update(result['pygments_files'])
-            macros.update(result['pygments_macros'])
+            files.update(result['files'])
+            macros.update(result['macros'])
             pygments_files.update(result['pygments_files'])
             pygments_macros.update(result['pygments_macros'])
             for key in consoledict:
@@ -1369,7 +1381,7 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                     # doesn't really depend on the file, then the error will be 
                     # raised again anyway the next time PythonTeX runs when the 
                     # dependency is listed but not found.
-                    dependencies_hasher[dep].update('')
+                    dependencies_hasher[dep].update(''.encode(encoding))
                     messages.append('* PythonTeX error')
                     messages.append('    Cannot find dependency "' + dep + '"')
                     messages.append('    It belongs to ' + ':'.join([inputtype, inputsession, inputgroup]))
@@ -1382,7 +1394,7 @@ def run_code(inputtype, inputsession, inputgroup, outputdir, command,
                     dependencies_hasher[dep].update(f.read())
                     f.close()
                 else:
-                    dependencies_hasher[dep].update(str(os.path.getmtime(dep_file)))
+                    dependencies_hasher[dep].update(str(os.path.getmtime(dep_file)).encode(encoding))
             for dep in dependencies_hasher:
                 dependencies[dep] = dependencies_hasher[dep].hexdigest()
         
@@ -1963,7 +1975,7 @@ def run_console(outputdir, jobname, fvextfile, pygments_settings, update_code,
                         else:
                             processed = ('\\begin{Verbatim}\n' + 
                                     ''.join(console_content) + '\\end{Verbatim}\n\n')
-                            fname = os.path.join(outputdir, inputtype + '_' + inputsession + '_' + inputgroup + '_' + inputinstance + '.pygtex')
+                            fname = os.path.join(outputdir, inputtype + '_' + inputsession + '_' + inputgroup + '_' + inputinstance + '.tex')
                             f = open(fname, 'w', encoding=encoding)
                             f.write(processed)
                             f.close()
@@ -2055,7 +2067,7 @@ if __name__ == '__main__':
     # (rather than just exit due to --version or --help command-line options), 
     # print PythonTeX version.  Flush to make the message go out immediately,  
     # so that the user knows PythonTeX has started.
-    print('This is PythonTeX v' + version)
+    print('This is PythonTeX ' + version)
     sys.stdout.flush()
     # Once we have the encoding (from argv), we set stdout and stderr to use 
     # this encoding.  Later, we will parse the saved stderr of scripts 

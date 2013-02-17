@@ -26,6 +26,8 @@
 \usepackage{fullpage}
 \usepackage{graphicx}
 \usepackage[svgnames]{xcolor}
+\usepackage{url}
+\urlstyle{same}
 
 \usepackage[stderr]{pythontex}
 \restartpythontexsession{\thesection}
@@ -55,7 +57,7 @@
 
 \section{General Python interaction}
 
-We can typeset code that is passed to Python, and pull in the results.
+We can typeset code that is passed to Python, and bring back the results.
 
 This can be simple.  For example, \pyb{print('Python says hi!')} returns the following:
 \begin{quote}
@@ -67,9 +69,15 @@ Or we could access the printed content verbatim (it might contain special charac
 \printpythontex[verb]
 \end{quote}
 
-Python interaction can also be more complex.  \pyb{print(str(2**2**2) + r'\endinput')} returns \printpythontex.  In this case, the printed results include \LaTeX\ code, which is correctly interpreted by \LaTeX\ to ensure that there is not an extra space after the 16.  Printed output is saved to a file and brought back in via \verb|\input|, and the \verb|\endinput| command prevents \LaTeX\ from treating the newline at the end of the file as justification for a space character.
+Python interaction can also be more complex.  \pyb{print(str(2**2**2) + r'\endinput')} returns \printpythontex.  In this case, the printed results include \LaTeX\ code, which is correctly interpreted by \LaTeX\ to ensure that there is not an extra space after the 16.  Printed output is saved to a file and brought back in via \verb|\input|, and the \verb|\endinput| command stops input immediately, before \LaTeX\ gets to the end of the line and inserts a space character there, after the 16.
 
-But we don't have to typeset the code.  It can be hidden.\pyc{mystring=r'\textbf{This is a message from Python}'}  And then we can access it later:  \py{mystring}.
+Printing works, but as the last example demonstrates, you have to be careful about spacing if you have text immediately after the printed content.  In that case, it's usually best to assemble text within a \pytex\ environment and store the text in a variable.  Then you can bring in the text later, using the \pygment{latex}{\py} command.  The \pygment{latex}{\py} command brings in a string representation of its argument.  First we create the text.
+\begin{pyblock}
+mytext = '$1 + 1 = {0}$'.format(1+1)
+\end{pyblock}
+Then we bring it in:  \py{mytext}.  The \pygment{latex}{\py} command can even bring in verbatim content, as long as you are using the pdfTeX or XeTeX engines.  (Unfortunately, verbatim does not work with LuaTeX, due to a bug.\footnote{\url{http://tracker.luatex.org/view.php?id=733}})
+
+We don't have to typeset the code we're executing.  It can be hidden.\pyc{mystring=r'\textbf{This is a message from Python}'}  And then we can access it later:  \py{mystring}.
 
 
 \section{Pygments highlighting}
@@ -82,6 +90,8 @@ But we don't have to typeset the code.  It can be hidden.\pyc{mystring=r'\textbf
 >>> âæéöø + ßçñðŠ
 579
 \end{pygments}
+
+There is also a Pygments command for inline use:  \pygment{latex}{\pygment}.
 
 
 \section{Python console environment}
@@ -129,7 +139,7 @@ It's easy to use arbitrary symbols in equations.
 
 \begin{sympyblock}
 phi = Symbol(r'\phi')
-h = Integral(exp(-phi**2), (phi,0,oo))
+h = Integral(exp(-phi**2), (phi, 0, oo))
 \end{sympyblock}
 
 \[\sympy{h}=\sympy{h.doit()}\]
@@ -140,14 +150,16 @@ h = Integral(exp(-phi**2), (phi,0,oo))
 
 We can create plots with matplotlib, perfectly matching the plot fonts with the document fonts.  No more searching for the code that created a figure!
 
+You may want to use matplotlib's PGF backend when creating plots.
+
 \begin{pylabblock}
 rc('text', usetex=True)
 rc('font', family='serif')
 rc('font', size=10.0)
 rc('legend', fontsize=10.0)
 rc('font', weight='normal')
-x = linspace(0,10)
-figure(figsize=(4,2.5))
+x = linspace(0, 10)
+figure(figsize=(4, 2.5))
 plot(x, sin(x), label='$\sin(x)$')
 xlabel(r'$x\mathrm{-axis}$')
 ylabel(r'$y\mathrm{-axis}$')

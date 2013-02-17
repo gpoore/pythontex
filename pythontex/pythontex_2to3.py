@@ -27,7 +27,7 @@ unified.  This approach also allows greater customization of version-specific
 code than would be possible if automatic translation with a tool like 2to3 
 was required.
 
-Copyright (c) 2012, Geoffrey M. Poore
+Copyright (c) 2012-2013, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -41,7 +41,8 @@ from io import open
 import re
 
 
-files_to_process = ('pythontex2.py', 'pythontex_types2.py', 'pythontex_utils2.py')
+files_to_process = ('pythontex2.py', 'pythontex_types2.py',
+                    'pythontex_utils2.py', 'depythontex2.py')
 encoding = 'utf-8'
 
 

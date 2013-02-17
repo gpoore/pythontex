@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2013/01/23 Version~0.10beta2 PythonTeX]
+    [2013/02/17 Version~0.11beta ]
 %</package>
 %
 %<*driver>
@@ -68,7 +68,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{2144}
+% \CheckSum{2469}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -86,6 +86,17 @@
 %   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
 %
+%
+% \begin{changelog}{v0.11beta}{2013/02/17}
+% \item Commands like \texttt{\string\py} can now bring in any valid LaTeX code, including verbatim content, under the pdfTeX and XeTeX engines.  Verbatim content was not allowed previously.  LuaTeX cannot bring in verbatim, due to a known bug.
+% \item Added package option \texttt{depythontex} and scripts \texttt{depythontex*.py}.  These allow a PythonTeX document to be converted into a pure LaTeX document, with no Python dependency.  The package option creates an auxiliary file with extension \texttt{.depytx}.  The \texttt{depythontex*.py} scripts take this auxiliary file and the original LaTeX document, and combine the two to produce a new document that does not rely on the PythonTeX package.  All PythonTeX commands and environments are replaced by their output.   All Python-generated content is substituted directly into the document.  By default, all typeset code is wrapped in \texttt{\string\verb} and \texttt{verbatim}, but \texttt{depythontex*.py} has a \texttt{-{}-listing} option that allows \texttt{fancyvrb}, \texttt{listings}, \texttt{minted}, or \texttt{pythontex} to be used instead.
+% \item The current PythonTeX version is now saved in the \texttt{.pytxcode}.  If this does not match the version of the PythonTeX scripts, a warning is issued.  This makes it easier to determine errors due to version mismatches.
+% \item Fixed an incompatibility with the latest release of \texttt{xstring} (version 1.7, 2013/01/13).
+% \item Fixed a bug in the \texttt{console} environment that could cause problems when switching from Pygments highlighting  to \texttt{fancyvrb} when using the \texttt{fvextfile} option.  Fixed a bug introduced in the v0.10beta series that prevented the \texttt{console} environment from working with \texttt{fancyvrb}.
+% \item Fixed a bug with PythonTeX verbatim commands and environments that use Pygments.  The verbatim commands and environments were incorrectly treated as if they had the attributes of executed code in the v0.10beta series.
+% \item Fixed a bug from the v0.10beta series that sometimes prevented imports from \texttt{\_\_future\_\_} from working when there were multiple sessions.
+% \item Fixed a bug related to hashing dependencies' mtime under Python 3.
+% \end{changelog}
 %
 % \begin{changelog}{v0.10beta2}{2013/01/23}
 % \item Improved \texttt{pythontex*.py}'s handling of the name of the file being processed.  A warning is no longer raised if the name is given with an extension; extensions are now processed (stripped) automatically.  The filename may now contain a path to the file, so you need not run \texttt{pythontex*.py} from within the document's directory.
@@ -177,10 +188,6 @@
 % \pytex\ makes possible some pretty amazing things.  But that power brings with it a certain risk and responsibility.  Compiling a document that uses \pytex\ involves executing Python code on your computer.  You should only compile \pytex\ documents from sources you trust.  \pytex\ comes with NO WARRANTY.\footnote{All \LaTeX\ code is licensed under the \href{http://www.latex-project.org/lppl.txt}{\LaTeX\ Project Public License (LPPL)} and all Python code is licensed under the \href{http://www.opensource.org/licenses/BSD-3-Clause}{BSD 3-Clause License}.} The copyright holder and any additional authors will not be liable for any damages.
 %
 %
-% \section*{Package status}
-% \pytex\ is currently in ``beta,'' but a full release and submission to CTAN is very close.  It has been tested under Windows with \TeX\ Live and Python 2.7 and 3.2, under OS X (10.7) with MacPort's \TeX\ Live and Python 2.7, and under Linux (Ubuntu) with TeX Live and Python 2.7.
-% \vfill
-% 
 %
 % \pagebreak
 % \tableofcontents
@@ -230,7 +237,7 @@
 %
 % \pytex\ requires a \TeX\ installation.  \href{http://www.tug.org/texlive/}{\TeX\ Live} or \href{http://miktex.org/}{MiK\TeX} are preferred.  \pytex\ requires the |Kpathsea| library, which is available in both of these distributions.  The following \LaTeX\ packages, with their dependencies, are also required:  |fancyvrb|, |etex|, |etoolbox|, |xstring|, |pgfopts|, |newfloat|, and |color| or |xcolor|.  If you are creating and importing graphics using Python, you will also need |graphicx|.  The |mdframed| package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors.
 %
-% \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools.  Python 3.1 and later will work as well.  Earlier versions of Python 2 and 3 are not compatible, at least not without several modifications to the \pytex\ scripts.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile orthe \pytex\ gallery file, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}. 
+% \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools.  Python 3.2 and later will work as well.  Earlier versions of Python 2 and 3 are not compatible, at least not without several modifications to the \pytex\ scripts.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile orthe \pytex\ gallery file, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}. 
 %
 % \pytex\ consists of the following files:
 % \begin{itemize}
@@ -238,6 +245,7 @@
 % \item Documented \LaTeX\ source file |pythontex.dtx|, from which |pythontex.pdf| and |pythontex.sty| are generated
 % \item Main Python scripts |pythontex2.py| and |pythontex3.py|
 % \item Helper scripts |pythontex_utils2.py| and |pythontex_types2.py|, and |pythontex_utils3.py| and |pythontex_types3.py|
+% \item Scripts |depythontex2.py| and |depythontex3.py| that are used to remove \pytex\ dependence
 % \item Installation script |pythontex_install_texlive| (for \TeX\ Live)
 % \item |README.rst|
 % \item Optional batch files |pythontex2.bat| and |pythontex3.bat| for use in launching |pythontex*.py| under Windows 
@@ -440,10 +448,9 @@
 % \end{verbatim}
 % The |stdin| option replaces |<name>| with |<stdin>|, as it appears in a standard Python interactive session.  The |console| option uses |<console>| instead, which is the default setting for the Python |code| module used by \pytex\ to create Python console environments.
 %
-% \pytxtodo{
 % \DescribeMacro{depythontex=\meta{none}/true/false default:false \meta{none}=true}
 %
-% \textbf{This option has not yet been implemented.}  This option determines whether \pytex\ attempts to create a version of the .tex file that does not require \pytex.  When invoked, it will create a file |depythontex-|\meta{jobname}|.tex|, in which all \pytex\ commands and environments have been replaced by their output and their typeset code (typeset via |fancyvrb|).}
+% This option is used to create a version of the \LaTeX\ document that does not require the \pytex\ package.  When invoked, it creates an auxiliary file called |<filename>.depytx|.  The script |depythontex*.py| uses the original document and this auxiliary file to create a new document in which all \pytex\ commands and environments have been replaced by typeset code and code output.  For additional information on |depythontex|, see Section~\ref{sec:depythontex}.
 %
 %
 % \subsection{Code commands and environments}
@@ -468,11 +475,11 @@
 %
 % This command is used for including variable values or other content that can be converted to a string.  It is an alternative to including content via the |print| statement/function within other commands/environments.
 %
-% The |\py| command sends \meta{code} to Python, and Python returns a string representation of \meta{code}.\pytxtodo{Link to details about Python built-ins}  \meta{opening~delim} and \meta{closing~delim} must be either a pair of identical, non-space characters, or a pair of curly braces.  Thus, |\py{1+1}| sends the code |1+1| to Python, Python evaluates the string representation of this code, and the result is returned to \LaTeX\ and included as |2|.  The commands |\py#1+1#| and |\py@1+1@| would have the same effect.  The command can also be used to access variable values.  For example, if the code |a=1| had been executed previously, then |\py{a}| simply brings the string represantation of |a| back into the document as |1|.  
+% The |\py| command sends \meta{code} to Python, and Python returns a string representation of \meta{code}.\pytxtodo{Link to details about Python built-ins}  \meta{opening~delim} and \meta{closing~delim} must be either a pair of identical, non-space characters, or a pair of curly braces.  If curly braces are used as delimiters, then curly braces may only be used within \meta{code} if they are paired.  Thus, |\py{1+1}| sends the code |1+1| to Python, Python evaluates the string representation of this code, and the result is returned to \LaTeX\ and included as |2|.  The commands |\py#1+1#| and |\py@1+1@| would have the same effect.  The command can also be used to access variable values.  For example, if the code |a=1| had been executed previously, then |\py{a}| simply brings the string represantation of |a| back into the document as |1|.  
 %
 % Assignment is \textbf{not} allowed using |\py|.  For example, |\py{a=1}| is \textbf{not} valid.  This is because assignment cannot be converted to a string.\footnote{It would be simple to allow any code within |\textbackslash py|, including assignment, by using a |try/except| statement.  In this way, the functionality of |\textbackslash py| and |\textbackslash pyc| could be merged.  While that would be simpler to use, it also has serious drawbacks.  If |\textbackslash py| is not exclusively used to typeset string representations of \meta{code}, then it is no longer possible on the \LaTeX\ side to determine whether a command should return a string.  Thus, it is harder to determine, from within a \TeX\ editor, whether |pythontex*.py| needs to be run; warnings for missing Python content could not be issued, because the system wouldn't know (on the \LaTeX\ side) whether content was indeed missing.}
 %
-% The text returned by Python must be valid \LaTeX\ code.  If you need to include complex text within your document, or if you need to include verbatim text, you should use the |print| statement/function within one of the other commands or environments.  The primary reasons to use |\py| rather than |print| are (1) |\py| is more compact and (2) |print| requires an external file to be created for every command or environment in which it is used, while |\py| and equivalents for other families share a single external file.  Thus, use of |\py| minimizes the creation of external files, which is a key design goal for \pytex.\footnote{For |\textbackslash py|, the text returned by Python is stored in macros and thus must be valid \LaTeX\ code, because \LaTeX\ interprets the returned content.  The use of macros for storing returned content means that an external file need not be created for each use of |\textbackslash py|.  Rather, all macros created by |\textbackslash py| and equivalent commands from other families are stored in a single file that is inputted.}
+% The text returned by Python must be valid \LaTeX\ code.  Verbatim and other special content is allowed under the pdfTeX and XeTeX engines (a known bug prevents it from working with LuaTeX).  The primary reasons for using |\py| rather than |print| are (1) |\py| is more compact and (2) |print| requires an external file to be created for every command or environment in which it is used, while |\py| and equivalents for other families share a single external file.  Thus, use of |\py| minimizes the creation of external files, which is a key design goal for \pytex.\footnote{For |\textbackslash py|, the text returned by Python is stored in macros and thus must be valid \LaTeX\ code, because \LaTeX\ interprets the returned content.  The use of macros for storing returned content means that an external file need not be created for each use of |\textbackslash py|.  Rather, all macros created by |\textbackslash py| and equivalent commands from other families are stored in a single file that is inputted.  Note that even though the content is stored in macros, verbatim content is allowed, through the use of special macro definitions combined with \texttt{\string\scantokens}.}  The main reason for using |print| rather than |\py| is if you need to include a very large amount of material; |print|'s use of external files won't use up \TeX's memory, and may give noticeably better performance once the material is sufficiently long.
 %
 % \DescribeMacro{\pyc\oarg{session}\meta{opening~delim}\meta{code}\meta{closing~delim}}
 %
@@ -563,8 +570,6 @@
 % If you need to add more than a single line of custom code, you could use the command multiple times, but it will be more efficient to use the |pythontexcustomcode| environment.
 %
 % \meta{code} may contain imports from |__future__|.  These must be the first elements in any custom code command or environment, since |__future__| imports are only possible at the very beginning of a Python script and only the very beginning of custom code is checked for them.  If imports from |__future__| are present at the beginning of both custom code and the user's code, all imports will work correctly; the presence of the imports in custom code, before user code, does not turn off checking for |__future__| imports at the very beginning of user code.  However, it is probably best to keep all |__future__| imports in a single location.
-%
-% \meta{code} may \textbf{not} contain \LaTeX\ macros.  \meta{code} is interpreted as verbatim content, since in general the custom code will not be valid \LaTeX.
 %
 % \DescribeEnv{pythontexcustomcode\oarg{position}\marg{family}}
 %
@@ -806,6 +811,104 @@
 % It is also possible to change the working directory from within Python code, via |os.chdir()|.
 %
 %
+% \section{\texttt{depythontex}}
+% \label{sec:depythontex}
+%
+% \pytex\ can greatly simplify the creation of documents.  At the same time, by introducing dependence on non-\LaTeX\ external tools, it can constrain how these documents are used.  For example, many publishers will not accept \LaTeX\ documents that require special packages or need special macros.  To address this issue, the package includes a feature called |depythontex| that can convert a \pytex\ document into a plain \LaTeX\ document.
+% 
+% 
+% \subsection{Preparing a document that will be converted}
+%
+% The conversion process should work flawlessly in most cases, with no special formatting required.
+%
+% For best results, keep the following in mind.
+% \begin{itemize}
+% \item The \pytex\ package should have its own |\usepackage|.
+% \item If you need to insert content from Python in inline contexts, it is best to use |\py| or an equivalent command.  If you use |print|, either directly (for example, from within |\pyc|) or via |\printpythontex|, make sure that the spacing following the printed content is correct.  You may need to print an |\endinput| or |%| at the end of your content to prevent an extra trailing space.  |depythontex| will attempt to reproduce the spacing of the original document, even if it is not ideal.  See Section~\ref{sec:depythontex:technical-details} for additional details.
+% \item Some \LaTeX\ environments, such as the |verbatim| environment from the |verbatim| package and the |Verbatim| environment from |fancyvrb|, do not allow text to follow the |\end{|\meta{environment}|}|.  If you bring Python-generated content that ends with one of these environments into your document, using |print| or |\py|, make sure that the end-of-environment command is followed by a newline.  For example, if you are assembling a |Verbatim| environment to bring in, the last line should be the string
+% \begin{verbatim}
+% '\\end{Verbatim}\n'
+% \end{verbatim}
+% Even if you neglect a final newline, |depythontex| will still function correctly in most cases.  Whenever Python-generated content does not end with a newline, |depythontex| usually inserts one and gobbles spaces that follow the environment.  This preserves the correct spacing while avoiding any issues produced by an end-of-environment command.  But in some cases, |depythontex| cannot do this.  For example, if |\py| is used to bring in a |Verbatim| environment, and there is text immediately after the |\py|, without any intervening space, |depythontex| cannot substitute a newline for spaces, because there are none.  Because of the way that |print| and |\py| content is brought in, everything may still work correctly in the original \pytex\ document.  But it would fail in the |depythontex| output.
+% \item Do not create \pytex\ commands or environments on the Python side and |print| or otherwise bring them in.  That is too many levels of complexity!
+% \item |depythontex| is only designed to replace \pytex\ commands and environments that are actually in the main document file.  Do not bring in anything that contains \pytex\ commands or environments via |\input|, |\include|, or |\usepackage|.  The only exception is \pytex\ commands and environments that do not typeset anything (for example, |code| environments that don't print).  If these are brought in via a package or external file, the command |\DepythontexOff| must come before them, and they must be followed by the command |\DepythontexOn|.  Basically, |depythontex| must be disabled for commands and environments brought in via external files.  This works so long as the commands and environments only provide code and settings, rather than any typeset content.
+%
+% Tools for automatically removing the |\usepackage| for packages that contain \pytex\ commands will be added soon; for now, these |\usepackage|'s must be removed manually in the |depythontex| output.
+% \item Keep in mind that the file produced by |depythontex| will need to include any graphics that you create with \pytex.  Make sure any graphics are saved in a location where they are easily accessible.
+% \end{itemize}
+%
+% \subsection{Removing \pytex\ dependence}
+% 
+% Converting a document requires three steps.
+% \begin{enumerate}
+% \item Turn on the package option |depythontex|.  Then compile the document, run |pythontex*.py|, and compile the document again.  Depending on the document, additional compiles may be necessary (for example, to resolve references).  Any syntax highlighting will be turned off automatically during this process, to remove dependence on Pygments.
+%
+% During compilation, an auxiliary file called |<filename>.depytx| is created.  This file contains information about the location of the \pytex\ commands and environments that need to be replaced, and about the content with which they are to be replaced.
+%
+% \item Run the |depythontex*.py| script.  This takes the following arguments.
+%     \begin{itemize}
+%     \item |--encoding ENCODING| This is the encoding of the \LaTeX\ file and all related files.  If an encoding is not specified, UTF-8 is assumed.
+%     \item |--overwrite| This turns off the user prompt in the event that a file already exists with the output name, making overwriting automatic.
+%     \item |--listing| This option specifies the commands and environments that are used for any typeset code.  This can be |verbatim|, |fancyvrb|, |listings|, |minted|, or |pythontex|.\footnote{The \texttt{pythontex} option is included for completeness.  In most cases, you would probably use \texttt{depythontex} to remove all dependence on \pytex.  But sometimes it might be useful to remove all Python code while still using \pytex\ for syntax highlighting.}  |verbatim| is used by default.  An appropriate |\usepackage| command is automatically added to the output document's preamble.
+%
+% When code is typeset with any option other than |verbatim|, listing line numbering from the original document will be preserved.  When code is typeset with any option other than |verbatim| and |fancyvrb|, syntax highlighting will also be preserved.  The only exception is when |listings| is used, and |listings|'s language name does not correspond to Pygments' lexer name.  In this case, you should use the |--lexer-dict| option to specify how the Pygments lexer is to be translated into a |listings| language.
+%     \item |--lexer-dict| This option is used to specify how Pygments lexers are converted to |listings| languages, when the two do not have the same name.  It takes a comma-separated list of the form
+% \begin{verbatim}
+% "<Pygments lexer>:<listings language>, ..., ... "
+% \end{verbatim}
+% A Python-style dict will also be accepted.
+%     \item |--preamble| This option allows additional commands to be added to the output document's preamble.  This is useful when you want the output document to load a package that was automatically loaded by \pytex, such as |upquote|.
+%     \item |TEXNAME| The name of the \LaTeX\ file whose \pytex\ dependence is to be removed.  
+%     \item |[OUTFILE]| By default, the script takes a file |<filename>.<ext>| and creates a new file called |depythontex_<filename>.<ext>|.  If a name is given for the output file, that is used instead.
+%     \end{itemize}
+% \item Compile the |depythontex| file, and compare it to the original.
+%
+% The original and |depythontex| files should be nearly identical.  All Python-generated content is substituted directly, so it should be unchanged.  Usually, any differences will be due to changes in the way that code is typeset.  For example, by default all code in the |depythontex| file is typeset with |\verb| and |verbatim|.  But |\verb| is more fragile than the inline \pytex\ commands (it isn't allowed inside other commands), and |verbatim| does not support line numbering or syntax highlighting.
+%
+% Remember that the |depythontex| file will need to include any graphics created by \pytex.  By default, these are saved in the \pytex\ |outputdir|, which is |pythontex-files-<jobname>| unless you have customized it.  They may be in other locations if you have set a non-default |workingdir| or have specified a path when saving graphics.  You may want to copy the graphics into the same directory as the |depythontex| file, or provide their location via |\graphicspath|.
+%
+% Depending on your needs, you may wish to customize |depythontex*.py|.  The actual substitutions are performed in a few functions that are defined at the beginning of the script.
+% \end{enumerate}
+%
+%
+% \subsection{Technical details}
+% \label{sec:depythontex:technical-details}
+%
+% The |depythontex| process should go smoothly under most circumstances, and the document produced usually should not need manual tweaking.  There are a few technical details that may be of interest.
+% \begin{itemize}
+% \item Content that is printed (actually printed, not from a command like |\py|) is always followed by a space when included as \LaTeX\ code rather than as verbatim.  Usually this is only noticeable when the content is used inline, adjacent to other text.  In such cases, you need to make sure that the spacing is correct in your original document, and need to be aware of how |depythontex| handles the conversion.
+
+% This spacing behavior is due to \LaTeX's |\input|.  When the file of printed content is brought in via |\input|, \LaTeX\ removes any newline characters (|\n|, |\r|, or |\r\n|) at the end of each line, and adds a space at the end of each line (even if there wasn't a newline character).  Thus, when the printed content is brought in, a space is added to its end.  Since this space is within the |\input|'s curly braces |{}|, it is not combined with any following spaces in the \LaTeX\ document to make a single space.  Rather, if the printed content is followed by one or more spaces, two spaces will result; and if it is followed immediately by text, there will be a single space before the text.
+%
+% The space added by |\input| is often invisible, and even when it is not, it is sometimes desirable.\footnote{For example, |\string\printpythontex| behaves as a normal command, and gobbles following spaces, but the space from |\string\input| puts a space back.  So you often get the space you want in inline contexts.}  But this space can be an issue in some inline contexts.  The simplest solution is to use a command like |\py| to bring in content inline.
+%
+% If a command like |\py| is not practical for some reason, there are at least three ways to deal with the space introduced by |\input|:  by printing |\endinput| at the end of the printed content (ending the content before the final space), by printing |%| at the end of the printed content (commenting out the final space), or by using |\unskip| after the printed content (eating preceding spaces).  |depythontex| will work with all three approaches, but only under a limited range of circumstances.  In summary, |depythontex| works with |\endinput| and |%| only if they are the very last thing printed (before a final newline), and works with a following |\unskip|.\footnote{It would be possible to make \texttt{depythontex} work with \texttt{\string\endinput} and \texttt{\%} anywhere, not just at the very end of printed content.  But doing so would require a lot of additional parsing, especially for \texttt{\string\endinput}, to be absolutely sure that we found an actual command rather than a string.  Furthermore, there is no reason that there should be any content after an \texttt{\string\endinput} or \texttt{\%}, since such content would never be included in the document.  Indeed, the current approach prevents any printed content from accidentally being eliminated in this manner.}
+% \begin{itemize}
+% \item |\endinput| cannot be left in the printed content that is substituted into the new document, because it would cause the new document to end immediately.  |depythontex| checks the very end of printed content for |\endinput|, and removes it if it is there before substituting the content.  The terminating |\endinput| is only removed if it is not a string, |\string\endinput|.
+%
+% If |\endinput| is anywhere else in the printed content, and it is not immediately preceded by |\string|, |depythontex| issues a warning.
+% \item A terminating |%| cannot be left in the printed content that is substituted into the new document, because it would comment out any text in the remainder of the line into which it is substituted (in |\input|, its effect is limited to the print file).  |depythontex| checks the very end of printed content for |%|, and removes it if it is there before substituting the content.  |depythontex| only removes the terminating |%| if it is not a literal character |\%| or |\string%|.
+%
+% |depythontex| checks the last line of printed content for other |%| characters, and issues a warning if there are any |%| characters that are not part of |\%| or |\string%|.
+%
+% \item A following |\unskip| could be left in the new document, since it would not produce incorrect spacing.  But it would be undesirable, since it was only there in the first place because of the way that \pytex\ was used.  |depythontex| checks for |\unskip|, and if it is found, attempts to correct the spacing and remove the |\unskip|.  This removal process is only possible if |\unskip| immediately follows a command (otherwise, it wouldn't work anyway) or is on the line immediately after the end of an environment.
+%
+% If |depythontex| finds |\unskip| following printed content, but cannot replace it (it doesn't immediately follow a command, or isn't on the line immediately after the end of an environment), a warning is issued.  It is possible that the |\unskip| is not correctly positioned, and even if it produces the correct spacing, the user should know that due to its location it will survive in the converted document.
+% \end{itemize}
+%
+% If one of the above approaches is not used to eliminate the space introduced by the final newline in printed content, |depythontex| still makes sure that the spacing in the new document matches that of the original document, even if that means forcing a double space.  In the majority of cases, |depythontex| can create the correct spacing using actual spaces and newlines.  But in a few instances, it will include a |\space{}| to ensure a double space that matches the original document.  In those situations, a warning is issued in case the spacing was not intentional.
+%
+% \item Strings such as |\\}|, |\\{|, and |\string| can occur in \pytex\ content that is being replaced.  It is possible that they might decrease performance somewhat in larger or more complex documents.
+%
+% \pytex\ commands for entering verbatim code allow the code to be delimited with either matched braces |{}| or with a repeated character such as |#| (as in |\verb|).  Any verbatim code delimited by braces cannot \textbf{contain} any braces \textbf{unless} they are paired.  So it is easy for |depythontex*.py| to find the end of the delimited code.
+%
+% However, |depythontex*.py| must also replace \pytex\ commands that take a normal, non-verbatim argument delimited by braces (for example, the various |\setpythontex*| commands).  Finding the closing brace for these commands is usually straightforward, but it can be tricky because the argument might contain a literal brace such as |\}| or |\string}|.  |depythontex*.py| automatically accounts for |\}|.  If it detects |\string|, it also accounts for it, but doing so requires more intense parsing.  Similarly, |\\}| requires extra parsing, because depending on what comes before it, the first backslash |\| could be literal (for example, if preceded by |\string|), or the two backslashes |\\| could go together to indicate a new line.
+% \end{itemize}
+%
+%
+%
+%
+%
 % \section{\LaTeX\ programming with \pytex}
 %
 % This section will be expanded in the future.  For now, it offers a brief summary.
@@ -843,20 +946,22 @@
 % If you are considering writing macros that involve \pytex, you should keep a few things in mind.
 % \begin{itemize}
 % \item Do you really need to use \pytex?  If another package already provides the functionality you need, it may be simpler to use an existing tool, particularly if you are working with special characters and thus need to capture verbatim arguments.
-% \item A feature called |depythontex| is currently under development.  Its goal is to create a copy of the original .tex document, and replace all \pytex\ commands in the copy with their output, so that the new document does not depend on \pytex\ at all.  This is primarily of interest for publication, since publishers tend not to like special packages or macros.  It is possible that |depythontex| will support custom user commands beyond those supplied by the \pytex\ package.  If that happens, though, user commands would likely need to be rewritten with new tools supplied by \pytex.  So if you decide to create custom macros now, and expect to need |depythontex| when it is released, you should expect to have to edit your macros before they will work with |depythontex| (assuming that custum user macros will work at all).
+% \item A feature called |depythontex| has recently been added.  It creates a copy of the original \LaTeX\ document in which all \pytex\ commands and environments are replaced by their output, so that the new document does not depend on \pytex\ at all.  This is primarily of interest for publication, since publishers tend not to like special packages or macros.  |depythontex| does not yet support custom user commands.  So if you decide to create custom macros now, and expect to need |depythontex|, you should expect to have to edit your macros before they will work with |depythontex|.
 % \end{itemize}
 %
 % \subsection{Package writing with \pytex}
 %
 % As of v0.10beta, the custom code command and environment, and the regular code command and environment, work in the preamble.  This means that it is now possible to write packages that incorporate \pytex!  At this point, packages are probably a good way to keep track of custom code that you use frequently, and maybe some macros that use \pytex.
 %
-% However, you are encouraged not to develop a huge mathematical or scientific package for \LaTeX\ using \pytex.  At least not yet!  As discussed above, |depythontex| may bring many changes to macro programming involving \pytex.  So have fun writing packages if you want---but keep in mind that \pytex\ will keep changing, and some things that are difficult now may be very simple in the future.
+% However, you are encouraged not to develop a huge mathematical or scientific package for \LaTeX\ using \pytex.  At least not yet!  As discussed above, |depythontex| will bring changes to macro programming involving \pytex.  So have fun writing packages if you want---but keep in mind that \pytex\ will keep changing, and some things that are difficult now may be very simple in the future.
 %
 %
 % \section{Questions and answers}
 %
 % \begin{description}[style=unboxed]
-% \item[Will you add a plot command that automates the saving and inclusion of plots or other graphics created by matplotlib or similar packages?] There are no plans to add a plot command like |\pyplot|.  A plot command would add a little convenience, but at the expense of power.  Automated saving would give the plot an automatically generated name, making the file harder to find.  Automated inclusion would involve collecting a lot of settings and then passing them on to |\includegraphics|, perhaps within |figure| and |center| environments.  It is much simpler for the user to choose a meaningful name and then include the file in the desired manner.
+% \item[Will you add a plot command that automates the saving and inclusion of plots or other graphics created by matplotlib or similar packages?] \hfill
+% 
+% There are no plans to add a plot command like |\pyplot| to the package.  A plot command would add a little convenience, but at the expense of power.  Automated saving would give the plot an automatically generated name, making the file harder to find.  In the general case, automated inclusion would involve collecting a lot of settings and then passing them on to |\includegraphics|, perhaps within |figure| and |center| environments.  In general, it is simpler for the user to choose a meaningful name and then include the file in the desired manner.  If you are working with a series of relatively simple figures, and want to automate the process, you may wish to consult the \href{https://github.com/gpoore/pythontex/wiki}{\pytex\ wiki}.
 % \end{description}
 %
 %
@@ -866,9 +971,11 @@
 %
 % A more extensive troubleshooting section will be added in the future.\pytxtodo{Extend section}
 %
-% If a \pytex\ document will not compile, you may want to delete the directory in which \pytex\ content is stored and try compiling from scratch.  It is possible for \pytex\ to become stuck in an unrecoverable loop.  Suppose you tell Python to print some \LaTeX\ code back to your \LaTeX\ document, but make a fatal \LaTeX\ syntax error in the printed content.  This syntax error prevents \LaTeX\ from compiling.  Now suppose you realize what happened and correct the syntax error.  The problem is that the corrected code cannot be executed until \LaTeX\ correctly compiles and saves the code externally, but \LaTeX\ cannot compile until the corrected code has already been executed.  The simplest solution in such cases is to correct the code, delete all files in the \pytex\ directory, compile the \LaTeX\ document, and then run \pytex\ from scratch.  You can also disable the inclusion of printed content using the |print| and |stderr| package options.
+% \begin{itemize}
+% \item If a \pytex\ document will not compile, you may want to delete the directory in which \pytex\ content is stored and try compiling from scratch.  It is possible for \pytex\ to become stuck in an unrecoverable loop.  Suppose you tell Python to print some \LaTeX\ code back to your \LaTeX\ document, but make a fatal \LaTeX\ syntax error in the printed content.  This syntax error prevents \LaTeX\ from compiling.  Now suppose you realize what happened and correct the syntax error.  The problem is that the corrected code cannot be executed until \LaTeX\ correctly compiles and saves the code externally, but \LaTeX\ cannot compile until the corrected code has already been executed.  The simplest solution in such cases is to correct the code, delete all files in the \pytex\ directory, compile the \LaTeX\ document, and then run \pytex\ from scratch.  You can also disable the inclusion of printed content using the |print| and |stdout| package options.
 %
-% Dollar signs \$ may appear as \textsterling\ in italic code comments typeset by Pygments.  This is a font-related issue.  One fix is to |\usepackage[T1]{fontenc}|.
+% \item Dollar signs \$ may appear as \textsterling\ in italic code comments typeset by Pygments.  This is a font-related issue.  One fix is to |\usepackage[T1]{fontenc}|.
+% \end{itemize}
 %
 %
 % \section{The future of \pytex}
@@ -883,11 +990,12 @@
 %
 % \subsubsection{Modifications to make}
 % \begin{itemize}
-% \item |depythontex| --- convert \pytex\ documents into pure, standard \LaTeX\ that doesn't depend on Python or |pythontex.sty|.  This is primarily for publishing and similar situations.
+% \item Add support for |depythontex| to remove the |\usepackage| for a package that contains \pytex\ commands and environments.
+% \item Add Pygments commands and environments that are compatible with basic |listings| and |minted| syntax.  This will make it easier to work with documents converted to \LaTeX\ from another format, for example via Pandoc.
 % \item Console environments currently don't use default code or custom code---they start as standard Python consoles.  Determine if there's a need for default and/or custom code, and if so, determine how to deal with it.  Update documentation either way.
 % \item User-defined custom commands and environments for general Pygments typesetting.
 % \item Additional documentation for the Python code (Sphinx?).
-% \item Establish a testing framework.
+% \item Improved testing framework.
 % \item Keep track of any Pygments errors for future runs, so we know what to run again?  How easy is it to get Pygments errors?  There don't seem to have been any in any of the testing so far.
 % \item It might nice to include some methods in the \pytex\ utilities for formatting numbers (especially with SymPy and Pylab).
 % \item Test the behavior of files brought in via |\input| and |\include| that contain \pytex\ content.
@@ -938,15 +1046,14 @@
 % The prefix |pytx@| is used for all \pytex\ macros, to prevent conflict with other packages.  Macros that simply store text or a value for later retrieval are given names completely in lower case.  For example, |\pytx@packagename| stores the name of the package, |PythonTeX|.  Macros that actually perform some operation in contrast to simple storage are named using CamelCase, with the first letter after the prefix being capitalized.  For example, |\pytx@CheckCounter| checks to see if a counter exists, and if not, creates it.  Thus, macros are divided into two categories based on their function, and named accordingly.
 %
 % \subsection{Package opening}
-% We begin according to custom by specifying the version of \LaTeX\ that we require and stating the package that we are providing.  We also store the name of the package in a macro for later use in warnings and error messages.
+% We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
-\NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{pythontex}[2013/01/23 v0.10beta2]
 \newcommand{\pytx@packagename}{PythonTeX}
+\newcommand{\pytx@packageversion}{v0.11beta}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
-% A number of packages are required.  |fancyvrb| is used to typeset all code that is not inline, and its internals are used to format inline code as well.  |etex| provides extra registers, to avoid the (probably unlikely) possibility that the many counters required by \pytex\ will exhaust the supply. |etoolbox| is used for string comparison and boolean flags.  |xstring| provides the |\tokenize| macro.  |pgfopts| is used to process package options, via the |pgfkeys| package.   |newfloat| allows the creation of a floating environment for code listings.  |xcolor| or |color| is needed for syntax highlighting with Pygments.
+% A number of packages are required.  |fancyvrb| is used to typeset all code that is not inline, and its internals are used to format inline code as well.  |etex| provides extra registers, to avoid the (probably unlikely) possibility that the many counters required by \pytex\ will exhaust the supply. |etoolbox| is used for string comparison and boolean flags.  |xstring| provides string manipulation.  |pgfopts| is used to process package options, via the |pgfkeys| package.   |newfloat| allows the creation of a floating environment for code listings.  |xcolor| or |color| is needed for syntax highlighting with Pygments.
 %    \begin{macrocode}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
@@ -1017,6 +1124,7 @@
 % Sometimes it may be useful to switch |autoprint| on and off within different parts of a document, rather than setting it to a single setting for the entire document.  So we provide a command for that purpose.  Note that the command overrides the package-level option.
 %    \begin{macrocode}
 \newcommand{\setpythontexautoprint}[1]{%
+    \Depythontex{cmd:setpythontexautoprint:m:n}%
     \ifstrequal{#1}{true}{\booltrue{pytx@opt@autoprint}}{}%
     \ifstrequal{#1}{false}{\boolfalse{pytx@opt@autoprint}}{}%
 }
@@ -1155,7 +1263,6 @@
 %    \begin{macrocode}
 \def\pytx@pyglexer{}
 \pgfkeys{/PYTX/pkgopt/pyglexer/.code=\def\pytx@pyglexer{#1}}
-
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1235,15 +1342,21 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% \subsubsection{De-PythonTeX}
+% \subsubsection{depythontex}
 % \begin{macro}{pytx@opt@depythontex}
-% This option governs whether \pytex\ creates a version of the .tex file that does not require \pytex\ to be compiled.  This option should be useful for converting a \pytex\ document into a more standard \TeX\ document when sharing or publishing documents.
+% This option governs whether \pytex\ saved data that can be used to create a version of the .tex file that does not require \pytex\ to be compiled.  This option should be useful for converting a \pytex\ document into a more standard \TeX\ document when sharing or publishing documents.
+%
+% While we're at it, we go ahead and define dummy versions of the |depythontex| macros, so that they can be used in defining commands that are used within the package, not just outside of it.
 %    \begin{macrocode}
 \newbool{pytx@opt@depythontex}
 \pgfkeys{/PYTX/pkgopt/depythontex/.default=true}
 \pgfkeys{/PYTX/pkgopt/depythontex/.is choice}
 \pgfkeys{/PYTX/pkgopt/depythontex/true/.code=\booltrue{pytx@opt@depythontex}}
 \pgfkeys{/PYTX/pkgopt/depythontex/false/.code=\boolfalse{pytx@opt@depythontex}}
+\let\Depythontex\@gobble
+\let\DepyFile\@gobble
+\let\DepyMacro\@gobble
+\let\DepyListing\@empty
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1270,8 +1383,14 @@
 %    \begin{macrocode}
 \ifbool{pytx@opt@upquote}{\RequirePackage{upquote}}{}
 %    \end{macrocode}
+%
+% If the |depythontex| option is used, we also need to disable Pygments highlighting.  This is necessary because some content, such as |console| environments, is needed in a non-highlighted form, so that it will not contain any special macros.
+%    \begin{macrocode}
+\ifbool{pytx@opt@depythontex}{\boolfalse{pytx@opt@pygments}}{}
+%    \end{macrocode}
+%
 % \subsection{Utility macros and input/output setup}
-% Once options are processed, we proceed to define a number of utility macros and setup the file input/output that is required by \pytex.
+% Once options are processed, we proceed to define a number of utility macros and setup the file input/output that is required by \pytex.  We also create macros and perform setup needed by depythontex, since these are closely related to input/output.
 %
 % \subsubsection{Automatic counter creation}
 % 
@@ -1283,6 +1402,43 @@
 }
 %    \end{macrocode}
 % \end{macro}
+%
+%
+% \subsubsection{Saving verbatim content in macros}
+%
+% \begin{macro}{\pytx@SVMCR}
+% Commands like |\py| bring in string representations of objects.  Printed content is saved to external files, but commands like |\py| bring in content by saving it in macros.  A single large file of macro definitions is brought in, rather than many external files.
+%
+% This prevents the creation of unnecessary files, but it also has a significant drawback:  only some content can be saved in a standard macro.  In particular, verbatim content using |\verb| and |verbatim| will not work.  So we need a way to save anything in a macro.  The solution is to create a special macro that captures its argument verbatim.  The argument is then tokenized when it is used via |\scantokens|.  All of this requires a certain amount of catcode trickery.
+%
+% While this approach works with the XeTeX and pdfTeX engines, it does not work with the LuaTeX engine, which has a known bug in its implementation of |\scantokens|.\footnote{\url{http://tracker.luatex.org/view.php?id=733}}  So we provide a separate version for Lua\TeX\ that does not support verbatim.  The space after the |#1| is intentional, so that the newline at the beginning of the macro definition is gobbled, and the macro content will start with text rather than leading whitespace.
+%
+%    \begin{macrocode}
+\def\pytx@SVMCR#1{%
+    \edef\pytx@tmp{\csname #1\endcsname}%
+    \begingroup
+    \endlinechar`\^^J
+    \let\do\@makeother\dospecials
+    \pytx@SVMCR@i}
+\begingroup
+\catcode`!=0
+!catcode`!\=12
+!long!gdef!pytx@SVMCR@i#1\endpytx@SVMCR^^J{%
+    !endgroup
+    !expandafter!gdef!pytx@tmp{%
+        !expandafter!scantokens!expandafter{#1!empty}}%
+}%
+!endgroup
+\expandafter\ifx\csname directlua\endcsname\relax\else
+\def\pytx@SVMCR#1 {%
+    \edef\pytx@tmp{\csname #1\endcsname}%
+    \pytx@SVMCR@i}
+\long\def\pytx@SVMCR@i#1\endpytx@SVMCR{%
+    \expandafter\gdef\pytx@tmp{#1}%
+}
+\fi
+%    \end{macrocode}\end{macro}
+%
 %
 % \subsubsection{Code context}
 % \begin{macro}{\pytx@context}\begin{macro}{\pytx@SetContext}\begin{macro}{\definepythontexcontext}
@@ -1320,6 +1476,7 @@
 % Three forms of |\pytx@SetGroup*| are provided.  |\pytx@SetGroup| is for general code use.  |\pytx@SetGroupVerb| is for use in verbatim contexts.  It splits verbatim content off into its own group.  That way, verbatim content does not affect the instance numbers of code that is actually executed.  This prevents code from needing to be run every time verbatim content is added or removed; code is only executed when it is actually changed.  |pytx@SetGroupCons| is for |console| environments.  It separate console content from executed code and from verbatim content, again for efficiency reasons.
 %    \begin{macrocode}
 \newcommand{\restartpythontexsession}[1]{%
+    \Depythontex{cmd:restartpythontexsession:m:n}%
     \def\pytx@SetGroup{%
         \edef\pytx@group{#1}%
     }%
@@ -1368,7 +1525,9 @@
 %
 % The command |\setpythontexoutputdir| stores the name of \pytex's output directory in |\pytx@outputdir|.  If the |graphicx| package is loaded, the output directory is also added to the graphics path at the beginning of the document, so that files in the output directory may be included within the main document without the necessity of specifying path information.  The command |\setpythontexoutputdir| is only allowed in the preamble, because the location of \pytex\ content should be specified before the body of the document is typeset.
 %    \begin{macrocode}
-\newcommand{\setpythontexoutputdir}[1]{\def\pytx@outputdir{#1}}
+\newcommand{\setpythontexoutputdir}[1]{%
+    \Depythontex{cmd:setpythontexoutputdir:m:n}%
+    \def\pytx@outputdir{#1}}
 \setpythontexoutputdir{pythontex-files-\pytx@jobname}
 \AtBeginDocument{\@ifpackageloaded{graphicx}{\graphicspath{{\pytx@outputdir/}}}{}}
 \@onlypreamble\setpythontexoutputdir
@@ -1380,12 +1539,14 @@
 %
 %    \begin{macrocode}
 \newcommand{\setpythontexworkingdir}[1]{%
+    \Depythontex{cmd:setpythontexworkingdir:m:n}%
     \def\pytx@workingdir{#1}%
 }
 \@onlypreamble\setpythontexworkingdir
 \AtBeginDocument{%
     \ifcsname pytx@workingdir\endcsname\else
-        \setpythontexworkingdir{\pytx@outputdir}\fi
+        %\setpythontexworkingdir{\pytx@outputdir}\fi Depythontex
+        \let\pytx@workingdir\pytx@outputdir\fi
 }
 %    \end{macrocode}
 % \end{macro}\end{macro}
@@ -1411,7 +1572,9 @@
 % % While we are pulling in content, we also pull in the file of macros that stores some inline ``printed'' content, if the file exists.  Since we need this file in general, and since it will not typically invole a noticeable speed penalty, we bring it in at the beginning of the document without any special conditions.
 %    \begin{macrocode}
 \AtBeginDocument{%
+    \makeatletter
     \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}{}%
+    \makeatother
 }
 %    \end{macrocode}
 % \end{macro}\end{macro}
@@ -1449,6 +1612,8 @@
 % Settings need to be written to the code file.  Some of these settings are not final until the beginning of the document, since they may be modified by the user within the preamble.  Thus, all settings should be written at the end of the document, so that they will all be together and will not be interspersed with any code that was entered in the preamble.  The order in which the settings are written is not significant, but for symmetry it should mirror the order in which they were defined.
 %    \begin{macrocode}
 \AtEndDocument{
+    \immediate\write\pytx@codefile{%
+        \pytx@delimsettings version=\pytx@packageversion\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
         \pytx@delimsettings outputdir=\pytx@outputdir\pytx@delimchar}%
     \immediate\write\pytx@codefile{%
@@ -1512,6 +1677,7 @@
 % In the current implementation, |\setpythontexfv| and |\fvset| differ because the former is not persistent in the same sense as the latter.  If we use |\fvset| to set one property, and then use it later to set another property, the setting for the original property is persistent.  It remains until another |\fvset| command is issued to change it.  In contrast, every time |\setpythontexfv| is used, it clears all prior settings and only the current settings actually apply.  This is because |\fvset| stores the state of each setting in its own macro, while |\setpythontexfv| simply stores a string of settings that is passed to |\fvset| at the appropriate times.  For typical use scenarios, this distinction shouldn't be important---usually, we will want to set the behavior of |fancyvrb| for all \pytex\ content, or for a family of \pytex\ content, and leave those settings constant throughout the document.  Furthermore, environments that typeset code take |fancyvrb| commands as their second optional argument, so there is already a mechanism in place for changing the settings for a single environment.  However, if we ever want to change the typesetting of code for only a small portion of a document (larger than a single environment), this persistence distinction does become important.\footnote{An argument could be made for having |\textbackslash setpythontexfv| behave exactly like |\textbackslash fvset|.  Properly implementing this behavior would be tricky, because of inheritance issues between \pytex-wide and family-specific settings (this is probably a job for |pgfkeys|).  Full persistence would likely require a large number of macros and conditionals.  At least from the perspective of keeping the code clean and concise, the current approach is superior, and probably introduces minor annoyances at worst.}
 %    \begin{macrocode}
 \newcommand{\setpythontexfv}[2][]{%
+    \Depythontex{cmd:setpythontexfv:om:n}%
     \ifstrempty{#1}%
         {\gdef\pytx@fvsettings{#2}}%
         {\expandafter\gdef\csname pytx@fvsettings@#1\endcsname{#2}}%
@@ -1590,11 +1756,12 @@
 \def\pytx@stdout@warntext{}
 \def\pytx@FetchStdoutfile[#1][#2]#3{%
     \IfFileExists{\pytx@outputdir/#3.stdout}{%
-        \ifstrequal{#1}{}{\input{\pytx@outputdir/#3.stdout}}{}%
+        \ifstrempty{#1}{\input{\pytx@outputdir/#3.stdout}}{}%
         \ifstrequal{#1}{raw}{\input{\pytx@outputdir/#3.stdout}}{}%
         \ifstrequal{#1}{verb}{\VerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
         \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
         \ifstrequal{#1}{v}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
+        \DepyFile{p:\pytx@outputdir/#3.stdout:mode=#1}%
     }%
     {\pytx@stdout@warntext
         \PackageWarning{\pytx@packagename}{Non-existent printed content}}%
@@ -1609,7 +1776,8 @@
 % We define a macro that pulls in the content of the most recent stdout file, accepting verbatim settings and also |fancyvrb| settings if they are given.
 %    \begin{macrocode}
 \def\stdoutpythontex{%
-    \@ifnextchar[{\pytx@Stdout}{\pytx@Stdout[]}%
+    \Depythontex{cmd:stdoutpythontex:oo:p}%
+    \@ifnextchar[{\pytx@Stdout}{\pytx@Stdout[raw]}%
 }
 \def\pytx@Stdout[#1]{%
     \@ifnextchar[{\pytx@Stdout@i[#1]}{\pytx@Stdout@i[#1][]}%
@@ -1617,14 +1785,21 @@
 \def\pytx@Stdout@i[#1][#2]{%
     \pytx@FetchStdoutfile[#1][#2]{\pytx@stdfile}%
 }
-\let\printpythontex\stdoutpythontex
+\def\printpythontex{%
+    \Depythontex{cmd:printpythontex:oo:p}%
+    \@ifnextchar[{\pytx@Stdout}{\pytx@Stdout[raw]}%
+}
 %    \end{macrocode}
 % \end{macro}\end{macro}
 %
 % \begin{macro}{\saveprintpythontex}\begin{macro}{\savestdoutpythontex}
 % Sometimes, we may wish to use printed content at multiple locations in a document.  Because |\pytx@stdfile| is changed by every command and environment that could print, the printed content that |\printpythontex| tries to access is constantly changing.  Thus, |\printpythontex| is of use only immediately after content has actually been printed, before any additional \pytex\ commands or environments change the definition of |\pytx@stdfile|.  To get around this, we create |\saveprintpythontex|\marg{name}.  This macro saves the current name of |\pytx@stdfile| so that it is associated with \meta{name} and thus can be retrieved later, after |\pytx@stdfile| has been redefined.
 %    \begin{macrocode}
-\def\savestdoutpythontex#1{%
+\def\savestdoutpythontex{%
+    \Depythontex{cmd:savestdoutpythontex:m:n}%
+    \savestdoutpythontex@i
+}
+\def\savestdoutpythontex@i#1{%
     \ifcsname pytx@SVout@#1\endcsname
         \PackageError{\pytx@packagename}%
             {Attempt to save content using an already-defined name}%
@@ -1633,7 +1808,10 @@
         \expandafter\edef\csname pytx@SVout@#1\endcsname{\pytx@stdfile}%
     \fi
 }
-\let\saveprintpythontex\savestdoutpythontex
+\def\saveprintpythontex{%
+    \Depythontex{cmd:saveprintpythontex:m:n}%
+    \savestdoutpythontex@i
+}
 %    \end{macrocode}
 % \end{macro}\end{macro}
 %
@@ -1641,6 +1819,7 @@
 % Now that we have saved the current |\pytx@stdoutfile| under a new, user-chosen name, we need a way to retrieve the content of that file later, using the name.
 %    \begin{macrocode}
 \def\usestdoutpythontex{%
+    \Depythontex{cmd:usestdoutpythontex:oom:p}%
     \@ifnextchar[{\pytx@UseStdout}{\pytx@UseStdout[]}%
 }
 \def\pytx@UseStdout[#1]{%
@@ -1654,7 +1833,10 @@
         \PackageWarning{\pytx@packagename}{Non-existent saved printed content}%
     \fi
 }
-\let\useprintpythontex\usestdoutpythontex
+\def\useprintpythontex{%
+    \Depythontex{cmd:useprintpythontex:oom:p}%
+    \@ifnextchar[{\pytx@UseStdout}{\pytx@UseStdout[]}%
+}
 %    \end{macrocode}
 % \end{macro}\end{macro}
 %
@@ -1671,11 +1853,12 @@
 %    \begin{macrocode}
 \def\pytx@FetchStderrfile[#1][#2]#3{%
     \IfFileExists{\pytx@outputdir/#3.stderr}{%
-        \ifstrequal{#1}{}{\VerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
         \ifstrequal{#1}{raw}{\input{\pytx@outputdir/#3.stderr}}{}%
+        \ifstrempty{#1}{\VerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
         \ifstrequal{#1}{verb}{\VerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
         \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
         \ifstrequal{#1}{v}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
+        \DepyFile{p:\pytx@outputdir/#3.stderr:mode=#1}%
     }%
     {\textbf{??~\pytx@packagename~??}%
         \PackageWarning{\pytx@packagename}{Non-existent stderr content}}%
@@ -1687,7 +1870,8 @@
 % We define a macro that pulls in the content of the most recent error file, accepting verbatim settings and also |fancyvrb| settings if they are given.
 %    \begin{macrocode}
 \def\stderrpythontex{%
-    \@ifnextchar[{\pytx@Stderr}{\pytx@Stderr[]}%
+    \Depythontex{cmd:stderrpythontex:oo:p}%
+    \@ifnextchar[{\pytx@Stderr}{\pytx@Stderr[verb]}%
 }
 \def\pytx@Stderr[#1]{%
     \@ifnextchar[{\pytx@Stderr@i[#1]}{\pytx@Stderr@i[#1][]}%
@@ -1703,6 +1887,7 @@
 % \begin{macro}{\savestderrpythontex} 
 %    \begin{macrocode}
 \def\savestderrpythontex#1{%
+    \Depythontex{cmd:savestderrpythontex:m:n}%
     \ifcsname pytx@SVerr@#1\endcsname
         \PackageError{\pytx@packagename}%
             {Attempt to save content using an already-defined name}%
@@ -1717,7 +1902,8 @@
 % \begin{macro}{\usestderrpythontex}
 %    \begin{macrocode}
 \def\usestderrpythontex{%
-    \@ifnextchar[{\pytx@UseStderr}{\pytx@UseStderr[]}%
+    \Depythontex{cmd:usestderrpythontex:oom:p}%
+    \@ifnextchar[{\pytx@UseStderr}{\pytx@UseStderr[verb]}%
 }
 \def\pytx@UseStderr[#1]{%
     \@ifnextchar[{\pytx@UseStderr@i[#1]}{\pytx@UseStderr@i[#1][]}%
@@ -1733,6 +1919,126 @@
 %    \end{macrocode}
 % \end{macro}
 %
+%
+% \subsubsection{\texttt{depythontex}}
+%
+% The purpose of |depythontex| is to create a version of the original \LaTeX\ document that does not rely on the \pytex\ package.  All uses of \pytex\ are replaced by their output.  This is particularly useful when submitting a paper to a journal, because \pytex\ can simplify the writing process, but many journals frown upon ``special'' packages or custom macros.  Note that if you just need to share a \pytex\ document with someone, you can always include a copy of |pythontex.sty| and the \pytex\ output directory with the document, and then non-Python parts of the document can be edited just like a normal \LaTeX\ document, without running any Python code.
+%
+% The general strategy for |depythontex| is to write an auxiliary file that contains information about all environments and macros that need to be replaced, including location, format, and the content with which they are to be replaced.  This auxiliary file is then used to performed substitutions on a copy of the original document.  It would be possible to simply create a list of all \pytex\ macros and environments, and use that to perform substitutions.  But that approach would have to track the state of \pytex\ more carefully than the auxiliary file approach.  For example, in the auxiliary file approach, it is easy to track whether |autoprint| is on or off, because commands and environments will write to the auxiliary file if they do indeed use |autoprint|.  But without an auxiliary file, you would have to search for |\setpythontexautoprint| and devise an algorithm for determining where it is on or off.  Furthermore, once there is a large set of macros, a general search-and-replace could be quite expensive computationally.
+%
+% These commands need to be defined after all the other settings commands, because some of the other settings commands are used within this package after being defined, and thus don't need replacement because they're in the package.  At the same time, the |depythontex| commands have to exist so that other commands can be defined with them.  So dummy versions are created earlier.  During the next refactoring, the order will be cleaned up and clarified.
+%
+% \begin{macro}{\pytx@depyfile}
+% If the |depythontex| package option is on, we need to open an auxiliary file for writing depythontex information.
+%    \begin{macrocode}
+\ifbool{pytx@opt@depythontex}{%
+    \newwrite\pytx@depyfile
+    \immediate\openout\pytx@depyfile=\jobname.depytx
+}{}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\Depythontex}
+% Each command or environment that is to work with depythontex will write the following information to the auxiliary file:
+% \begin{verbatim}
+% =>DEPYTHONTEX#<type>:<name>:<args>:<typeset>:<line>:[<Pygments lexer>]#
+% \end{verbatim}
+% where |<type>| is |cmd| or |env|; |<name>| is the complete name of the command or environment; |<args>| is a string representing the arguments taken (|o|=optional, |m|=mandatory, |v|=mandatory~verbatim, |n|=none); |<typeset>| is a string representing what is typeset (|c|=code, |p|=printed, |n|=null), and |<line>| is |\the\inputlineno|.  The last one can be determined automatically without user input, but the first four must be entered when a macro is created.  Optionally, the Pygments lexer is written to file if it is available (if |\pytx@lexer| is not |\relax|). These pieces of information are needed for the following reasons.
+% \begin{itemize}
+% \item |<type>| We need to know whether we are dealing with a command or environment, so we know how to deal with it.  There is no way to detect this automatically, since a command could always be inside some environment.
+% \item |<name>| We need to know the name of what is to be replaced.  There's no way to automatically get this.
+% \item |<args>| We need to know the form of the arguments, so we can assemble an appropriate regular expression.  In some cases, a command might be created in such a way that this could be detected or easily passed on to \pytex\ (for example, if the command was defined using the |xparse| package), but in general there isn't a simple way to detect it.
+% \item |<typeset>| Technically, this could be determined from |\pytx@cmd| in many instances.  But it couldn't be determined for cases like |\printpythontex| and |\stderrpythontex|.  Furthermore, we want a very general interface suitable for users writing custom commands and environments.
+% \item |<line>| This can be determined automatically.
+% \item |<Pygments lexer>| This is needed if so that the language can be specified in the output.  In general, |\pytx@lexer| can be defined automatically by a command and environment generator.
+% \end{itemize}
+%
+% We need a command that writes this information to the auxiliary file.  Since this command may be employed by users writing custom macros, we choose a capitalized name not containing any ampersands |@|.  Since we need to be able to easily disable the macro, we create the real macro with name ending in |@orig|, and then |\let| the intended name to it.
+%    \begin{macrocode}
+\let\pytx@lexer\relax
+\def\Depythontex@orig#1{%
+    \immediate\write\pytx@depyfile{=>DEPYTHONTEX\pytx@delimchar#1:%
+        \the\inputlineno:\ifx\pytx@lexer\relax\else\pytx@lexer\fi\pytx@delimchar}%
+    \let\pytx@lexer\relax}
+\ifbool{pytx@opt@depythontex}%
+    {\let\Depythontex\Depythontex@orig}%
+    {\let\Depythontex\@gobble}
+\ifbool{pytx@opt@depythontex}{%
+\AtEndDocument{%
+    \immediate\write\pytx@depyfile{=>DEPYTHONTEX:SETTINGS\pytx@delimchar version=%
+        \pytx@packageversion\pytx@delimchar}%
+    \immediate\write\pytx@depyfile{=>DEPYTHONTEX:SETTINGS\pytx@delimchar macrofile=%
+        \pytx@outputdir/\pytx@jobname.pytxmcr\pytx@delimchar}%
+}%
+}{}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DepyMacro}
+% We need a macro that will write the appropriate information to the auxiliary file if substitution with the contents of a macro is needed.  The argument is of the form |<typeset>:<macro name>|, where |<typeset>| is the type of content (|p|=print, |c|=code).
+%    \begin{macrocode}
+\def\DepyMacro@orig#1{%
+    \immediate\write\pytx@depyfile{MACRO:#1}%
+}
+\ifbool{pytx@opt@depythontex}%
+    {\let\DepyMacro\DepyMacro@orig}%
+    {\let\DepyMacro\@gobble}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\DepyFile}
+% We also need a macro that will write the appropriate information to the auxiliary file if substitution with the contents of a file is needed.  As an argument, this command takes |<typeset>:<filename>[:mode=<format>]|, where |<typeset>| is the type of content (|p|=print, |c|=code), |<filename>| is the full filename, and the optional |mode| is the format in which the file is brought in (|raw|, |verb|, |inlineverb| or |v|).  If |mode| is not specified, it defaults to reasonable defaults.  In general, |mode| is only needed for |p| content; |c| content is verbatim of one form or another.
+%    \begin{macrocode}
+\def\DepyFile@orig#1{%
+    \immediate\write\pytx@depyfile{FILE:#1}%
+}%
+\ifbool{pytx@opt@depythontex}%
+    {\let\DepyFile\DepyFile@orig}%
+    {\let\DepyFile\@gobble}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DepyListing}
+% We need a macro that will write information to the auxiliary file for code listings, specifically whether line numbers were used, and if so, what the starting number was.  This is non-trivial, because it is possible to change both of these via an environment's second optional argument.  One approach would be to capture all optional arguments, pass the second to |fancyvrb|, and then attempt to evaluate the status of line numbers via an examination of |fancyvrb|'s internals.  That approach would require a good deal of work and would likely involve a patch for |fancyvrb|.  Instead, we redefine |\theFancyVerbLine|, so that it saves the line number to file the first time it is used, and then redefines itself to its original form.
+%
+% Since we are redefining |\theFancyVerbLine|, |\DepyListing| can only be used with commands (such as |\inputpygments|) if it is in a group (|\begingroup| ... |\endgroup|).  This prevents the redefinition from ``escaping,'' if line numbering is not used.  (Environments are wrapped in groups automatically, so this doesn't apply to them.)
+%    \begin{macrocode}
+\newcommand{\pytx@DepyListing@write}{%
+    \immediate\write\pytx@depyfile{LISTING:firstnumber=\arabic{FancyVerbLine}}%
+}
+\def\DepyListing@orig{%
+    \let\oldFancyVerbLine\theFancyVerbLine
+    \def\theFancyVerbLine{%
+        \pytx@DepyListing@write
+        \expandafter\gdef\expandafter\theFancyVerbLine\expandafter{\oldFancyVerbLine}%
+        \theFancyVerbLine
+    }%
+}
+\ifbool{pytx@opt@depythontex}%
+    {\let\DepyListing\DepyListing@orig}%
+    {\let\DepyListing\@empty}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DepythontexOn}
+% \begin{macro}{\DepythontexOff}
+% We need a way to switch |depythontex| on and off.  When |depythontex| is being used, it needs to be on throughout the entire main document.  But it must be switched off for any commands or environments that are brought in via external files (for example, in a package).  Since anything that is brought in isn't actually in the text of the main document, substitution is both impossible and unnecessary.
+%    \begin{macrocode}
+\newcommand{\DepythontexOn}{%
+    \let\Depythontex\Depythontex@orig
+    \let\DepyMacro\DepyMacro@orig
+    \let\DepyFile\DepyFile@orig
+    \let\DepyListing\DepyListing@orig
+}
+\newcommand{\DepythontexOff}{%
+    \let\Depythontex\@gobble
+    \let\DepyMacro\@gobble
+    \let\DepyFile\@gobble
+    \let\DepyListing\@empty
+}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
 %
 % \subsection{Inline commands}
 %
@@ -1817,6 +2123,8 @@
 %
 % We save a detokenized version of the argument in |\pytx@argdetok|.  Even though the argument was captured under special catcode conditions, this is still necessary.  If the argument was delimited by curly braces, then any internal curly braces were active when the argument was captured, and these need their catcodes corrected.  If the code contains any unicode characters, detokenization is needed so that they may be correctly saved to file.
 %
+% We save a retokenized version of the argument in |\pytx@argretok|.  This is needed for typesetting with |fancyvrb|.  The code must be retokenized so that space characters are active, since |fancyvrb| allows space characters to be visible or invisible by making them active.
+%
 % The \textbf{name} of the counter corresponding to this code is assembled.  It is needed for keeping track of the instance, and is used for bringing in content created by the code and for bringing in highlighting created by Pygments.
 % 
 % Next we call a series of macros that determine whether the code is shown (typeset), whether it is saved to the code file, and whether content created by the code (``printed'') should be brought in.  These macros are |\let| to appropriate values when an inline command is called; they are not defined independently.
@@ -1826,6 +2134,7 @@
 \def\pytx@InlineMargBgroup#1{%
     \endgroup
     \def\pytx@argdetok{\detokenize{#1}}%
+    \def\pytx@arg{#1}%
     \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
@@ -1846,18 +2155,21 @@
 %
 %
 % \begin{macro}{\pytx@InlineShowFV}
-% Code may be typeset with |fancyvrb|.  In this case, the code must be retokenized so that space characters are active, since |fancyvrb| allows space characters to be visible or invisible by making them active.  |fancyvrb| settings are invoked via |pytx@FVSet|, but this must be done within a group so that the settings remain local.  Most of the remainder of the commands are from |fancyvrb|'s |\FV@FormattingPrep|, and take care of various formatting matters, including spacing, font, whether space characters are shown, and any user-defined formatting.  Finally, we create an |\hbox| and invoke |\FancyVerbFormatLine| to maintain parallelism with |BVerbatim|, which is used for inline content highlighted with Pygments.  |\FancyVerbFormatLine| may be redefined to alter the typeset code, for example, by putting it in a colorbox via the following command:\footnote{Currently, |\textbackslash FancyVerbFormatLine| is global, as in |fancyvrb|.  Allowing a family-specific variant may be considered in the future.  In most cases, the |fancyvrb| option |formatcom|, combined with external formatting from packages like |mdframed|, should provide all formatting desired.  But something family-specific might occasionally prove useful.}
+% Code may be typeset with |fancyvrb|.  |fancyvrb| settings are invoked via |pytx@FVSet|, but this must be done within a group so that the settings remain local.  Most of the remainder of the commands are from |fancyvrb|'s |\FV@FormattingPrep|, and take care of various formatting matters, including spacing, font, whether space characters are shown, and any user-defined formatting.  Finally, we create an |\hbox| and invoke |\FancyVerbFormatLine| to maintain parallelism with |BVerbatim|, which is used for inline content highlighted with Pygments.  |\FancyVerbFormatLine| may be redefined to alter the typeset code, for example, by putting it in a colorbox via the following command:\footnote{Currently, |\textbackslash FancyVerbFormatLine| is global, as in |fancyvrb|.  Allowing a family-specific variant may be considered in the future.  In most cases, the |fancyvrb| option |formatcom|, combined with external formatting from packages like |mdframed|, should provide all formatting desired.  But something family-specific might occasionally prove useful.}
 % \begin{quote}
 % |\renewcommand{\FancyVerbFormatLine}[1]{\colorbox{green}{#1}}|
 % \end{quote}
 %    \begin{macrocode}
 \def\pytx@InlineShowFV{%
-    \begingroup
-    \let\do\@makeother\dospecials
-    \catcode`\ =\active
-    \catcode`\^^I=\active
-    \tokenize{\pytx@argretok}{\pytx@argdetok}%
-    \endgroup
+    \def\pytx@argretok{%
+        \begingroup
+        \everyeof{\noexpand}%
+        \endlinechar-1\relax
+        \let\do\@makeother\dospecials
+        \catcode`\ =\active
+        \catcode`\^^I=\active
+        \expandafter\scantokens\expandafter{\pytx@arg}%
+        \endgroup}%
     \begingroup
     \pytx@FVSet
     \FV@BeginVBox
@@ -1914,7 +2226,8 @@
 \AtBeginDocument{
     \def\pytx@InlineAutoprint{%
         \ifbool{pytx@opt@autoprint}{%
-            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}{}%
+            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+                {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}{}}{}%
     }
     \ifbool{pytx@opt@stdout}{}{\let\pytx@InlineAutoprint\@empty}
 }
@@ -1929,6 +2242,7 @@
     \edef\pytx@mcr{pytx@MCR@\pytx@type @\pytx@session @\pytx@group @\arabic{\pytx@counter}}%
     \ifcsname\pytx@mcr\endcsname
         \csname\pytx@mcr\endcsname
+        \DepyMacro{p:\pytx@mcr}%
     \else
         \textbf{??}%
         \PackageWarning{\pytx@packagename}{Missing autoprint content}%
@@ -1947,6 +2261,8 @@
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlinebFV}[1]{%
     \expandafter\newcommand\expandafter{\csname #1b\endcsname}{%
+        \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
+        \Depythontex{cmd:#1b:ov:c}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{inlineb}%
         \pytx@SetContext
@@ -1978,6 +2294,8 @@
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlinevFV}[1]{%
     \expandafter\newcommand\expandafter{\csname #1v\endcsname}{%
+        \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
+        \Depythontex{cmd:#1v:ov:c}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{inlinev}%
         \pytx@SetContext
@@ -2009,6 +2327,7 @@
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlinecFV}[1]{%
     \expandafter\newcommand\expandafter{\csname #1c\endcsname}{%
+        \Depythontex{cmd:#1c:ov:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{inlinec}%
         \pytx@SetContext
@@ -2029,6 +2348,7 @@
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlineFV}[1]{%
     \expandafter\newcommand\expandafter{\csname #1\endcsname}{%
+        \Depythontex{cmd:#1:ov:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{inline}%
         \pytx@SetContext
@@ -2048,6 +2368,7 @@
 % This macro takes a single line of code and adds it to all sessions within a family.  It is the inline version of the |pythontexcustomcode| environment.
 %    \begin{macrocode}
 \newcommand{\pythontexcustomc}[2][begin]{%
+    \Depythontex{cmd:pythontexcustomc:omv:p}%
     \ifstrequal{#1}{begin}{}{%
         \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
             {Invalid optional argument for \string\pythontexcustomc}{}
@@ -2070,6 +2391,7 @@
 % This macro is a holdover from 0.9beta3.  It has been deprecated in favor of |\pythontexcustomc| and |pythontexcustomcode|.
 %    \begin{macrocode}
 \def\setpythontexcustomcode#1{%
+    \Depythontex{cmd:setpythontexcustomcode:mv:p}%
     \PackageWarning{\pytx@packagename}{The command
         \string\setpythontexcustomcode\space has been deprecated;
         use \string\pythontexcustomc\space or pythontexcustomcode instead}%
@@ -2135,6 +2457,9 @@
 \newcommand{\pytx@MakeBlockFV}[1]{%
     \expandafter\newenvironment{#1block}{%
         \VerbatimEnvironment
+        \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
+        \Depythontex{env:#1block:oo|:c}%
+        \DepyListing
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{block}%
         \pytx@SetContext
@@ -2188,6 +2513,9 @@
 \newcommand{\pytx@MakeVerbFV}[1]{%
     \expandafter\newenvironment{#1verb}{%
         \VerbatimEnvironment
+        \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
+        \Depythontex{env:#1verb:oo|:c}%
+        \DepyListing
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{verb}%
         \pytx@SetContext
@@ -2353,7 +2681,8 @@
 \AtBeginDocument{
     \def\pytx@EnvAutoprint{%
         \ifbool{pytx@opt@autoprint}{%
-            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}{}{}}{}%
+            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+                {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}{}}{}%
     }
     \ifbool{pytx@opt@stdout}{}{\let\pytx@EnvAutoprint\@empty}
 }
@@ -2368,6 +2697,7 @@
 \newcommand{\pytx@MakeCodeFV}[1]{%
     \expandafter\newenvironment{#1code}{%
         \VerbatimEnvironment
+        \Depythontex{env:#1code:oo|:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{code}%
         \pytx@SetContext
@@ -2429,6 +2759,7 @@
 %    \begin{macrocode}
 \newenvironment{pythontexcustomcode}[2][begin]{%
     \VerbatimEnvironment
+    \Depythontex{env:pythontexcustomcode:om:n}%
     \ifstrequal{#1}{begin}{}{%
         \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
             {Invalid optional argument for pythontexcustomcode}{}
@@ -2455,6 +2786,9 @@
 \newcommand{\pytx@MakeConsFV}[1]{%
     \expandafter\newenvironment{#1console}{%
         \VerbatimEnvironment
+        \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
+        \Depythontex{env:#1console:oo|:c}%
+        \DepyListing
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{console}%
         \pytx@SetContext
@@ -2470,10 +2804,14 @@
     \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
+        \DepyMacro{c:\pytx@counter @\arabic{\pytx@counter}}%
     \else
-        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.pygtex}{}%
-            {\textbf{??~\pytx@packagename~??}%
-                \PackageWarning{\pytx@packagename}{Non-existent console content}}%
+        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.tex}%
+            {\DepyFile{c:\pytx@outputdir/\pytx@stdfile.tex}}%
+            {\InputIfFileExists{\pytx@outputdir/\pytx@stdfile.pygtex}%
+                {\DepyFile{c:\pytx@outputdir/\pytx@stdfile.pygtex}}%
+                {\textbf{??~\pytx@packagename~??}%
+                    \PackageWarning{\pytx@packagename}{Non-existent console content}}}%
     \fi
     \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
@@ -2542,7 +2880,8 @@
     %\pytx@MakeCodeFV{#2}%
     \ifstrequal{#1}{console}{\pytx@MakeConsFV{#2}}{}%
     \ifstrequal{#1}{all}{\pytx@MakeConsFV{#2}}{}%
-    \setpythontexfv[#2]{}%
+    %\setpythontexfv[#2]{}% Uncomment after Depythontex ordering
+    \expandafter\gdef\csname pytx@fvsettings@#2\endcsname{}%
 }
 \@onlypreamble\makepythontexfamilyfv
 %    \end{macrocode}
@@ -2588,6 +2927,7 @@
 % We need to be able to reset the lexer associated with a family after the family has already been created.
 %    \begin{macrocode}
 \def\setpythontexpyglexer#1#2{%
+    \Depythontex{cmd:setpythontexpyglexer:mm:n}%
     \ifcsname pytx@pyglexer@#1\endcsname
         \expandafter\xdef\csname pytx@pyglexer@#1\endcsname{#2}%
     \else
@@ -2605,6 +2945,7 @@
 % Due to the implementation (and also in the interest of keeping typesetting consistent), the Pygments style for a family must remain constant throughout the document.  Thus, we only allow changes to the style in the preamble.
 %    \begin{macrocode}
 \newcommand{\setpythontexpygopt}[2]{%
+    \Depythontex{cmd:setpythontexpygopt:mm:n}%
     \ifcsname pytx@pygopt@#1\endcsname
         \expandafter\xdef\csname pytx@pygopt@#1\endcsname{#2}%
     \else
@@ -2648,8 +2989,10 @@
 % We need to be able to reset the formatter used by a family among the options |auto|, |fancyvrb|, and |pygments|.
 %    \begin{macrocode}
 \def\setpythontexformatter#1#2{%
+    \Depythontex{cmd:setpythontexformatter:mm:n}%
     \ifcsname pytx@macroformatter@#1\endcsname
-        \expandafter\xdef\csname pytx@macroformatter@#1\endcsname{#2}
+        \ifbool{pytx@opt@depythontex}{}{%
+            \expandafter\xdef\csname pytx@macroformatter@#1\endcsname{#2}}
     \else
         \PackageError{\pytx@packagename}%
             {Cannot modify a family that does not exist or does not allow formatter choices}%
@@ -2684,7 +3027,8 @@
 % We define a bool |pytx@listingenv| that keeps track of whether a listings environment has been created.  Then we define a macro that creates a floating environment with a custom name, with appropriate settings for a listing environment.  We only allow this macro to be used in the preamble, since later use would wreak havok.
 %    \begin{macrocode}
 \newbool{pytx@listingenv}
-\def\setpythontexlistingenv#1{
+\def\setpythontexlistingenv#1{%
+    \Depythontex{cmd:setpythontexlistingenv:m:n}%
     \DeclareFloatingEnvironment[fileext=lopytx,listname={List of Listings},name=Listing]{#1}
     \booltrue{pytx@listingenv}
 }
@@ -2731,6 +3075,8 @@
 %    \begin{macrocode}
 \def\pytx@MakePygmentsInlineFV{%
     \newcommand{\pygment}[1]{%
+        \edef\pytx@lexer{##1}%
+        \Depythontex{cmd:pygment:mv:c}%
         \edef\pytx@type{PYG##1}%
         \edef\pytx@cmd{inlinev}%
         \pytx@SetContext
@@ -2809,6 +3155,9 @@
 \def\pytx@BEPygmentsFV@i#1{%
     \endgroup
     \edef\pytx@type{PYG#1}%
+    \edef\pytx@lexer{#1}%
+    \Depythontex{env:pygments:om:c}%
+    \DepyListing
     \edef\pytx@cmd{verb}%
     \edef\pytx@session{default}%
     \edef\pytx@linecount{pytx@\pytx@type @\pytx@session @\pytx@group @line}%
@@ -2913,6 +3262,8 @@
 %    \begin{macrocode}
 \def\pytx@MakePygmentsInputFV{
     \newcommand{\inputpygments}[3][]{%
+        \edef\pytx@lexer{##2}%
+        \Depythontex{cmd:inputpygments:omm:c}%
         \edef\pytx@type{PYG##2}%
         \edef\pytx@cmd{verb}%
         \pytx@SetContext
@@ -2924,10 +3275,11 @@
         \fi
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \begingroup
+        \DepyListing %Always must be in a group
         \pytx@FVSet
         \fvset{firstnumber=auto}%
         \IfFileExists{##3}%
-            {\VerbatimInput[##1]{##3}}%
+            {\DepyFile{c:##3:mode=verb}\VerbatimInput[##1]{##3}}%
             {\PackageWarning{\pytx@packagename}{Input file <##3> doesn't exist}}%
         \endgroup
         \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
@@ -2975,6 +3327,7 @@
 % This macro allows |fancyvrb| settings to be specified for a Pygments lexer.  It takes the lexer name as the optional argument and the settings as the mandatory argument.  If no optional argument (lexer) is supplied, then it sets the document-wide |fancyvrb| settings, and is in that case equivalent to |\setpythontexfv|.
 %    \begin{macrocode}
 \newcommand{\setpygmentsfv}[2][]{%
+    \Depythontex{cmd:setpygmentsfv:om:n}%
     \ifstrempty{#1}%
         {\gdef\pytx@fvsettings{#2}}%
         {\expandafter\gdef\csname pytx@fvsettings@PYG#1\endcsname{#2}}%
@@ -2987,6 +3340,7 @@
 % This macro allows the Pygments option to be set for a lexer.  It takes the lexer name as the first argument and the options as the second argument.  If this macro is used multiple times for a lexer, it will write the settings to the code file multiple times.  But |pythontex*.py| will simply process all settings, and each subsequent set of settings will overwrite any prior settings, so this is not a problem.
 %    \begin{macrocode}
 \def\setpygmentspygopt#1#2{%
+    \Depythontex{cmd:setpygmentspygopt:mm:n}%
     \AtEndDocument{\immediate\write\pytx@codefile{%
         \pytx@delimsettings pygfamily=PYG#1,#1,%
         \string{#2\string}\pytx@delimchar}%
@@ -3002,9 +3356,12 @@
 %
 % The parallel \pytex\ command allows for setting the formatting for individual families.  The rationale is that the user might use a \pytex\ family for executing and typesetting code, but not wish to use Pygments to highlight the code.  The Pygments command does not allow for setting the formatter for individual lexers, which would be the closest parallel to that behavior.  The primary reason that the user might use the Pygments commands and environments is for highlighting purposes.  Otherwise, there is little reason not to use |fancyvrb| or an equivalent directly.\footnote{The user might want to use Pygments commands for the |fancyvrb| style and line numbering continuity they provide.  In that case, a custom Pygments lexer, with formatter set to |fancyvrb| should be considered.  The verbatim part of a \pytex\ family could also be used.  Alternatively, the Pygments |TextLexer| (aka |text|) may be used; it is a null lexer, so nothing is highlighted.}
 %    \begin{macrocode}
-\def\setpygmentsformatter#1{\xdef\pytx@macroformatter@PYG{#1}}
+\def\setpygmentsformatter#1{%
+    \Depythontex{cmd:setpygmentsformatter:m:n}%
+    \ifbool{pytx@opt@depythontex}{}{\xdef\pytx@macroformatter@PYG{#1}}}
 \@onlypreamble\setpygmentsformatter
-\setpygmentsformatter{auto}
+%\setpygmentsformatter{auto} Uncomment once fix ordering of Depythontex
+\xdef\pytx@macroformatter@PYG{auto}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -3063,10 +3420,11 @@
 %
 %
 % \subsection{Final cleanup}
-% At the end of the document, we need to close the code file.
+% At the end of the document, we need to close files.
 %    \begin{macrocode}
 \AfterEndDocument{%
     \immediate\closeout\pytx@codefile
+    \ifbool{pytx@opt@depythontex}{\immediate\closeout\pytx@depyfile}{}%
 }
 %    \end{macrocode}
 %
