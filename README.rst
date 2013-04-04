@@ -22,16 +22,18 @@ PythonTeX provides fast, user-friendly access to Python from within LaTeX.  It a
 
 See ``pythontex.pdf`` for installation instructions.  See ``pythontex_gallery.pdf`` for examples of what is possible with PythonTeX.
 
+The ``depythontex`` utility creates a copy of a PythonTeX document in which all Python code has been replaced by its output.  This plain LaTeX document is more suitable for journal submission, sharing, or conversion to other document formats.  See ``pythontex_gallery.html`` and the accompanying conversion script for an example of a PythonTeX document that was converted to HTML via ``depythontex`` and `Pandoc <http://johnmacfarlane.net/pandoc/>`_.
 
-Current status
---------------
 
-Immediate development will focus on finishing the first full release.  This was delayed to incorporate depythontex, which had made unexpectedly rapid progress.
+Current status (2013/04/03)
+---------------------------
+
+A thorough review of all current and planned features has just been completed.  This clears the way for a full release as soon as a few modifications are made .  The goal is to freeze all syntax and command names after the full release, so ensuring their compatibility with planned features is important.
 
 Upcoming development will focus on refactoring.  This has two goals:
 
 * Better support for macro programming with PythonTeX.
-* Creating a simple way to add basic support for additional programming languages beyond Python.
+* Creating a simple system for adding support for additional programming languages beyond Python.
 
 
 Version History

@@ -73,7 +73,7 @@ Python interaction can also be more complex.  \pyb{print(str(2**2**2) + r'\endin
 
 Printing works, but as the last example demonstrates, you have to be careful about spacing if you have text immediately after the printed content.  In that case, it's usually best to assemble text within a \pytex\ environment and store the text in a variable.  Then you can bring in the text later, using the \pygment{latex}{\py} command.  The \pygment{latex}{\py} command brings in a string representation of its argument.  First we create the text.
 \begin{pyblock}
-mytext = '$1 + 1 = {0}$'.format(1+1)
+mytext = '$1 + 1 = {0}$'.format(1 + 1)
 \end{pyblock}
 Then we bring it in:  \py{mytext}.  The \pygment{latex}{\py} command can even bring in verbatim content, as long as you are using the pdfTeX or XeTeX engines.  (Unfortunately, verbatim does not work with LuaTeX, due to a bug.\footnote{\url{http://tracker.luatex.org/view.php?id=733}})
 
@@ -130,7 +130,7 @@ Many things are possible, including some very nice calculus.
 
 \begin{sympyblock}
 f = x**3 + cos(x)**5
-g = Integral(f,x)
+g = Integral(f, x)
 \end{sympyblock}
 
 \[\sympy{g}=\sympy{g.doit()}\]
@@ -191,7 +191,7 @@ from re import sub
 
 var('x')
 
-#Create a list of functions to include in the table
+# Create a list of functions to include in the table
 funcs = ['sin(x)', 'cos(x)', 'tan(x)', 
          'sin(x)**2', 'cos(x)**2', 'tan(x)**2', 
          'asin(x)', 'acos(x)', 'atan(x)', 
@@ -200,15 +200,15 @@ funcs = ['sin(x)', 'cos(x)', 'tan(x)',
 print(r'\begin{align*}')
 
 for func in funcs:
-    #Put in some vertical space when switching to arc and hyperbolic funcs
-    if func=='asin(x)' or func=='sinh(x)':
-        print(r'\vspace{0.5in}\\')
+    # Put in some vertical space when switching to arc and hyperbolic funcs
+    if func == 'asin(x)' or func == 'sinh(x)':
+        print(r'&\\')
     myderiv = 'Derivative(' + func + ', x)'
     myint = 'Integral(' + func + ', x)'
-    print(latex(eval(myderiv)) + '&=' \
-            + latex(eval(myderiv+'.doit()')) + r'\quad & \quad')
-    print(latex(eval(myint)) + '&=' \
-            + latex(eval(myint+'.doit()'))+ r'\\')
+    print(latex(eval(myderiv)) + '&=' +
+            latex(eval(myderiv + '.doit()')) + r'\quad & \quad')
+    print(latex(eval(myint)) + '&=' +
+            latex(eval(myint+'.doit()')) + r'\\')
 print(r'\end{align*}')
 \end{sympyblock}
 
@@ -221,7 +221,7 @@ Using SymPy, it is possible to typeset step-by-step solutions.  In this particul
 
 \begin{mdframed}[linecolor=Green,innerrightmargin=30pt,innerleftmargin=30pt,leftmargin=-30pt,rightmargin=-30pt,backgroundcolor=Black!5,skipabove=10pt,skipbelow=10pt,roundcorner=5pt,frametitle={\centering Step-by-Step Integral Evaluation\linebreak}]
 \begin{sympyblock}[][numbers=left]
-(x, y, z) = symbols('x,y,z')
+x, y, z = symbols('x,y,z')
 f = Symbol('f(x,y,z)')
 
 # Define limits of integration
@@ -235,25 +235,26 @@ z_ulim = 4
 print(r'\begin{align*}')
 
 # Notice how I define f as a symbol, then later as an actual function
-left = Integral(f, (x,x_llim,x_ulim), (y,y_llim,y_ulim), (z,z_llim,z_ulim))
-f = x*y+y*sin(z) + cos(x+y)
-right = Integral(f, (x,x_llim,x_ulim), (y,y_llim,y_ulim), (z,z_llim,z_ulim))
-print(latex(left) + '&=' + latex(right)+r'\\')
+left = Integral(f, (x, x_llim, x_ulim), (y, y_llim, y_ulim), (z, z_llim, z_ulim))
+f = x*y + y*sin(z) + cos(x+y)
+right = Integral(f, (x, x_llim, x_ulim), (y, y_llim, y_ulim), (z, z_llim, z_ulim))
+print(latex(left) + '&=' + latex(right) + r'\\')
 
 # For each step, I move limits from an outer integral to an inner, evaluated 
 # integral until the outer integral is no longer needed
-right = Integral(Integral(f,(z,z_llim,z_ulim)).doit(), (x,x_llim,x_ulim), \
-        (y,y_llim,y_ulim))
-print('&=' + latex(right)+r'\\')
+right = Integral(Integral(f, (z, z_llim, z_ulim)).doit(), (x, x_llim, x_ulim),
+                 (y, y_llim, y_ulim))
+print('&=' + latex(right) + r'\\')
 
-right = Integral(Integral(f,(z,z_llim,z_ulim),(y,y_llim,y_ulim)).doit(), \
-        (x,x_llim,x_ulim))
-print('&=' + latex(right)+r'\\')
+right = Integral(Integral(f, (z, z_llim, z_ulim), (y, y_llim, y_ulim)).doit(),
+                 (x, x_llim, x_ulim))
+print('&=' + latex(right) + r'\\')
 
-right = Integral(f,(z,z_llim,z_ulim),(y,y_llim,y_ulim),(x,x_llim,x_ulim)).doit()
-print('&=' + latex(right)+r'\\')
+right = Integral(f, (z, z_llim, z_ulim), (y, y_llim, y_ulim), 
+                 (x, x_llim, x_ulim)).doit()
+print('&=' + latex(right) + r'\\')
 
-print('&=' + latex(N(right))+r'\\')
+print('&=' + latex(N(right)) + r'\\')
 
 print(r'\end{align*}')
 \end{sympyblock}
