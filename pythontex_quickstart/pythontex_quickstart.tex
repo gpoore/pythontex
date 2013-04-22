@@ -1,0 +1,93 @@
+\documentclass[twocolumn]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+
+\usepackage{pythontex}
+
+\usepackage[svgnames]{xcolor}
+
+\usepackage{nopageno}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,urlcolor=Green,linkcolor=blue}
+
+\newcommand{\pytex}{Python\TeX}
+\renewcommand*{\thefootnote}{\fnsymbol{footnote}}
+
+\title{\vspace{-0.6in} \pytex\ Quickstart \\ {\normalsize \href{https://github.com/gpoore/pythontex}{github.com/gpoore/pythontex}}}
+\author{}
+\date{}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+
+
+\section*{Compiling}
+
+Compiling a document that uses \pytex\ involves three steps:  run latex, run \texttt{pythontex.py}, and finally run latex again.  You may wish to create a symlink or launching wrapper for \texttt{pythontex.py}, if one was not created during installation.  \pytex\ is compatible with the pdfLaTeX, XeLaTeX, and LuaLaTeX engines.  There are minor engine-specific differences.
+
+
+\section*{Commands}
+
+\pygment{latex}{\py} returns a string representation of its argument.  For example, \pygment{latex}{\py{2 + 4**2}} produces \py{2 + 4**2}, and \pygment{latex}{\py{'ABC'.lower()}} produces \py{'ABC'.lower()}.  \pygment{latex}{\py}'s argument can be delimited by curly braces, or by a matched pair of other characters (just like \pygment{latex}{\verb}).
+
+\pygment{latex}{\pyc} executes code.  By default, anything that is printed is automatically included in the document (see \texttt{autoprint}/\texttt{autostdout} in the main documentation).  For example, \pygment{latex}{\pyc{var = 2}} \pyc{var = 2} creates a variable, and then its value may be accessed later via \pygment{latex}{\py{var}}:  \py{var}.
+
+\pygment{latex}{\pyb} executes and typesets code.   For example, \pygment{latex}{\pyb{var = 2}} typesets \pyb{var = 2} in addition to creating the variable.  If anything is printed, it is not automatically included, but can be accessed via \pygment{latex}{\printpythontex} and \pygment{latex}{\stdoutpythontex}.
+
+\pygment{latex}{\pyv} only typesets code.  For example, \pygment{latex}{\pyv{var = 2}} produces \pyv{var = 2}.
+
+
+\section*{Environments}
+
+There are \texttt{pycode}, \texttt{pyblock}, and \texttt{pyverbatim} environments, which are the environment equivalents of \pygment{latex}{\pyc}, \pygment{latex}{\pyb}, and \pygment{latex}{\pyv}.  For example,
+\begin{pygments}{text}
+\begin{pycode}
+print(r'\begin{center}')
+print(r'\textit{A message from Python!}')
+print(r'\end{center}')
+\end{pycode}
+\end{pygments}
+produces
+\begin{pycode}
+print(r'\begin{center}')
+print(r'\textit{A message from Python!}')
+print(r'\end{center}')
+\end{pycode}
+
+There is also a \texttt{pyconsole} environment that emulates a Python interactive console.  For example,
+\begin{pygments}{text}
+\begin{pyconsole}
+var = 1 + 1
+var
+\end{pyconsole}
+\end{pygments}
+yields
+\begin{pyconsole}
+var = 1 + 1
+var
+\end{pyconsole}
+
+
+The \pygment{latex}{\begin} and \pygment{latex}{\end} of an environment should be on lines by themselves.  Currently, environments cannot be indented, but support for indentation is coming soon.
+
+\section*{Macro programming}
+
+\pytex\ commands can be used inside other commands in macro programming.  They will usually work fine, but curly braces should be used as delimiters and special \LaTeX\ characters such as \texttt{\%} and \texttt{\#} should be avoided in the Python code.  \pytex\ environments cannot be used inside \LaTeX\ commands, due to the way \LaTeX\ deals with verbatim content and catcodes.
+
+
+\section*{Additional features}
+
+\pytex\ provides many additional features.  The working and output directories can be specified.  The user can determine when code is executed with the package option \texttt{rerun}, based on factors such as modification and exit status.  By default, all commands and environments run in a single session, providing continuity.  Commands and environments accept an optional argument that specifies the session in which the code is executed; sessions run in parallel.  \pytex\ provides a utilities class that is always imported into each session.  The utilities class provides methods for tracking dependencies and automatically cleaning up created files.
+
+\pytex\ also provides the \texttt{depythontex} utility, which creates a copy of a document in which all \pytex\ commands and environments have been replaced by their output.  The resulting document is more suitable for journal submission, sharing, and conversion to other document formats.
+
+
+
+\end{document}

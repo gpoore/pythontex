@@ -1,0 +1,67 @@
+===================================================================
+                  The PythonTeX Package
+===================================================================
+
+:Author:  Geoffrey Poore
+:Version:  0.11 (2013/04/21)
+:License:  LPPL v1.3 or later (LaTeX code) and BSD 3-Clause (Python code)
+:Development:  https://github.com/gpoore/pythontex
+:Requirements:  Python 2.7 or 3.2+; Pygments
+
+
+The PythonTeX package allows you to enter Python code within a LaTeX 
+document, execute the code, and access its output in the original document.
+
+PythonTeX provides fast, user-friendly access to Python from within LaTeX.
+Python code is only executed when it has been modified, or when it meets 
+user-specified criteria.  Code may be divided into user-defined sessions,
+which automatically run in parallel.  Errors and warnings are synchronized 
+with the LaTeX document, so that they refer to the document's line numbers.  
+External dependencies can be tracked, so that code is re-executed when the 
+data it depends on is modified.  PythonTeX also provides syntax highlighting 
+for code in LaTeX documents via the Pygments syntax highlighter.
+
+PythonTeX includes a "depythontex" utility that creates a copy of a document
+in which all Python code has been replaced by its output.  This can be
+convenient for journal submissions, sharing documents, and converting to 
+other formats.
+
+Consult pythontex_quickstart.pdf and pythontex_gallery.pdf to get
+started and for examples of what PythonTeX can do.
+
+Compiling a PythonTeX document involves three steps:
+
+1. Run latex (all Python code is saved to an auxiliary file)
+2. Run pythontex.py (all code is executed)
+3. Run latex again (Python output is inputted)
+
+See the main documentation in pythontex.pdf for detailed installation 
+instructions.  An installation script is provided for TeX Live.  Files 
+should be installed in the directories indicated below.  In summary, 
+all files must be installed, and symlinks or launching wrappers should be 
+created for pythontex.py and depythontex.py.
+
+* /doc/latex/pythontex/
+
+  - pythontex.pdf
+  - README
+  - pythontex_quickstart.tex
+  - pythontex_quickstart.pdf
+  - pythontex_gallery.tex
+  - pythontex_gallery.pdf
+
+* /scripts/pythontex/
+
+  - pythontex.py, pythontex2.py, and pythontex3.py
+  - pythontex_types2.py and pythontex_types3.py
+  - pythontex_utils.py
+  - depythontex.py, depythontex2.py, and depythontex3.py
+
+* /source/latex/pythontex/
+
+  - pythontex.dtx
+  - pythontex.ins
+
+* /tex/latex/pythontex/
+
+  - pythontex.sty

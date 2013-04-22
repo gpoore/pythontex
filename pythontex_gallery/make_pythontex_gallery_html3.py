@@ -52,8 +52,8 @@ for n, line in enumerate(gallery):
 for n, line in enumerate(gallery):
     if 'savefig' in line and re.search(r"savefig\('\w+\.pdf'", line):
         gallery[n] = re.sub(r"savefig\('(\w+)\.pdf'", r"savefig('\1.png'", line)
-    if r'\includegraphics' in line and re.search(r'\includegraphics(?:\[.*\])?\{\w+\}', line):
-        gallery[n] = re.sub(r'\\includegraphics(?:\[.*\])?\{(\w+)\}', r'\includegraphics{\1.png}', line)
+    if r'\includegraphics' in line and re.search(r'\includegraphics(?:\[.*\])?\{\w+\.pdf\}', line):
+        gallery[n] = re.sub(r'\\includegraphics(?:\[.*\])?\{(\w+)\.pdf\}', r'\includegraphics{\1.png}', line)
     if r'\begin{mdframed}' in line:
         gallery[n] = re.sub(r'\\begin\{mdframed\}(?:\[.*\])?', '', line)
     if r'\end{mdframed}' in line:
@@ -73,32 +73,16 @@ f.close()
 
 # Compile the document with depythontex, and create html
 subprocess.call(['pdflatex', '-interaction=nonstopmode', 'pythontex_gallery.tex'])
-#// Python 2
-#try:
-#    subprocess.call(['pythontex2', 'pythontex_gallery.tex'])
-#except:
-#    subprocess.call(['pythontex2.py', 'pythontex_gallery.tex'])
-#\\ End Python 2
-#// Python 3
 try:
-    subprocess.call(['pythontex3', 'pythontex_gallery.tex'])
+    subprocess.call(['pythontex', 'pythontex_gallery.tex'])
 except:
-    subprocess.call(['pythontex3.py', 'pythontex_gallery.tex'])
-#\\ End Python 3
+    subprocess.call(['pythontex.py', 'pythontex_gallery.tex'])
 subprocess.call(['pdflatex', '-interaction=nonstopmode', 'pythontex_gallery.tex'])
 # Use minted-style listings, because Pandoc currently doesn't support some features of listings' `\lstinline`
-#// Python 2
-#try:
-#    subprocess.call(['depythontex2', 'pythontex_gallery.tex', '--listing=minted'])
-#except:
-#    subprocess.call(['depythontex2.py', 'pythontex_gallery.tex', '--listing=minted'])
-#\\ End Python 2
-#// Python 3
 try:
-    subprocess.call(['depythontex3', 'pythontex_gallery.tex', '--listing=minted'])
+    subprocess.call(['depythontex', 'pythontex_gallery.tex', '--listing=minted'])
 except:
-    subprocess.call(['depythontex3.py', 'pythontex_gallery.tex', '--listing=minted'])
-#\\ End Python 3
+    subprocess.call(['depythontex.py', 'pythontex_gallery.tex', '--listing=minted'])
 subprocess.call(['pandoc', '--standalone', '--mathjax', 'depythontex_pythontex_gallery.tex', '-o', 'pythontex_gallery.html'])
 
 

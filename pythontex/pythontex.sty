@@ -20,10 +20,10 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2013/02/17 Version~0.11beta ]
+    [2013/04/21 Version~0.11 ]
 
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{v0.11beta}
+\newcommand{\pytx@packageversion}{v0.11}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
 \RequirePackage{etoolbox}
@@ -31,16 +31,24 @@
 \RequirePackage{pgfopts}
 \RequirePackage{newfloat}
 \AtBeginDocument{\@ifpackageloaded{color}{}{\RequirePackage{xcolor}}}
+\newbool{pytx@opt@beta}
+\pgfkeys{/PYTX/pkgopt/beta/.default=true}
+\pgfkeys{/PYTX/pkgopt/beta/.is choice}
+\pgfkeys{/PYTX/pkgopt/beta/true/.code=\booltrue{pytx@opt@beta}}
+\pgfkeys{/PYTX/pkgopt/beta/false/.code=\boolfalse{pytx@opt@beta}}
 \def\pytx@opt@rerun{default}
 \pgfkeys{/PYTX/pkgopt/runall/.default=true}
 \pgfkeys{/PYTX/pkgopt/runall/.is choice}
-\pgfkeys{/PYTX/pkgopt/runall/true/.code=\def\pytx@opt@rerun{all}}
+\pgfkeys{/PYTX/pkgopt/runall/true/.code=\def\pytx@opt@rerun{always}}
 \pgfkeys{/PYTX/pkgopt/runall/false/.code=\relax}
 \pgfkeys{/PYTX/pkgopt/rerun/.is choice}
+\pgfkeys{/PYTX/pkgopt/rerun/never/.code=\def\pytx@opt@rerun{never}}
 \pgfkeys{/PYTX/pkgopt/rerun/modified/.code=\def\pytx@opt@rerun{modified}}
 \pgfkeys{/PYTX/pkgopt/rerun/errors/.code=\def\pytx@opt@rerun{errors}}
 \pgfkeys{/PYTX/pkgopt/rerun/warnings/.code=\def\pytx@opt@rerun{warnings}}
-\pgfkeys{/PYTX/pkgopt/rerun/all/.code=\def\pytx@opt@rerun{all}}
+\pgfkeys{/PYTX/pkgopt/rerun/always/.code=\def\pytx@opt@rerun{always}}
+\pgfkeys{/PYTX/pkgopt/rerun/all/.code=\def\pytx@opt@rerun{always}%
+    \PackageWarning{\pytx@packagename}{rerun=all is deprecated; use rerun=always}}
 \def\pytx@opt@hashdependencies{default}
 \pgfkeys{/PYTX/pkgopt/hashdependencies/.is choice}
 \pgfkeys{/PYTX/pkgopt/hashdependencies/.default=true}
@@ -52,31 +60,51 @@
 \pgfkeys{/PYTX/pkgopt/autoprint/.is choice}
 \pgfkeys{/PYTX/pkgopt/autoprint/true/.code=\booltrue{pytx@opt@autoprint}}
 \pgfkeys{/PYTX/pkgopt/autoprint/false/.code=\boolfalse{pytx@opt@autoprint}}
+\pgfkeys{/PYTX/pkgopt/autostdout/.default=true}
+\pgfkeys{/PYTX/pkgopt/autostdout/.is choice}
+\pgfkeys{/PYTX/pkgopt/autostdout/true/.code=\booltrue{pytx@opt@autoprint}}
+\pgfkeys{/PYTX/pkgopt/autostdout/false/.code=\boolfalse{pytx@opt@autoprint}}
 \newcommand{\setpythontexautoprint}[1]{%
     \Depythontex{cmd:setpythontexautoprint:m:n}%
     \ifstrequal{#1}{true}{\booltrue{pytx@opt@autoprint}}{}%
     \ifstrequal{#1}{false}{\boolfalse{pytx@opt@autoprint}}{}%
 }
+\newcommand{\setpythontexautostdout}[1]{%
+    \Depythontex{cmd:setpythontexautostdout:m:n}%
+    \ifstrequal{#1}{true}{\booltrue{pytx@opt@autoprint}}{}%
+    \ifstrequal{#1}{false}{\boolfalse{pytx@opt@autoprint}}{}%
+}
 \newbool{pytx@opt@stdout}
 \booltrue{pytx@opt@stdout}
+\pgfkeys{/PYTX/pkgopt/debug/.code=\boolfalse{pytx@opt@stdout}}
 \pgfkeys{/PYTX/pkgopt/stdout/.default=true}
 \pgfkeys{/PYTX/pkgopt/stdout/.is choice}
-\pgfkeys{/PYTX/pkgopt/stdout/true/.code=\booltrue{pytx@opt@stdout}}
-\pgfkeys{/PYTX/pkgopt/stdout/false/.code=\boolfalse{pytx@opt@stdout}}
+\pgfkeys{/PYTX/pkgopt/stdout/true/.code=\booltrue{pytx@opt@stdout}%
+    \PackageWarning{\pytx@packagename}{Option stdout is deprecated; use option debug}}
+\pgfkeys{/PYTX/pkgopt/stdout/false/.code=\boolfalse{pytx@opt@stdout}%
+    \PackageWarning{\pytx@packagename}{Option stdout is deprecated; use option debug}}
 \pgfkeys{/PYTX/pkgopt/print/.default=true}
 \pgfkeys{/PYTX/pkgopt/print/.is choice}
-\pgfkeys{/PYTX/pkgopt/print/true/.code=\booltrue{pytx@opt@stdout}}
-\pgfkeys{/PYTX/pkgopt/print/false/.code=\boolfalse{pytx@opt@stdout}}
+\pgfkeys{/PYTX/pkgopt/print/true/.code=\booltrue{pytx@opt@stdout}%
+    \PackageWarning{\pytx@packagename}{Option print is deprecated; use option debug}}
+\pgfkeys{/PYTX/pkgopt/print/false/.code=\boolfalse{pytx@opt@stdout}%
+    \PackageWarning{\pytx@packagename}{Option print is deprecated; use option debug}}
 \AtBeginDocument{%
     \ifbool{pytx@opt@stdout}{}{%
-        \PackageWarning{\pytx@packagename}{Option stdout/print is set to false}%
+        \PackageWarning{\pytx@packagename}{Using package option debug}%
     }%
 }
 \newbool{pytx@opt@stderr}
+\pgfkeys{/PYTX/pkgopt/makestderr/.default=true}
+\pgfkeys{/PYTX/pkgopt/makestderr/.is choice}
+\pgfkeys{/PYTX/pkgopt/makestderr/true/.code=\booltrue{pytx@opt@stderr}}
+\pgfkeys{/PYTX/pkgopt/makestderr/false/.code=\boolfalse{pytx@opt@stderr}}
 \pgfkeys{/PYTX/pkgopt/stderr/.default=true}
 \pgfkeys{/PYTX/pkgopt/stderr/.is choice}
-\pgfkeys{/PYTX/pkgopt/stderr/true/.code=\booltrue{pytx@opt@stderr}}
-\pgfkeys{/PYTX/pkgopt/stderr/false/.code=\boolfalse{pytx@opt@stderr}}
+\pgfkeys{/PYTX/pkgopt/stderr/true/.code=\booltrue{pytx@opt@stderr}%
+    \PackageWarning{\pytx@packagename}{Option stderr is deprecated; use option makestderr}}
+\pgfkeys{/PYTX/pkgopt/stderr/false/.code=\boolfalse{pytx@opt@stderr}%
+    \PackageWarning{\pytx@packagename}{Option stderr is deprecated; use option makestderr}}
 
 \def\pytx@opt@stderrfilename{full}
 \pgfkeys{/PYTX/pkgopt/stderrfilename/.default=full}
@@ -100,7 +128,6 @@
 \pgfkeys{/PYTX/pkgopt/upquote/true/.code=\booltrue{pytx@opt@upquote}}
 \pgfkeys{/PYTX/pkgopt/upquote/false/.code=\boolfalse{pytx@opt@upquote}}
 \newbool{pytx@opt@fixlr}
-\booltrue{pytx@opt@fixlr}
 \pgfkeys{/PYTX/pkgopt/fixlr/.default=true}
 \pgfkeys{/PYTX/pkgopt/fixlr/.is choice}
 \pgfkeys{/PYTX/pkgopt/fixlr/true/.code=\booltrue{pytx@opt@fixlr}}
@@ -113,20 +140,27 @@
 \pgfkeys{/PYTX/pkgopt/keeptemps/none/.code=\def\pytx@opt@keeptemps{none}}
 \newbool{pytx@opt@pygments}
 \booltrue{pytx@opt@pygments}
+\pgfkeys{/PYTX/pkgopt/prettyprinter/.is choice}
+\pgfkeys{/PYTX/pkgopt/prettyprinter/pygments/.code=\booltrue{pytx@opt@pygments}}
+\pgfkeys{/PYTX/pkgopt/prettyprinter/fancyvrb/.code=\boolfalse{pytx@opt@pygments}}
 \pgfkeys{/PYTX/pkgopt/pygments/.default=true}
 \pgfkeys{/PYTX/pkgopt/pygments/.is choice}
 \pgfkeys{/PYTX/pkgopt/pygments/true/.code=\booltrue{pytx@opt@pygments}}
 \pgfkeys{/PYTX/pkgopt/pygments/false/.code=\boolfalse{pytx@opt@pygments}}
-\def\pytx@pyglexer{}
-\pgfkeys{/PYTX/pkgopt/pyglexer/.code=\def\pytx@pyglexer{#1}}
-\def\pytx@pygopt{}
-\pgfkeys{/PYTX/pkgopt/pygopt/.code=\def\pytx@pygopt{#1}}
 \newbool{pytx@opt@pyginline}
 \booltrue{pytx@opt@pyginline}
+\pgfkeys{/PYTX/pkgopt/prettyprintinline/.default=true}
+\pgfkeys{/PYTX/pkgopt/prettyprintinline/.is choice}
+\pgfkeys{/PYTX/pkgopt/prettyprintinline/true/.code=\booltrue{pytx@opt@pyginline}}
+\pgfkeys{/PYTX/pkgopt/prettyprintinline/false/.code=\boolfalse{pytx@opt@pyginline}}
 \pgfkeys{/PYTX/pkgopt/pyginline/.default=true}
 \pgfkeys{/PYTX/pkgopt/pyginline/.is choice}
 \pgfkeys{/PYTX/pkgopt/pyginline/true/.code=\booltrue{pytx@opt@pyginline}}
 \pgfkeys{/PYTX/pkgopt/pyginline/false/.code=\boolfalse{pytx@opt@pyginline}}
+\def\pytx@pyglexer{}
+\pgfkeys{/PYTX/pkgopt/pyglexer/.code=\def\pytx@pyglexer{#1}}
+\def\pytx@pygopt{}
+\pgfkeys{/PYTX/pkgopt/pygopt/.code=\def\pytx@pygopt{#1}}
 \def\pytx@fvextfile{-1}
 \pgfkeys{/PYTX/pkgopt/fvextfile/.default=25}
 \pgfkeys{/PYTX/pkgopt/fvextfile/.code=\IfInteger{#1}{%
@@ -351,9 +385,8 @@
     \IfFileExists{\pytx@outputdir/#3.stdout}{%
         \ifstrempty{#1}{\input{\pytx@outputdir/#3.stdout}}{}%
         \ifstrequal{#1}{raw}{\input{\pytx@outputdir/#3.stdout}}{}%
-        \ifstrequal{#1}{verb}{\VerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
-        \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
-        \ifstrequal{#1}{v}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
+        \ifstrequal{#1}{verb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
+        \ifstrequal{#1}{verbatim}{\VerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
         \DepyFile{p:\pytx@outputdir/#3.stdout:mode=#1}%
     }%
     {\pytx@stdout@warntext
@@ -415,9 +448,8 @@
     \IfFileExists{\pytx@outputdir/#3.stderr}{%
         \ifstrequal{#1}{raw}{\input{\pytx@outputdir/#3.stderr}}{}%
         \ifstrempty{#1}{\VerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
-        \ifstrequal{#1}{verb}{\VerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
-        \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
-        \ifstrequal{#1}{v}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
+        \ifstrequal{#1}{verb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
+        \ifstrequal{#1}{verbatim}{\VerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
         \DepyFile{p:\pytx@outputdir/#3.stderr:mode=#1}%
     }%
     {\textbf{??~\pytx@packagename~??}%
@@ -785,7 +817,7 @@
     \begin{Verbatim}%
 }
 \newcommand{\pytx@MakeVerbFV}[1]{%
-    \expandafter\newenvironment{#1verb}{%
+    \expandafter\newenvironment{#1verbatim}{%
         \VerbatimEnvironment
         \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
         \Depythontex{env:#1verb:oo|:c}%
@@ -823,7 +855,7 @@
         \edef\pytx@cmd{#2}%
         \pytx@SetContext
         \ifstrequal{#2}{block}{\pytx@SetGroup}{}
-        \ifstrequal{#2}{verb}{\pytx@SetGroupVerb}{}
+        \ifstrequal{#2}{verbatim}{\pytx@SetGroupVerb}{}
         \begingroup
         \obeylines
         \@ifnextchar[{\endgroup\pytx@BeginEnvPyg}{\endgroup\pytx@BeginEnvPyg[]}%
@@ -864,7 +896,7 @@
     \begin{VerbatimOut}%
 }%
 \newcommand{\pytx@MakeBlockPyg}[1]{\pytx@MakePygEnv{#1}{block}}
-\newcommand{\pytx@MakeVerbPyg}[1]{\pytx@MakePygEnv{#1}{verb}}
+\newcommand{\pytx@MakeVerbPyg}[1]{\pytx@MakePygEnv{#1}{verbatim}}
 \def\pytx@WriteDetok#1{%
     \immediate\write\pytx@codefile{\detokenize{#1}}}%
 \def\pytx@FVB@VerbatimOut{%
@@ -1032,24 +1064,28 @@
     }%
 }
 \@onlypreamble\makepythontexfamilypyg
-\def\setpythontexpyglexer#1#2{%
-    \Depythontex{cmd:setpythontexpyglexer:mm:n}%
-    \ifcsname pytx@pyglexer@#1\endcsname
-        \expandafter\xdef\csname pytx@pyglexer@#1\endcsname{#2}%
-    \else
-        \PackageError{\pytx@packagename}%
-            {Cannot modify a non-existent family}{}%
-    \fi
+\newcommand{\setpythontexpyglexer}[2][]{%
+    \Depythontex{cmd:setpythontexpyglexer:om:n}%
+    \ifstrempty{#1}{\def\pytx@pyglexer{#2}}{%
+        \ifcsname pytx@pyglexer@#1\endcsname
+            \expandafter\xdef\csname pytx@pyglexer@#1\endcsname{#2}%
+        \else
+            \PackageError{\pytx@packagename}%
+                {Cannot modify a non-existent family}{}%
+        \fi
+    }%
 }%
 \@onlypreamble\setpythontexpyglexer
-\newcommand{\setpythontexpygopt}[2]{%
-    \Depythontex{cmd:setpythontexpygopt:mm:n}%
+\newcommand{\setpythontexpygopt}[2][]{%
+    \Depythontex{cmd:setpythontexpygopt:om:n}%
+    \ifstrempty{#1}{\def\pytx@pygopt{#2}}{%
     \ifcsname pytx@pygopt@#1\endcsname
         \expandafter\xdef\csname pytx@pygopt@#1\endcsname{#2}%
     \else
         \PackageError{\pytx@packagename}%
             {Cannot modify Pygments options for a non-existent family}{}%
     \fi
+    }%
 }
 \@onlypreamble\setpythontexpygopt
 \newcommand{\makepythontexfamily}[4][]{%
@@ -1072,18 +1108,23 @@
     }%
 }
 \@onlypreamble\makepythontexfamily
-\def\setpythontexformatter#1#2{%
-    \Depythontex{cmd:setpythontexformatter:mm:n}%
-    \ifcsname pytx@macroformatter@#1\endcsname
-        \ifbool{pytx@opt@depythontex}{}{%
-            \expandafter\xdef\csname pytx@macroformatter@#1\endcsname{#2}}
-    \else
-        \PackageError{\pytx@packagename}%
-            {Cannot modify a family that does not exist or does not allow formatter choices}%
-            {Create the family with \string\makepythontexfamily}%
-    \fi
+\newcommand{\setpythontexprettyprinter}[2][]{%
+    \Depythontex{cmd:setpythontexprettyprinter:om:n}%
+    \ifstrempty{#1}{%
+        \ifstrequal{#2}{fancyvrb}{\boolfalse{pytx@opt@pygments}}%
+        \ifstrequal{#2}{pygments}{\booltrue{pytx@opt@pygments}}%
+    }{%
+        \ifcsname pytx@macroformatter@#1\endcsname
+            \ifbool{pytx@opt@depythontex}{}{%
+                \expandafter\xdef\csname pytx@macroformatter@#1\endcsname{#2}}
+        \else
+            \PackageError{\pytx@packagename}%
+                {Cannot modify a family that does not exist or does not allow formatter choices}%
+                {Create the family with \string\makepythontexfamily}%
+        \fi
+    }%
 }
-\@onlypreamble\setpythontexformatter
+\@onlypreamble\setpythontexprettyprinter
 \makepythontexfamily[all]{py}{python}{}
 \makepythontexfamily[all]{sympy}{python}{}
 \makepythontexfamily[all]{pylab}{python}{}
@@ -1290,18 +1331,22 @@
         {\gdef\pytx@fvsettings{#2}}%
         {\expandafter\gdef\csname pytx@fvsettings@PYG#1\endcsname{#2}}%
 }%
-\def\setpygmentspygopt#1#2{%
-    \Depythontex{cmd:setpygmentspygopt:mm:n}%
-    \AtEndDocument{\immediate\write\pytx@codefile{%
-        \pytx@delimsettings pygfamily=PYG#1,#1,%
-        \string{#2\string}\pytx@delimchar}%
+\newcommand{\setpygmentspygopt}[2][]{%
+    \Depythontex{cmd:setpygmentspygopt:om:n}%
+    \ifstrempty{#1}{\def\pytx@pygopt{#2}}{%
+        \AtEndDocument{\immediate\write\pytx@codefile{%
+            \pytx@delimsettings pygfamily=PYG#1,#1,%
+            \string{#2\string}\pytx@delimchar}%
+        }%
     }%
 }
 \@onlypreamble\setpygmentspygopt
-\def\setpygmentsformatter#1{%
-    \Depythontex{cmd:setpygmentsformatter:m:n}%
-    \ifbool{pytx@opt@depythontex}{}{\xdef\pytx@macroformatter@PYG{#1}}}
-\@onlypreamble\setpygmentsformatter
+\newcommand{\setpygmentsprettyprinter}[1]{%
+    \Depythontex{cmd:setpygmentsprettyprinter:m:n}%
+    \ifstrequal{#1}{fancyvrb}{\boolfalse{pytx@opt@pygments}}%
+    \ifstrequal{#1}{pygments}{\booltrue{pytx@opt@pygments}}%
+}
+\@onlypreamble\setpygmentsprettyprinter
 \xdef\pytx@macroformatter@PYG{auto}
 \def\makepygmentsfv{%
     \pytx@MakePygmentsInlineFV
@@ -1335,6 +1380,129 @@
     \immediate\closeout\pytx@codefile
     \ifbool{pytx@opt@depythontex}{\immediate\closeout\pytx@depyfile}{}%
 }
+\ifbool{pytx@opt@beta}{
+
+\def\pytx@FetchStdoutfile[#1][#2]#3{%
+    \IfFileExists{\pytx@outputdir/#3.stdout}{%
+        \ifstrempty{#1}{\input{\pytx@outputdir/#3.stdout}}{}%
+        \ifstrequal{#1}{raw}{\input{\pytx@outputdir/#3.stdout}}{}%
+        \ifstrequal{#1}{verb}{\VerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
+        \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
+        \ifstrequal{#1}{v}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stdout}}{}%
+        \DepyFile{p:\pytx@outputdir/#3.stdout:mode=#1}%
+    }%
+    {\pytx@stdout@warntext
+        \PackageWarning{\pytx@packagename}{Non-existent printed content}}%
+}
+\def\pytx@FetchStderrfile[#1][#2]#3{%
+    \IfFileExists{\pytx@outputdir/#3.stderr}{%
+        \ifstrequal{#1}{raw}{\input{\pytx@outputdir/#3.stderr}}{}%
+        \ifstrempty{#1}{\VerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
+        \ifstrequal{#1}{verb}{\VerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
+        \ifstrequal{#1}{inlineverb}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
+        \ifstrequal{#1}{v}{\BVerbatimInput[#2]{\pytx@outputdir/#3.stderr}}{}%
+        \DepyFile{p:\pytx@outputdir/#3.stderr:mode=#1}%
+    }%
+    {\textbf{??~\pytx@packagename~??}%
+        \PackageWarning{\pytx@packagename}{Non-existent stderr content}}%
+}
+
+\renewcommand{\pytx@MakeVerbFV}[1]{%
+    \expandafter\newenvironment{#1verb}{%
+        \VerbatimEnvironment
+        \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
+        \Depythontex{env:#1verb:oo|:c}%
+        \DepyListing
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{verb}%
+        \pytx@SetContext
+        \pytx@SetGroupVerb
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BeginVerbEnvFV}{\endgroup\pytx@BeginVerbEnvFV[]}%
+    }%
+    {\end{Verbatim}%
+    \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+    }%
+}
+\renewcommand{\pytx@MakePygEnv}[2]{%
+    \expandafter\newenvironment{#1#2}{%
+        \VerbatimEnvironment
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{#2}%
+        \pytx@SetContext
+        \ifstrequal{#2}{block}{\pytx@SetGroup}{}
+        \ifstrequal{#2}{verb}{\pytx@SetGroupVerb}{}
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BeginEnvPyg}{\endgroup\pytx@BeginEnvPyg[]}%
+    }%
+    {\end{VerbatimOut}%
+    \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+    \pytx@FVSet
+    \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+    \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
+        \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
+    \else
+        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.pygtex}{}%
+            {\textbf{??~\pytx@packagename~??}%
+                \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
+    \fi
+    \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+    }%
+}%
+\renewcommand{\pytx@MakeVerbPyg}[1]{\pytx@MakePygEnv{#1}{verb}}
+
+\def\setpythontexpyglexer#1#2{%
+    \Depythontex{cmd:setpythontexpyglexer:mm:n}%
+    \ifcsname pytx@pyglexer@#1\endcsname
+        \expandafter\xdef\csname pytx@pyglexer@#1\endcsname{#2}%
+    \else
+        \PackageError{\pytx@packagename}%
+            {Cannot modify a non-existent family}{}%
+    \fi
+}%
+\renewcommand{\setpythontexpygopt}[2]{%
+    \Depythontex{cmd:setpythontexpygopt:mm:n}%
+    \ifcsname pytx@pygopt@#1\endcsname
+        \expandafter\xdef\csname pytx@pygopt@#1\endcsname{#2}%
+    \else
+        \PackageError{\pytx@packagename}%
+            {Cannot modify Pygments options for a non-existent family}{}%
+    \fi
+}
+\def\setpygmentspygopt#1#2{%
+    \Depythontex{cmd:setpygmentspygopt:mm:n}%
+    \AtEndDocument{\immediate\write\pytx@codefile{%
+        \pytx@delimsettings pygfamily=PYG#1,#1,%
+        \string{#2\string}\pytx@delimchar}%
+    }%
+}
+
+\def\setpythontexformatter#1#2{%
+    \Depythontex{cmd:setpythontexformatter:mm:n}%
+    \ifcsname pytx@macroformatter@#1\endcsname
+        \ifbool{pytx@opt@depythontex}{}{%
+            \expandafter\xdef\csname pytx@macroformatter@#1\endcsname{#2}}
+    \else
+        \PackageError{\pytx@packagename}%
+            {Cannot modify a family that does not exist or does not allow formatter choices}%
+            {Create the family with \string\makepythontexfamily}%
+    \fi
+}
+\@onlypreamble\setpythontexformatter
+\def\setpygmentsformatter#1{%
+    \Depythontex{cmd:setpygmentsformatter:m:n}%
+    \ifbool{pytx@opt@depythontex}{}{\xdef\pytx@macroformatter@PYG{#1}}}
+\@onlypreamble\setpygmentsformatter
+
+}{} %End beta
 \endinput
 %%
 %% End of file `pythontex.sty'.

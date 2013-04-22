@@ -55,11 +55,13 @@ except:
 
 
 # Make sure all necessary files are present
-needed_files = ['pythontex2.py', 'pythontex_types2.py', 'pythontex_utils2.py', 
-                'pythontex3.py', 'pythontex_types3.py', 'pythontex_utils3.py', 
-                'depythontex2.py', 'depythontex3.py',
+# The pythontex_gallery and pythontex_quickstart are optional; we check for them when installing doc
+needed_files = ['pythontex.py', 'pythontex2.py', 'pythontex3.py',
+                'pythontex_types2.py', 'pythontex_types3.py',
+                'pythontex_utils.py',
+                'depythontex.py', 'depythontex2.py', 'depythontex3.py',
                 'pythontex.sty', 'pythontex.ins', 'pythontex.dtx', 
-                'pythontex.pdf', 'README.rst']
+                'pythontex.pdf', 'README']
 missing_files = False
 # Print a list of all files that are missing, and exit if any are
 for eachfile in needed_files:
@@ -139,7 +141,15 @@ try:
     if not path.exists(doc_path):
         mkdir(doc_path)
     copy('pythontex.pdf', doc_path)
-    copy('README.rst', doc_path)
+    copy('README', doc_path)
+    for doc in ('pythontex_quickstart.tex', 'pythontex_quickstart.pdf', 
+                'pythontex_gallery.tex', 'pythontex_gallery.pdf'):
+        if path.isfile(doc):
+            copy(doc, doc_path)
+        else:
+            doc = path.join('..', doc.rsplit('.', 1)[0], doc)
+            if path.isfile(doc):
+                copy(doc, doc_path)
     # Install package
     if not path.exists(package_path):
         mkdir(package_path)
@@ -147,10 +157,12 @@ try:
     # Install scripts
     if not path.exists(scripts_path):
         mkdir(scripts_path)
+    copy('pythontex.py', scripts_path)
+    copy('depythontex.py', scripts_path)
+    copy('pythontex_utils.py', scripts_path)
     for ver in [2, 3]:
         copy('pythontex{0}.py'.format(ver), scripts_path)
         copy('pythontex_types{0}.py'.format(ver), scripts_path)
-        copy('pythontex_utils{0}.py'.format(ver), scripts_path)
         copy('depythontex{0}.py'.format(ver), scripts_path)
     # Install source
     if not path.exists(source_path):
@@ -176,9 +188,8 @@ if platform.system() == 'Windows':
     # The directory bin/ should be at the same level as texmf
     bin_path = path.join(path.split(texmf_path)[0], 'bin', 'win32') 
     if path.exists(path.join(bin_path, 'runscript.exe')):
-        for ver in [2, 3]:
-            copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex{0}.exe'.format(ver)))
-            copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'depythontex{0}.exe'.format(ver)))
+        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex.exe'))
+        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'depythontex.exe'))
         print('\nCreated binary wrapper...')
     else:
         print('\nCould not create a wrapper for launching pythontex*.py and depythontex*.py.')
@@ -205,22 +216,21 @@ else:
     for pltfrm in texlive_platforms:
         bin_path = path.join(root_path, 'bin', pltfrm)
         if path.exists(bin_path):
-            for ver in [2, 3]:
-                # Create symlink for pythontex*.py
-                link = path.join(bin_path, 'pythontex{0}.py'.format(ver))
-                # Unlink any old symlinks if they exist, and create new ones
-                # Not doing this gave permissions errors under Ubuntu
-                if path.exists(link):
-                    unlink(link)
-                symlink(path.join(scripts_path, 'pythontex{0}.py'.format(ver)), link)
-                chmod(link, 0o775)
-                # Now repeat for depythontex*.py
-                link = path.join(bin_path, 'depythontex{0}.py'.format(ver))
-                if path.exists(link):
-                    unlink(link)
-                symlink(path.join(scripts_path, 'depythontex{0}.py'.format(ver)), link)
-                chmod(link, 0o775)
-                symlink_created = True
+            # Create symlink for pythontex*.py
+            link = path.join(bin_path, 'pythontex.py')
+            # Unlink any old symlinks if they exist, and create new ones
+            # Not doing this gave permissions errors under Ubuntu
+            if path.exists(link):
+                unlink(link)
+            symlink(path.join(scripts_path, 'pythontex.py'), link)
+            chmod(link, 0o775)
+            # Now repeat for depythontex*.py
+            link = path.join(bin_path, 'depythontex.py')
+            if path.exists(link):
+                unlink(link)
+            symlink(path.join(scripts_path, 'depythontex.py'), link)
+            chmod(link, 0o775)
+            symlink_created = True
     
     # If the standard TeX Live bin/ locations didn't work, try the typical 
     # location for MacPorts TeX Live.  This should typically be 
@@ -236,18 +246,17 @@ else:
                 # seeing if pdftex exists
                 check_output([path.join(bin_path, 'pdftex'), '--version'])
                 # Create symlinks
-                for ver in [2, 3]:
-                    link = path.join(bin_path, 'pythontex{0}.py'.format(ver))
-                    if path.exists(link):
-                        unlink(link)
-                    symlink(path.join(scripts_path, 'pythontex{0}.py'.format(ver)), link)
-                    chmod(link, 0o775)
-                    link = path.join(bin_path, 'depythontex{0}.py'.format(ver))
-                    if path.exists(link):
-                        unlink(link)
-                    symlink(path.join(scripts_path, 'depythontex{0}.py'.format(ver)), link)
-                    chmod(link, 0o775)
-                    symlink_created = True
+                link = path.join(bin_path, 'pythontex.py')
+                if path.exists(link):
+                    unlink(link)
+                symlink(path.join(scripts_path, 'pythontex.py'), link)
+                chmod(link, 0o775)
+                link = path.join(bin_path, 'depythontex.py')
+                if path.exists(link):
+                    unlink(link)
+                symlink(path.join(scripts_path, 'depythontex.py'), link)
+                chmod(link, 0o775)
+                symlink_created = True
             except:
                 pass
     if symlink_created:
@@ -268,15 +277,8 @@ except:
     print('Your system may not be aware of newly installed files.')
 
 
-# Alert the user to the need to choose a version
-print('\n\n* * *')
-print('PythonTeX contains separate scripts for Python 2 and Python 3.')
-print('Choose the correct scripts based on your Python installation.')
-print('See the documentation for more information.')
-print('* * *\n')
-
-
 if platform.system() == 'Windows':
     # Pause so that the user can see any errors or other messages
     # input('\n[Press ENTER to exit]')
+    print('\n')
     call(['pause'], shell=True)

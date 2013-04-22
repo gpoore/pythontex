@@ -42,7 +42,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </blockquote>
 <p>Or we could access the printed content verbatim (it might contain special characters):</p>
 <blockquote>
-<pre><code>Python says hi!</code></pre>
+<p><code>Python says hi!</code></p>
 </blockquote>
 <p>Python interaction can also be more complex. <code>print(str(2**2**2) + r'\endinput')</code> returns 16. In this case, the printed results include LaTeX code, which is correctly interpreted by LaTeX to ensure that there is not an extra space after the 16. Printed output is saved to a file and brought back in via <code>\input</code>, and the <code>\endinput</code> command stops input immediately, before LaTeX gets to the end of the line and inserts a space character there, after the 16.</p>
 <p>Printing works, but as the last example demonstrates, you have to be careful about spacing if you have text immediately after the printed content. In that case, it’s usually best to assemble text within a PythonTeX environment and store the text in a variable. Then you can bring in the text later, using the <code>\py</code> command. The <code>\py</code> command brings in a string representation of its argument. First we create the text.</p>
@@ -202,7 +202,7 @@ right = Integral(f, (z, z_llim, z_ulim), (y, y_llim, y_ulim),
 &amp;=4 \cos{\left (3 \right )} + 4 \cos{\left (2 \right )} - 4 \cos{\left (5 \right )} - 9 \cos{\left (4 \right )} + 41\\
 &amp;=40.1235865133293\\\end{aligned}\]</span></p>
 <h1>Including stderr</h1>
-<p>PythonTeX allows code to be typset next to the stderr it produces. This requires the package option <code>stderr</code></p>
+<p>PythonTeX allows code to be typset next to the stderr it produces. This requires the package option <code>makestderr</code>.</p>
 <pre class="sourceCode python" linenos="" startFrom="1"><code class="sourceCode python">x = <span class="dv">123</span>
 y = <span class="dv">345</span>
 z = x + y +</code></pre>
@@ -211,7 +211,7 @@ z = x + y +</code></pre>
     z = x + y +
               ^
 SyntaxError: invalid syntax</code></pre>
-<p>The file name that appears in the message can be customized using the package option <code>stderrfilename</code>.</p>
+<p>The package option <code>stderrfilename</code> allows the file name that appears in the error message to be customized.</p>
 <div class="footnotes">
 <hr />
 <ol>

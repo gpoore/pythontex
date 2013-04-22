@@ -73,7 +73,7 @@ from re import match, sub, search
 
 # Script parameters
 # Version
-version = 'v0.11beta'
+version = 'v0.11'
 
 
 
@@ -143,7 +143,7 @@ def replace_code_cmd(name, arglist, linenum, code_replacement,
     
     # We only consider two possible modes of typesetting, verbatim and inline
     # verbatim
-    if code_replacement_mode == 'verb':
+    if code_replacement_mode == 'verbatim':
         # Sometimes we must replace a command with an environment, for 
         # example, for `\inputpygments`
         
@@ -223,7 +223,7 @@ def replace_code_env(name, arglist, linenum, code_replacement,
     
     '''
     # Currently, there is no need to test for code_replacement_mode, because
-    # this function is only ever called if the mode is 'verb'.  That may
+    # this function is only ever called if the mode is 'verbatim'.  That may
     # change in the future, but it seems unlikely that code entered in an
     # environment would end up typeset with a command.
     if listing == 'verbatim':
@@ -309,7 +309,7 @@ def replace_print_cmd(name, arglist, linenum,
         (replacement, after) (tuple, of str)
     
     '''    
-    if print_replacement_mode in ('inlineverb', 'v'):
+    if print_replacement_mode == 'verb':
         if print_replacement.count('\n') > 1:
             print('* DePythonTeX error:')
             print('    Attempt to print multiple lines of content near line ' + str(linenum))
@@ -321,7 +321,7 @@ def replace_print_cmd(name, arglist, linenum,
             if delim not in print_replacement:
                 break
         print_replacement = r'\verb' + delim + print_replacement + delim
-    elif print_replacement_mode in ('verb', ):
+    elif print_replacement_mode == 'verbatim':
         if bool(match('\s*?\n', after)):
             # Usually, we would end the verbatim environment with a newline.
             # This is fine if there is content in `after` before the next 
@@ -496,7 +496,7 @@ def replace_print_env(name, arglist, linenum,
     since there are currently no environments that use them; they are only
     used by `\printpythontex`, which is a command.
     ''' 
-    if print_replacement_mode in ('inlineverb', 'v'):
+    if print_replacement_mode == 'verb':
         if print_replacement.count('\n') > 1:
             print('* DePythonTeX error:')
             print('    Attempt to print multiple lines of content near line ' + str(linenum))
@@ -517,7 +517,7 @@ def replace_print_env(name, arglist, linenum,
             # line, where they would have been discarded.
             if not bool(match('\s*$', after)):
                 after = sub('^\s*?\n\s*', '', after)
-    elif print_replacement_mode in ('verb', ):
+    elif print_replacement_mode == 'verbatim':
         if bool(match('\s*?\n', after)):
             # Usually, we would end the verbatim environment with a newline.
             # This is fine if there is content in `after` before the next 
@@ -659,13 +659,6 @@ def replace_print_env(name, arglist, linenum,
 
 
 
-# Let the user know things have started
-print('This is DePythonTeX {0}'.format(version))
-sys.stdout.flush()
-
-
-
-
 # Deal with argv
 # Parse argv
 parser = argparse.ArgumentParser()
@@ -714,6 +707,16 @@ elif args.listing == 'minted':
     preamble_additions.append('\\usepackage{minted}')
 elif args.listing == 'pythontex':
     preamble_additions.append('\\usepackage{pythontex}')
+
+
+
+
+# Let the user know things have started
+print('This is DePythonTeX {0}'.format(version))
+sys.stdout.flush()
+
+
+
 
 # Make sure we have a valid texfile
 texfile_name = os.path.expanduser(os.path.normcase(args.TEXNAME))
@@ -978,7 +981,7 @@ for n, depytxline in enumerate(depytx):
                 f.close()
                 if typeset == 'c':
                     code_replacement_mode = mode
-                    if depy_type == 'cmd' and code_replacement_mode != 'verb':
+                    if depy_type == 'cmd' and code_replacement_mode != 'verbatim':
                         # Usually, code from commands is typeset with commands
                         # and code from environments is typeset in 
                         # environments.  The except is code from commands 

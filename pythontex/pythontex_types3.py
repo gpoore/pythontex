@@ -132,20 +132,11 @@ class Codetype(object):
     inline_string_dict = dict()
     encoding_string_dict = dict()
     
-    #// Python 2
-    #utils_string_dict['python'] = """
-    #        sys.path.append('{0}')
-    #        from pythontex_utils2 import PythontexUtils
-    #        pytex = PythontexUtils()
-    #        """
-    #\\ End Python 2
-    #// Python 3
     utils_string_dict['python'] = """
             sys.path.append('{0}')
-            from pythontex_utils3 import PythontexUtils
+            from pythontex_utils import PythontexUtils
             pytex = PythontexUtils()
             """
-    #\\ End Python 3
     
     inputs_string_const_dict['python'] = """
             

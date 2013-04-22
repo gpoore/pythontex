@@ -82,7 +82,7 @@ import pickle
 
 # Script parameters
 # Version
-version = 'v0.11beta'
+version = 'v0.11'
 
 
 
@@ -111,7 +111,7 @@ def process_argv(data, temp_data):
                        const='true', choices=('true', 'false'),
                        help='run all code, regardless of whether it has been modified; equivalent to package option')
     group.add_argument('--rerun', default='errors', 
-                       choices=('modified', 'errors', 'warnings', 'all'),
+                       choices=('modified', 'errors', 'warnings', 'always'),
                        help='set conditions for rerunning code; equivalent to package option')
     parser.add_argument('--hashdependencies', nargs='?', default='false', 
                         const='true', choices=('true', 'false'),                          
@@ -128,7 +128,7 @@ def process_argv(data, temp_data):
         temp_data['error_exit_code'] = False
     # runall is a subset of rerun, so both are stored under rerun
     if args.runall == 'true':
-        temp_data['rerun'] = 'all'
+        temp_data['rerun'] = 'always'
     else:
         temp_data['rerun'] = args.rerun
     if args.hashdependencies == 'true':
@@ -400,7 +400,7 @@ def load_code_get_settings(data, temp_data):
 
 
 
-def get_old_data(data, old_data):
+def get_old_data(data, old_data, temp_data):
     '''
     Load data from the last run, if it exists, into the dict old_data.  
     Determine the path to the PythonTeX scripts, either by using a previously 
@@ -425,9 +425,8 @@ def get_old_data(data, old_data):
     # Create a string containing the name of the data file
     outputdir = data['settings']['outputdir']
     pythontex_data_file = os.path.join(outputdir, 'pythontex_data.pkl')
-    # Create a string containing the name of the pythontex_utils*.py file
-    # Note that the file name depends on the Python version
-    pythontex_utils_file = 'pythontex_utils' + str(sys.version_info[0]) + '.py'
+    # Create a string containing the name of the pythontex_utils.py file
+    pythontex_utils_file = 'pythontex_utils.py'
     
     # Load the old data if it exists (read as binary pickle)
     if os.path.isfile(pythontex_data_file):
@@ -654,7 +653,7 @@ def hash_code(data, temp_data, old_data, typedict):
                     return False
                 else:
                     return True
-        elif rerun == 'all':
+        elif rerun == 'always':
             def func(status):
                 return False
         return func
@@ -2039,9 +2038,7 @@ def save_data(data):
 
 
 
-# The "if" statement is needed for multiprocessing under Windows; see the 
-# multiprocessing documentation.
-if __name__ == '__main__':
+def main():
     # Create dictionaries for storing data.
     #
     # All data that must be saved for subsequent runs is stored in "data".
@@ -2100,7 +2097,7 @@ if __name__ == '__main__':
 
 
     # Load/create old_data
-    get_old_data(data, old_data)
+    get_old_data(data, old_data, temp_data)
     
     
     # Hash the code.  Determine what needs to be executed.  Determine whether
@@ -2146,3 +2143,11 @@ if __name__ == '__main__':
         sys.exit(1)
     else:
         sys.exit()
+
+
+
+# The "if" statement is needed for multiprocessing under Windows; see the 
+# multiprocessing documentation.  It is also needed in this case when the 
+# script is invoked via the wrapper.
+if __name__ == '__main__':
+    main()

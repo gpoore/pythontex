@@ -29,7 +29,7 @@
 \usepackage{url}
 \urlstyle{same}
 
-\usepackage[stderr]{pythontex}
+\usepackage[makestderr]{pythontex}
 \restartpythontexsession{\thesection}
 
 
@@ -168,7 +168,7 @@ savefig('myplot.pdf', bbox_inches='tight')
 \end{pylabblock}
 
 \begin{center}
-\includegraphics{myplot}
+\includegraphics{myplot.pdf}
 \end{center}
 
 
@@ -219,7 +219,7 @@ print(r'\end{align*}')
 
 Using SymPy, it is possible to typeset step-by-step solutions.  In this particular case, we also use the \verb|mdframed| package to place a colored background behind our code.
 
-\begin{mdframed}[linecolor=Green,innerrightmargin=30pt,innerleftmargin=30pt,leftmargin=-30pt,rightmargin=-30pt,backgroundcolor=Black!5,skipabove=10pt,skipbelow=10pt,roundcorner=5pt,frametitle={\centering Step-by-Step Integral Evaluation\linebreak}]
+\begin{mdframed}[linecolor=Green,innerrightmargin=30pt,innerleftmargin=30pt,leftmargin=-30pt,rightmargin=-30pt,backgroundcolor=Black!5,skipabove=10pt,skipbelow=10pt,roundcorner=5pt,frametitle={Step-by-Step Integral Evaluation},frametitlealignment=\center,splitbottomskip=6pt,splittopskip=12pt]
 \begin{sympyblock}[][numbers=left]
 x, y, z = symbols('x,y,z')
 f = Symbol('f(x,y,z)')
@@ -265,7 +265,7 @@ print(r'\end{align*}')
 
 \section{Including stderr}
 
-\pytex\ allows code to be typset next to the stderr it produces.  This requires the package option \verb|stderr|
+\pytex\ allows code to be typset next to the stderr it produces.  This requires the package option \verb|makestderr|.
 
 \begin{pyblock}[errorsession][numbers=left]
 x = 123
@@ -275,9 +275,9 @@ z = x + y +
 
 This code causes a syntax error:
 
-\stderrpythontex
+\stderrpythontex[verbatim][frame=single]
 
-The file name that appears in the message can be customized using the package option \verb|stderrfilename|.
+The package option \verb|stderrfilename| allows the file name that appears in the error message to be customized.
 
 
 
