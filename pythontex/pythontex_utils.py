@@ -76,13 +76,26 @@ class PythontexUtils(object):
     # The style order doesn't matter, but it corresponds to that of \mathchoice
     _sympy_latex_styles = ('display', 'text', 'script', 'scriptscript')
     
-    # Create dummy functions that will be redefined when used
+    # Create the public functions for the user, and private functions that 
+    # they call.  Two layers are necessary, because we need to be able to 
+    # redefine the functions that do the actual work, once things are 
+    # initialized.  But we don't want to redefine the public functions, since 
+    # that could cause problems if the user defines a new function to be one 
+    # of the public functions--the user's function would not change when
+    # the method was redefined.
+    def _sympy_latex(self, expr, **settings):
+        self._init_sympy_latex()
+        return self._sympy_latex(expr, **settings)
+    
     def sympy_latex(self, expr, **settings):
+        return self._sympy_latex(expr, **settings)
+    
+    def _set_sympy_latex(self, style, **kwargs):
         self._init_sympy_latex()
-        return self.sympy_latex(expr, **settings)
+        return self._set_sympy_latex(style, **kwargs)
+    
     def set_sympy_latex(self, style, **kwargs):
-        self._init_sympy_latex()
-        self.set_sympy_latex(style, **kwargs)
+        self._set_sympy_latex(style, **kwargs)
     # Temporary compatibility with deprecated methods
     def init_sympy_latex(self):
         raise UserWarning('Method init_sympy_latex() is deprecated; init is now automatic.')
@@ -129,14 +142,14 @@ class PythontexUtils(object):
         # Now we create a function for updating the settings.
         #
         # Note that EVERY time the settings are changed, we must call 
-        # self._make_sympy_latex().  This is because the sympy_latex() 
+        # self._make_sympy_latex().  This is because the _sympy_latex() 
         # method is defined based on the settings, and every time the 
         # settings change, it may need to be redefined.  It would be 
-        # possible to define sympy_latex() so that its definition remained 
+        # possible to define _sympy_latex() so that its definition remained 
         # constant, simply drawing on the settings.  But most common 
         # combinations of settings allow more efficient versions of 
-        # sympy_latex() to be defined.
-        def set_sympy_latex(style, **kwargs):
+        # _sympy_latex() to be defined.
+        def _set_sympy_latex(style, **kwargs):
             if style in self._sympy_latex_styles:
                 self._sympy_latex_settings[style].update(kwargs)
             elif style == 'all':
@@ -145,7 +158,7 @@ class PythontexUtils(object):
             else:
                 raise UserWarning('Unknown LaTeX math style ' + str(style))
             self._make_sympy_latex()
-        self.set_sympy_latex = set_sympy_latex
+        self._set_sympy_latex = _set_sympy_latex
         
         # Now that the dictionaries of settings have been created, and 
         # the function for modifying the settings is in place, we are ready 
@@ -186,10 +199,10 @@ class PythontexUtils(object):
         interface could be created, that would involve invoking LatexPrinter 
         four times, once for each math style.  It would also require that 
         LaTeX process a \mathchoice macro for everything returned by 
-        sympy_latex(), which would add more inefficiency.  In practice, there 
+        _sympy_latex(), which would add more inefficiency.  In practice, there 
         will generally be enough overlap between the different settings, and 
         the settings will be focused enough, that more efficient 
-        implementations of sympy_latex() are possible.
+        implementations of _sympy_latex() are possible.
         
         Note that we perform a "lazy import" here.  We don't want to import
         the LatexPrinter unless we are sure to use it, since the import brings
@@ -206,14 +219,14 @@ class PythontexUtils(object):
         # Go through a number of possible scenarios, to create an efficient 
         # implementation of sympy_latex()
         if all(self._sympy_latex_settings[style] == {} for style in self._sympy_latex_styles):
-            def sympy_latex(expr, **settings):
+            def _sympy_latex(expr, **settings):
                 '''            
                 Deal with the case where there are no context-specific 
                 settings.
                 '''
                 return LatexPrinter(settings).doprint(expr)
         elif all(self._sympy_latex_settings[style] == self._sympy_latex_settings['display'] for style in self._sympy_latex_styles):
-            def sympy_latex(expr, **settings):
+            def _sympy_latex(expr, **settings):
                 '''
                 Deal with the case where all settings are identical, and thus 
                 the settings are really only being used to set defaults, 
@@ -228,7 +241,7 @@ class PythontexUtils(object):
                     final_settings.update(settings)
                     return LatexPrinter(final_settings).doprint(expr)
         elif all(self._sympy_latex_settings[style] == self._sympy_latex_settings['text'] for style in ('script', 'scriptscript')):
-            def sympy_latex(expr, **settings):
+            def _sympy_latex(expr, **settings):
                 '''
                 Deal with the case where only 'display' has different settings.
                 
@@ -249,7 +262,7 @@ class PythontexUtils(object):
                 else:
                     return r'\mathchoice{' + display + '}{' + text + '}{' + text + '}{' + text + '}'
         else:
-            def sympy_latex(expr, **settings):
+            def _sympy_latex(expr, **settings):
                 '''
                 If all attempts at simplification fail, create the most 
                 general interface.
@@ -279,7 +292,7 @@ class PythontexUtils(object):
                     return display
                 else:
                     return r'\mathchoice{' + display + '}{' + text + '}{' + script + '}{' + scriptscript+ '}'
-        self.sympy_latex = sympy_latex
+        self._sympy_latex = _sympy_latex
     
     # Now we are ready to create non-SymPy formatters and a method for 
     # setting formatters
