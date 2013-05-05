@@ -20,7 +20,13 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2013/04/21 Version~0.11 ]
+    [2013/04/30 Version~0.12]
+
+\providecommand\InputFileOrMessage[3]{%
+   \InputIfFileExists{#1}%
+                     {#2}%
+                     {#3\PackageWarning{pythontex}{File `#1' not found.}}%
+}
 
 \newcommand{\pytx@packagename}{PythonTeX}
 \newcommand{\pytx@packageversion}{v0.11}
@@ -281,11 +287,11 @@
 \newbool{pytx@usedpygments}
 \AfterEndPreamble{%
     \ifbool{pytx@usedpygments}%
-        {\InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxpyg}{}{}}{}%
+        {\InputFileOrMessage{\pytx@outputdir/\pytx@jobname.pytxpyg}{}{}}{}%
 }
 \AtBeginDocument{%
     \makeatletter
-    \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}{}%
+    \InputFileOrMessage{\pytx@outputdir/\pytx@jobname.pytxmcr}{}{}%
     \makeatother
 }
 \newwrite\pytx@codefile
@@ -636,7 +642,7 @@
 \AtBeginDocument{
     \def\pytx@InlineAutoprint{%
         \ifbool{pytx@opt@autoprint}{%
-            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+            \InputFileOrMessage{\pytx@outputdir/\pytx@stdfile.stdout}%
                 {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}{}}{}%
     }
     \ifbool{pytx@opt@stdout}{}{\let\pytx@InlineAutoprint\@empty}
@@ -868,7 +874,7 @@
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
     \else
-        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.pygtex}{}%
+        \InputFileOrMessage{\pytx@outputdir/\pytx@stdfile.pygtex}{}%
             {\textbf{??~\pytx@packagename~??}%
                 \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
     \fi
@@ -911,7 +917,7 @@
 \AtBeginDocument{
     \def\pytx@EnvAutoprint{%
         \ifbool{pytx@opt@autoprint}{%
-            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+            \InputFileOrMessage{\pytx@outputdir/\pytx@stdfile.stdout}%
                 {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}{}}{}%
     }
     \ifbool{pytx@opt@stdout}{}{\let\pytx@EnvAutoprint\@empty}
@@ -991,9 +997,9 @@
         \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
         \DepyMacro{c:\pytx@counter @\arabic{\pytx@counter}}%
     \else
-        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.tex}%
+        \InputFileOrMessage{\pytx@outputdir/\pytx@stdfile.tex}%
             {\DepyFile{c:\pytx@outputdir/\pytx@stdfile.tex}}%
-            {\InputIfFileExists{\pytx@outputdir/\pytx@stdfile.pygtex}%
+            {\InputFileOrMessage{\pytx@outputdir/\pytx@stdfile.pygtex}%
                 {\DepyFile{c:\pytx@outputdir/\pytx@stdfile.pygtex}}%
                 {\textbf{??~\pytx@packagename~??}%
                     \PackageWarning{\pytx@packagename}{Non-existent console content}}}%
@@ -1236,7 +1242,7 @@
         \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
             \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
         \else
-            \InputIfFileExists{\pytx@outputdir/%
+            \InputFileOrMessage{\pytx@outputdir/%
                 \pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}.pygtex}{}%
                 {\textbf{??~\pytx@packagename~??}%
                     \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
@@ -1317,7 +1323,7 @@
         \ifcsname FV@SV@pytx@\pytx@type @\pytx@session @\pytx@group @0\endcsname
             \UseVerbatim[##1]{pytx@\pytx@type @\pytx@session @\pytx@group @0}%
         \else
-            \InputIfFileExists{\pytx@outputdir/##3_##2.pygtex}{}%
+            \InputFileOrMessage{\pytx@outputdir/##3_##2.pygtex}{}%
                 {\textbf{??~\pytx@packagename~??}%
                     \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
         \fi
@@ -1448,7 +1454,7 @@
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
     \else
-        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.pygtex}{}%
+        \InputFileOrMessage{\pytx@outputdir/\pytx@stdfile.pygtex}{}%
             {\textbf{??~\pytx@packagename~??}%
                 \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
     \fi
