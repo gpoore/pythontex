@@ -77,7 +77,7 @@ mytext = '$1 + 1 = {0}$'.format(1 + 1)
 \end{pyblock}
 Then we bring it in:  \py{mytext}.  The \pygment{latex}{\py} command can even bring in verbatim content, as long as you are using the pdfTeX or XeTeX engines.  (Unfortunately, verbatim does not work with LuaTeX, due to a bug.\footnote{\url{http://tracker.luatex.org/view.php?id=733}})
 
-We don't have to typeset the code we're executing.  It can be hidden.\pyc{mystring=r'\textbf{This is a message from Python}'}  And then we can access it later:  \py{mystring}.
+We don't have to typeset the code we're executing.  It can be hidden.\pyc{mystring=r'\textbf{This is a message from Python}'} And then we can access it later:  \py{mystring}.
 
 
 \section{Pygments highlighting}
@@ -109,6 +109,8 @@ def f(expr):
 f(x)
 print('Python says hi from the console!')
 \end{pyconsole}
+
+It is possible to refer to the values of console variables later on in inline contexts, using the \pygment{latex}{\pycon} command.  For example, the value of $z$ was \pycon{z}.
 
 
 \section{Basic SymPy interaction}

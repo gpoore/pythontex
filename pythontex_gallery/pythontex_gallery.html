@@ -58,18 +58,19 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p>There is also a Pygments command for inline use: <code>\pygment</code>.</p>
 <h1>Python console environment</h1>
 <p>PythonTeX includes an environment that emulates a Python interactive session. Commands are entered within the environment, each line is treated as input to an interactive session, and the result is typeset.</p>
-<pre class="sourceCode python"><code class="sourceCode python">&gt;&gt;&gt; x = <span class="dv">123</span>
-&gt;&gt;&gt; y = <span class="dv">345</span>
+<pre class="pycon"><code>&gt;&gt;&gt; x = 123
+&gt;&gt;&gt; y = 345
 &gt;&gt;&gt; z = x + y
 &gt;&gt;&gt; z
-<span class="dv">468</span>
-&gt;&gt;&gt; <span class="kw">def</span> f(expr):
-...     <span class="kw">return</span>(expr**<span class="dv">4</span>)
+468
+&gt;&gt;&gt; def f(expr):
+...     return(expr**4)
 ... 
 &gt;&gt;&gt; f(x)
-<span class="dv">228886641</span>
-&gt;&gt;&gt; <span class="kw">print</span>(<span class="st">&#39;Python says hi from the console!&#39;</span>)
-Python says hi <span class="ch">from</span> the console!</code></pre>
+228886641
+&gt;&gt;&gt; print(&#39;Python says hi from the console!&#39;)
+Python says hi from the console!</code></pre>
+<p>It is possible to refer to the values of console variables later on in inline contexts, using the <code>\pycon</code> command. For example, the value of <span class="math">\(z\)</span> was <code>468</code>.</p>
 <h1>Basic SymPy interaction</h1>
 <p>PythonTeX allows us to perform algebraic manipulations with SymPy and then properly typeset the results.</p>
 <p>We create three variables, and define <span class="math">\(z\)</span> in terms of the other two.</p>

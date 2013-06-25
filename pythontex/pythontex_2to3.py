@@ -41,7 +41,7 @@ from io import open
 import re
 
 
-files_to_process = ('pythontex2.py', 'pythontex_types2.py', 'depythontex2.py')
+files_to_process = ('pythontex2.py', 'depythontex2.py')
 encoding = 'utf-8'
 
 

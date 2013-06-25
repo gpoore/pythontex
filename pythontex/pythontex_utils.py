@@ -16,6 +16,7 @@ Licensed under the BSD 3-Clause License:
 
 # Imports
 import sys
+import warnings
 
 # Most imports are only needed for SymPy; these are brought in via 
 # "lazy import."  Importing unicode_literals here shouldn't ever be necessary 
@@ -27,7 +28,7 @@ import sys
 # within the ASCII subset are actually used).
 
 
-class PythontexUtils(object):
+class PythonTeXUtils(object):
     '''
     A class of PythonTeX utilities.
     
@@ -39,13 +40,14 @@ class PythontexUtils(object):
     
     String variables for keeping track of TeX information.  Most are 
     actually needed; the rest are included for completeness.
-        * inputtype
-        * inputsession
-        * inputgroup
-        * inputinstance
-        * inputcommand
-        * inputcontext
-        * inputline
+        * input_family
+        * input_session
+        * input_restart
+        * input_command
+        * input_context
+        * input_args
+        * input_instance
+        * input_line
     
     Future file handle for output that is saved via macros
         * macrofile
@@ -92,13 +94,13 @@ class PythontexUtils(object):
     
     def _set_sympy_latex(self, style, **kwargs):
         self._init_sympy_latex()
-        return self._set_sympy_latex(style, **kwargs)
+        self._set_sympy_latex(style, **kwargs)
     
     def set_sympy_latex(self, style, **kwargs):
         self._set_sympy_latex(style, **kwargs)
     # Temporary compatibility with deprecated methods
     def init_sympy_latex(self):
-        raise UserWarning('Method init_sympy_latex() is deprecated; init is now automatic.')
+        warnings.warn('Method init_sympy_latex() is deprecated; init is now automatic.')
         self._init_sympy_latex()
     
     # Next we create a method that initializes the actual context-aware 
@@ -156,7 +158,7 @@ class PythontexUtils(object):
                 for s in self._sympy_latex_styles:
                     self._sympy_latex_settings[s].update(kwargs)
             else:
-                raise UserWarning('Unknown LaTeX math style ' + str(style))
+                warnings.warn('Unknown LaTeX math style ' + str(style))
             self._make_sympy_latex()
         self._set_sympy_latex = _set_sympy_latex
         
@@ -322,28 +324,14 @@ class PythontexUtils(object):
         else:
             raise ValueError('Unsupported formatter type')
     
-    # We provide a method that saves "printed" content via macros.
-    # This is one of the two primary tasks of the class.  (Actually, this is 
-    # the primary task when the SymPy latex printer interface isn't needed.)
-    def _print_via_macro(self, expr):
-        '''
-        Function for "printing" via macros.  Convert output to macro form
-        and save it to an external file.
-        
-        This function is not intended for general use.  It is specifically 
-        for inline commands without a suffix, which pull in Python content 
-        via macros.  Attempts to use it in other contexts may fail or cause 
-        unexpected behavior.
-        '''
-        before = (r'\pytx@SVMCR{pytx@MCR@' + 
-                  self.inputtype + '@' + self.inputsession + '@' + 
-                  self.inputgroup + '@' + self.inputinstance + '}\n')
-        after = '\\endpytx@SVMCR\n\n'
-        if sys.version_info[0] == 2:
-            # Writing is done via the io module, which requires unicode
-            self.macrofile.write(unicode(before + self.formatter(expr) + after))
-        else:
-            self.macrofile.write(before + self.formatter(expr) + after)      
+    # We need functions that can be executed immediately before and after
+    # each chunk of code.  By default, these should do nothing; they are for
+    # user customization, or customization via packages.
+    def before(self):
+        pass
+    def after(self):
+        pass
+    
     
     # We need a way to keep track of dependencies
     # We create a list that stores specified dependencies, and a method that
@@ -356,8 +344,8 @@ class PythontexUtils(object):
     def add_dependencies(self, *args):
         self._dependencies.extend(list(args))
     def _save_dependencies(self):
+        print('=>PYTHONTEX:DEPENDENCIES#')
         if self._dependencies:
-            print('=>PYTHONTEX:DEPENDENCIES#')
             for dep in self._dependencies:
                 print(dep)
     
@@ -373,12 +361,12 @@ class PythontexUtils(object):
     def add_created(self, *args):
         self._created.extend(list(args))
     def _save_created(self):
+        print('=>PYTHONTEX:CREATED#')
         if self._created:
-            print('=>PYTHONTEX:CREATED#')
             for creation in self._created:
                 print(creation)
     
-    def _cleanup(self):
+    def cleanup(self):
         self._save_dependencies()
         self._save_created()
         

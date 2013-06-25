@@ -73,7 +73,7 @@ input = raw_input
 
 # Script parameters
 # Version
-version = 'v0.11'
+version = 'v0.12beta'
 
 
 
@@ -129,7 +129,7 @@ def replace_code_cmd(name, arglist, linenum, code_replacement,
             preprocessed (like a console environment's content)
         code_replacement_mode (str/None):  mode in which the replacement is 
             to be typeset; raw/None (as TeX; generally unused for code), 
-            inlineverb (or v) (as inline), or verb (as environment)
+            verb (inline), or verbatim (environment)
         after (str):  text immediately following the command; usually 
             shouldn't be needed
         lexer (str/None):  Pygments lexer
@@ -212,7 +212,7 @@ def replace_code_env(name, arglist, linenum, code_replacement,
             commands, this is always not None if the function is called
         code_replacement_mode (str/None):  mode in which the replacement is 
             to be typeset; raw/None (as TeX; generally unused for code), 
-            inlineverb (or v) (as inline), or verb (as environment)
+            verb (inline), or verbatim (environment)
         after (str):  text immediately following the environment; usually 
             shouldn't be needed
         lexer (str/None):  Pygments lexer
@@ -675,6 +675,8 @@ parser.add_argument('--lexer-dict', default=None,
                     help='add mappings from Pygments lexer names to the language names of other highlighting packages; should be a comma-separated list of the form "<Pygments lexer>:<language>, <Pygments lexer>:<language>, ..."')
 parser.add_argument('--preamble', default=None,
                     help='line of commands to add to output preamble')
+parser.add_argument('--graphicspath', default=False, action='store_true',
+                    help=r'Add the outputdir to the graphics path, by modifying an existing \graphicspath command or adding one.')
 parser.add_argument('TEXNAME',
                     help='LaTeX file')
 parser.add_argument('OUTFILE', nargs='?', default=None,
@@ -773,6 +775,10 @@ n = len(depytx) - 1
 while depytx[n].startswith('=>DEPYTHONTEX:SETTINGS#'):
     content = depytx[n].split('#', 1)[1].rsplit('#', 1)[0]
     k, v = content.split('=', 1)
+    if v in ('true', 'True'):
+        v= True
+    elif v in ('false', 'False'):
+        v = False
     settings[k] = v
     depytx[n] = ''
     n -= 1
@@ -953,7 +959,10 @@ for n, depytxline in enumerate(depytx):
                     print('    This is probably because the document needs to be recompiled')
                     sys.exit(1)
                 if typeset == 'c':
-                    code_replacement = ''.join(macrodict[macro])
+                    if depy_type == 'cmd':
+                        code_replacement = ''.join(macrodict[macro]).strip('\n')
+                    else:
+                        code_replacement = ''.join(macrodict[macro])
                 elif typeset == 'p':
                     print_replacement = ''.join(macrodict[macro])
                 else:
@@ -1338,7 +1347,6 @@ texout.extend(tex[texlinenum+1:])
 
 
 
-# Modify the preamble as necessary
 # Replace the `\usepackage{pythontex}`
 for n, line in enumerate(texout):
     if '{pythontex}' in line:
@@ -1361,6 +1369,15 @@ for n, line in enumerate(texout):
         break
 if preamble_additions:
     texout[n] += '\n'.join(preamble_additions) + '\n'
+# Take care of graphicspath
+if args.graphicspath and settings['graphicx']:
+    for n, line in enumerate(texout):
+        if '\\graphicspath' in line and not bool(match('\s*%', line)):
+            texout[n] = line.replace('\\graphicspath{', '\\graphicspath{{' + settings['outputdir'] +'/}')
+            break
+        elif line.startswith(r'\begin{document}'):
+            texout[n] = '\\graphicspath{{' + settings['outputdir'] + '/}}\n' + line
+            break
 
 
 

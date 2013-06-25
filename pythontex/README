@@ -3,7 +3,7 @@
 ===================================================================
 
 :Author:  Geoffrey Poore
-:Version:  0.11 (2013/04/21)
+:Version:  0.12beta (2013/06/24)
 :License:  LPPL v1.3 or later (LaTeX code) and BSD 3-Clause (Python code)
 :Development:  https://github.com/gpoore/pythontex
 :Requirements:  Python 2.7 or 3.2+; Pygments
