@@ -9,7 +9,7 @@
 
 :Author: Geoffrey Poore
 
-:Version: 0.12beta
+:Version: 0.12
 
 :License:  LPPL_ (LaTeX code) and `BSD 3-Clause`_ (Python code)
 
@@ -20,7 +20,7 @@
 
 PythonTeX provides fast, user-friendly access to Python from within LaTeX.  It allows Python code entered within a LaTeX document to be executed, and the results to be included within the original document.  It also provides syntax highlighting for code within LaTeX documents via the Pygments syntax highlighter.
 
-PythonTeX also provides support for Ruby.  Support for additional languages is coming soon.
+PythonTeX also provides support for Ruby and Julia.  Support for additional languages is coming soon.
 
 See ``pythontex.pdf`` for detailed installation instructions, or use the installation script for TeX Live.  See ``pythontex_quickstart.pdf`` to get started, and ``pythontex_gallery.pdf`` for examples of what is possible with PythonTeX.
 
@@ -30,16 +30,6 @@ The ``depythontex`` utility creates a copy of a PythonTeX document in which all 
 Current status
 --------------
 
-Version 0.12 will be in beta for a week or two.  It has passed all tests and should be very stable, but since it involved many significant modifications, the final 0.12 will await user testing and feedback.
-
-Immediate development goals:
-
-*  Finish and release 0.12 final.  This will involve a few additional tweaks
-   and incorporate a few additional features.
-*  Refactor code on the TeX side, to better interface with recent 
-   modifications on the Python side.
-
-
 Upcoming objectives:
 
 *  Add better support for macro programming with PythonTeX.
@@ -47,6 +37,58 @@ Upcoming objectives:
 
 Version History
 ---------------
+
+v0.12 (2013/08/26)
+
+*  Added support for the Julia language, with the ``julia`` and ``jl`` 
+   families of commands and environments.  (Note that Pygments only added 
+   Julia support in version 1.6.)
+   
+*  Warnings and errors are now synchronized with the line numbers of files 
+   brought in via ``\input``, ``\include``, etc.  This is accomplished using 
+   the ``currfile`` package.
+   
+*  Added package option ``gobble``.  When ``gobble=auto``, all code is 
+   dedented before being executed and/or typeset.  The current 
+   implementation is functional but basic; it will be improved and extended 
+   in the future.
+   
+*  The document root directory is now always added to ``sys.path`` (or its 
+   equivalent), even when it is not the working directory. (The working 
+   directory has been added to ``sys.path`` since v0.12beta.)  The document 
+   directory is added after the working directory, so that the working 
+   directory has precedence.
+   
+*  Fixed a bug in ``console`` commands and environments; ``sys.path`` now 
+   contains the working and document directories, and the working directory 
+   is now the output directory by default.  This parallels the behavior of 
+   non-``console`` commands and environments.
+   
+*  Added command-line option ``--interpreter`` that allows an interpreter to 
+   be invoked via a specific command.  This allows, for example, a specific 
+   version of Python to be invoked.
+   
+*  Improved synchronization of stderr in cases when an error is triggered 
+   far after its origin (for example, an error caused by a multiline string 
+   that is lacking a closing quote/delimiter, and thus may span several 
+   chunks of user code).
+   
+*  Modified usage of the ``shlex`` module to work around its lack of Unicode 
+   support in Python versions prior to 2.7.3.
+   
+*  Fixed a bug from v0.12beta that prevented ``\inputpygments`` from working 
+   when ``pygments=true``.
+   
+*  Fixed a bug with counters that caused errors when content spanning 
+   multiple columns was created within a ``tabular`` environment.
+   
+*  Added checking for compatible Python versions in ``pythontex.py``.
+
+*  Improved execution of ``*.bat`` and ``*.cmd`` files under Windows.  The 
+   solution from v0.12beta allowed ``*.bat`` and ``*.cmd`` to be found and 
+   executed when the extension was not given, but did not give correct 
+   return codes.
+
 
 v0.12beta (2013/06/24)
 
@@ -153,7 +195,8 @@ v0.12beta (2013/06/24)
 *  Under Windows, ``subprocess.Popen()`` is now invoked with
    ``shell=True`` if ``shell=False`` results in a WindowsError. This
    allows commands involving ``*.bat`` and ``*.cmd`` files to be
-   executed; otherwise, only ``*.exe`` can be found and run.
+   executed when the extension is not specified; otherwise, only ``*.exe`` 
+   can be found and run.
 
 *  The path to utils is now found in ``pythontex.py`` via
    ``sys.path[0]`` rather than ``kpsewhich``. This allows the PythonTeX

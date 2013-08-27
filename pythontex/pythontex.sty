@@ -20,19 +20,24 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2013/06/24 Version~0.12beta ]
+    [2013/08/26 Version~0.12]
 
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{v0.12beta}
+\newcommand{\pytx@packageversion}{v0.12}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
 \RequirePackage{etoolbox}
 \RequirePackage{xstring}
 \RequirePackage{pgfopts}
 \RequirePackage{newfloat}
+\RequirePackage{currfile}
 \AtBeginDocument{\@ifpackageloaded{color}{}{\RequirePackage{xcolor}}}
 \def\pytx@families{}
 \pgfkeys{/PYTX/pkgopt/usefamily/.estore in=\pytx@families}
+\def\pytx@opt@gobble{none}
+\pgfkeys{/PYTX/pkgopt/gobble/.is choice}
+\pgfkeys{/PYTX/pkgopt/gobble/none/.code=\def\pytx@opt@gobble{none}}
+\pgfkeys{/PYTX/pkgopt/gobble/auto/.code=\def\pytx@opt@gobble{auto}}
 \newbool{pytx@opt@beta}
 \pgfkeys{/PYTX/pkgopt/beta/.default=true}
 \pgfkeys{/PYTX/pkgopt/beta/.is choice}
@@ -312,6 +317,7 @@
     \immediate\write\pytx@codefile{version=\pytx@packageversion}%
     \immediate\write\pytx@codefile{outputdir=\pytx@outputdir}%
     \immediate\write\pytx@codefile{workingdir=\pytx@workingdir}%
+    \immediate\write\pytx@codefile{gobble=\pytx@opt@gobble}%
     \immediate\write\pytx@codefile{rerun=\pytx@opt@rerun}%
     \immediate\write\pytx@codefile{hashdependencies=\pytx@opt@hashdependencies}%
     \immediate\write\pytx@codefile{makestderr=\ifbool{pytx@opt@stderr}{true}{false}}%
@@ -329,17 +335,25 @@
 \def\pytx@argsrun{}
 \def\pytx@argspprint{}
 \def\pytx@WriteCodefileInfo{%
+    \ifcurrfile{\currfilebase}{\jobname}%
+        {\let\pytx@currfile\@empty}{\let\pytx@currfile\currfilename}%
     \immediate\write\pytx@codefile{\pytx@delim\pytx@type\pytx@delimchar%
         \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
         \arabic{\pytx@counter}\pytx@delimchar\pytx@cmd\pytx@delimchar%
         \pytx@context\pytx@delimchar\pytx@argsrun\pytx@delimchar%
-        \pytx@argspprint\pytx@delimchar\the\inputlineno\pytx@delimchar}%
+        \pytx@argspprint\pytx@delimchar%
+        \pytx@currfile\pytx@delimchar%
+        \the\inputlineno\pytx@delimchar}%
 }
 \newcommand{\pytx@WriteCodefileInfoExt}[1][]{%
+    \ifcurrfile{\currfilebase}{\jobname}%
+            {\let\pytx@currfile\@empty}{\let\pytx@currfile\currfilename}%
     \immediate\write\pytx@codefile{\pytx@delim\pytx@type\pytx@delimchar%
         \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
         0\pytx@delimchar\pytx@cmd\pytx@delimchar%
-        \pytx@context\pytx@delimchar\pytx@args\pytx@delimchar%
+        \pytx@context\pytx@delimchar\pytx@argsrun\pytx@delimchar%
+        \pytx@argspprint\pytx@delimchar%
+        \pytx@currfile\pytx@delimchar%
         \the\inputlineno\pytx@delimchar#1}%
 }
 \newcommand{\setpythontexfv}[2][]{%
@@ -512,6 +526,8 @@
         \pytx@outputdir\pytx@delimchar}%
     \immediate\write\pytx@depyfile{=>DEPYTHONTEX:SETTINGS\pytx@delimchar graphicx=%
             \ifcsname graphicspath\endcsname true\else false\fi\pytx@delimchar}%
+    \immediate\write\pytx@depyfile{=>DEPYTHONTEX:SETTINGS\pytx@delimchar gobble=%
+            \pytx@opt@gobble\pytx@delimchar}%
 }%
 }{}
 \def\DepyMacro@orig#1{%
@@ -588,7 +604,7 @@
     \endgroup
     \def\pytx@argdetok{\detokenize{#1}}%
     \def\pytx@arg{#1}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
     \pytx@InlineShow
@@ -834,7 +850,7 @@
 }
 \def\pytx@BeginBlockEnvFV[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%
@@ -868,7 +884,7 @@
 }
 \def\pytx@BeginVerbEnvFV[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%
@@ -908,7 +924,7 @@
 }%
 \def\pytx@BeginEnvPyg[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%
@@ -966,7 +982,7 @@
 }%
 \def\pytx@BeginCodeEnv[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \pytx@WriteCodefileInfo
     \begingroup
@@ -1032,7 +1048,7 @@
 }
 \def\pytx@BeginConsEnvFV[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%
@@ -1208,6 +1224,8 @@
 \renewcommand{\do}[1]{%
     \ifstrequal{#1}{ruby}{\makepythontexfamily[pyglexer=ruby]{ruby}}{}%
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
+    \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
+    \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 \newbool{pytx@listingenv}
@@ -1338,7 +1356,7 @@
     \edef\pytx@type{PYG#1}%
     \edef\pytx@cmd{verbatim}%
     \edef\pytx@session{default}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%

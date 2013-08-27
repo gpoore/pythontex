@@ -62,18 +62,19 @@ Licensed under the BSD 3-Clause License:
 #\\ End Python 2
 import sys
 import os
-import argparse
-from collections import defaultdict
-from re import match, sub, search
 #// Python 2
 #from io import open
 #input = raw_input
 #\\ End Python 2
+import argparse
+from collections import defaultdict
+from re import match, sub, search
+import textwrap
 
 
 # Script parameters
 # Version
-version = 'v0.12beta'
+version = 'v0.12'
 
 
 
@@ -776,7 +777,7 @@ while depytx[n].startswith('=>DEPYTHONTEX:SETTINGS#'):
     content = depytx[n].split('#', 1)[1].rsplit('#', 1)[0]
     k, v = content.split('=', 1)
     if v in ('true', 'True'):
-        v= True
+        v = True
     elif v in ('false', 'False'):
         v = False
     settings[k] = v
@@ -1257,10 +1258,13 @@ for n, depytxline in enumerate(depytx):
                             if end_environment in tex[texlinenum]:
                                 break
                     code_replacement, after = after.split(end_environment, 1)
-                    # If there's content on the line with the end-enviroment
+                    # If there's content on the line with the end-environment
                     # command, it should be discarded, to imitate TeX
                     if not code_replacement.endswith('\n'):
                         code_replacement = code_replacement.rsplit('\n', 1)[0] + '\n'
+                    # Take care of `gobble`
+                    if settings['gobble'] == 'auto':
+                        code_replacement = textwrap.dedent(code_replacement)
                 else:
                     if end_environment not in after:
                         while True:

@@ -31,11 +31,20 @@ from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
 
+interpreter_dict = {k:k for k in ('python', 'ruby', 'julia')}
+# The {file} field needs to be replaced by itself, since the actual 
+# substitution of the real file can only be done at runtime, whereas the
+# substitution for the interpreter should be done when the engine is 
+# initialized.
+interpreter_dict['file'] = '{file}'
+
+
 engine_dict = {}
 
 
-CodeIndex = namedtuple('CodeIndex', ['input_command', 'input_line_int', 
-                                     'lines_total', 'lines_user', 
+CodeIndex = namedtuple('CodeIndex', ['input_file', 'input_command', 
+                                     'input_line_int', 'lines_total', 
+                                     'lines_user', 'lines_input',
                                      'inline_count'])
 
 
@@ -50,12 +59,13 @@ class CodeEngine(object):
     '''
     def __init__(self, name, language, extension, command, template, wrapper, 
                  formatter, errors=None, warnings=None,
-                 linenumbers=None, console=False, startup=None, created=None):
+                 linenumbers=None, lookbehind=False, 
+                 console=False, startup=None, created=None):
 
         # Save raw arguments so that they may be reused by subtypes
         self._rawargs = (name, language, extension, command, template, wrapper, 
                          formatter, errors, warnings,
-                         linenumbers, console, startup, created)
+                         linenumbers, lookbehind, console, startup, created)
         
         # Type check all strings, and make sure everything is Unicode
         if sys.version_info[0] == 2:
@@ -66,7 +76,7 @@ class CodeEngine(object):
                     not isinstance(template, basestring) or
                     not isinstance(wrapper, basestring) or
                     not isinstance(formatter, basestring)):
-                raise TypeError('PythonTeXType needs string in initialization')
+                raise TypeError('CodeEngine needs string in initialization')
             self.name = unicode(name)
             self.language = unicode(language)
             self.extension = unicode(extension)
@@ -81,8 +91,8 @@ class CodeEngine(object):
                     not isinstance(command, str) or 
                     not isinstance(template, str) or
                     not isinstance(wrapper, str) or
-                    not isinstance(formatter, str)):
-                raise TypeError('PythonTeXType needs string in initialization')
+                    not isinstance(formatter, str)):    
+                raise TypeError('CodeEngine needs string in initialization')
             self.name = name
             self.language = language
             self.extension = extension
@@ -112,19 +122,19 @@ class CodeEngine(object):
                 if isinstance(errors, basestring):
                     errors = [errors]
                 elif not isinstance(errors, list) and not isinstance(errors, tuple):
-                    raise TypeError('PythonTeX needs "errors" to be a string, list, or tuple')
+                    raise TypeError('CodeEngine needs "errors" to be a string, list, or tuple')
                 for e in errors:
                     if not isinstance(e, basestring):
-                        raise TypeError('PythonTeX needs "errors" to contain strings')
+                        raise TypeError('CodeEngine needs "errors" to contain strings')
                 errors = [unicode(e) for e in errors]
             else:
                 if isinstance(errors, str):
                     errors = [errors]
                 elif not isinstance(errors, list) and not isinstance(errors, tuple):
-                    raise TypeError('PythonTeX needs "errors" to be a string, list, or tuple')
+                    raise TypeError('CodeEngine needs "errors" to be a string, list, or tuple')
                 for e in errors:
                     if not isinstance(e, str):
-                        raise TypeError('PythonTeX needs "errors" to contain strings')
+                        raise TypeError('CodeEngine needs "errors" to contain strings')
             self.errors = errors
         if warnings is None:
             warnings = []
@@ -133,19 +143,19 @@ class CodeEngine(object):
                 if isinstance(warnings, basestring):
                     warnings = [warnings]
                 elif not isinstance(warnings, list) and not isinstance(warnings, tuple):
-                    raise TypeError('PythonTeX needs "warnings" to be a string, list, or tuple')
+                    raise TypeError('CodeEngine needs "warnings" to be a string, list, or tuple')
                 for w in warnings:
                     if not isinstance(w, basestring):
-                        raise TypeError('PythonTeX needs "warnings" to contain strings')
+                        raise TypeError('CodeEngine needs "warnings" to contain strings')
                 warnings = [unicode(w) for w in warnings]
             else:
                 if isinstance(warnings, str):
                     warnings = [warnings]
                 elif not isinstance(warnings, list) and not isinstance(warnings, tuple):
-                    raise TypeError('PythonTeX needs "warnings" to be a string, list, or tuple')
+                    raise TypeError('CodeEngine needs "warnings" to be a string, list, or tuple')
                 for w in warnings:
                     if not isinstance(w, str):
-                        raise TypeError('PythonTeX needs "warnings" to contain strings')
+                        raise TypeError('CodeEngine needs "warnings" to contain strings')
             self.warnings = warnings
         if linenumbers is None:
             linenumbers = 'line {{number}}'
@@ -153,26 +163,31 @@ class CodeEngine(object):
             if isinstance(linenumbers, basestring):
                 linenumbers = [linenumbers]
             elif not isinstance(linenumbers, list) and not isinstance(linenumbers, tuple):
-                raise TypeError('PythonTeX needs "linenumbers" to be a string, list, or tuple')
+                raise TypeError('CodeEngine needs "linenumbers" to be a string, list, or tuple')
             for l in linenumbers:
                 if not isinstance(l, basestring):
-                    raise TypeError('PythonTeX needs "linenumbers" to contain strings')
+                    raise TypeError('CodeEngine needs "linenumbers" to contain strings')
             linenumbers = [unicode(l) for l in linenumbers]
         else:
             if isinstance(linenumbers, str):
                 linenumbers = [linenumbers]
             elif not isinstance(linenumbers, list) and not isinstance(linenumbers, tuple):
-                raise TypeError('PythonTeX needs "linenumbers" to be a string, list, or tuple')
+                raise TypeError('CodeEngine needs "linenumbers" to be a string, list, or tuple')
             for l in linenumbers:
                 if not isinstance(l, str):
-                    raise TypeError('PythonTeX needs "linenumbers" to contain strings')
+                    raise TypeError('CodeEngine needs "linenumbers" to contain strings')
         # Need to replace tags
         linenumbers = [l.replace('{{number}}', r'(\d+)') for l in linenumbers]
         self.linenumbers = linenumbers
+
+        # Type check lookbehind
+        if not isinstance(lookbehind, bool):
+            raise TypeError('CodeEngine needs "lookbehind" to be bool')
+        self.lookbehind = lookbehind
         
         # Type check console
         if not isinstance(console, bool):
-            raise TypeError('PythonTeXType needs "console" to be bool')
+            raise TypeError('CodeEngine needs "console" to be bool')
         self.console = console
         
         # Type check startup
@@ -185,10 +200,10 @@ class CodeEngine(object):
                 if isinstance(startup, basestring):
                     startup = unicode(startup)
                 else:
-                    raise TypeError('PythonTeX needs "startup" to be a string')
+                    raise TypeError('CodeEngine needs "startup" to be a string')
             else:
                 if not isinstance(startup, str):
-                    raise TypeError('PythonTeX needs "startup" to be a string')
+                    raise TypeError('CodeEngine needs "startup" to be a string')
             if not startup.endswith('\n'):
                 startup += '\n'
         self.startup = self._dedent(startup)
@@ -201,19 +216,19 @@ class CodeEngine(object):
                 if isinstance(created, basestring):
                     created = [created]
                 elif not isinstance(created, list) and not isinstance(created, tuple):
-                    raise TypeError('PythonTeX type needs "created" to be a string, list, or tuple')
+                    raise TypeError('CodeEngine needs "created" to be a string, list, or tuple')
                 for f in created:
                     if not isinstance(f, basestring):
-                        raise TypeError('PythonTeX needs "created" to contain strings')
+                        raise TypeError('CodeEngine "created" to contain strings')
                 created = [unicode(f) for f in created]
             else:
                 if isinstance(created, str):
                     created = [created]
                 elif not isinstance(created, list) and not isinstance(created, tuple):
-                    raise TypeError('PythonTeX type needs "created" to be a string, list, or tuple')
+                    raise TypeError('CodeEngine needs "created" to be a string, list, or tuple')
                 for f in created:
                     if not isinstance(f, str):
-                        raise TypeError('PythonTeX needs "created" to contain strings')
+                        raise TypeError('CodeEngine needs "created" to contain strings')
         self.created = created
         
         # The base PythonTeX type does not support extend; it is used in 
@@ -264,14 +279,19 @@ class CodeEngine(object):
         
     def customize(self, **kwargs):
         '''
-        Customize the template on the fly with arguments from the TeX side.
+        Customize the template on the fly.
         
-        This is used for imports from `__future__`.  Ideally, it should be 
-        restricted to this and similar cases.  The custom code command and 
-        environment are insufficient for such cases, because of the 
-        requirement that imports from `__future__` be at the very beginning
-        of a script.
+        This provides customization based on command line arguments 
+        (`--interpreter`) and customization from the TeX side (imports from
+        `__future__`).  Ideally, this function should be restricted to this 
+        and similar cases.  The custom code command and environment are 
+        insufficient for such cases, because the command is at a level above
+        that of code and because of the requirement that imports from 
+        `__future__` be at the very beginning of a script.
         '''
+        # Take care of `--interpreter`
+        self.command = self.command.format(**interpreter_dict)
+        # Take care of `__future__`
         if self.language.startswith('python'):
             if sys.version_info[0] == 2 and 'pyfuture' in kwargs:
                 pyfuture = kwargs['pyfuture']
@@ -425,13 +445,13 @@ class CodeEngine(object):
         
         # Add beginning to script
         script_begin = script_begin.format(encoding=encoding, future=future, 
-                            utilspath=utilspath, workingdir=workingdir,
-                            extend=self.extend,
-                            input_family=code_list[0].input_family,
-                            input_session=code_list[0].input_session,
-                            input_restart=code_list[0].input_restart,
-                            dependencies_delim='=>PYTHONTEX:DEPENDENCIES#',
-                            created_delim='=>PYTHONTEX:CREATED#')
+                                           utilspath=utilspath, workingdir=workingdir,
+                                           extend=self.extend,
+                                           input_family=code_list[0].input_family,
+                                           input_session=code_list[0].input_session,
+                                           input_restart=code_list[0].input_restart,
+                                           dependencies_delim='=>PYTHONTEX:DEPENDENCIES#',
+                                           created_delim='=>PYTHONTEX:CREATED#')
         script.append(script_begin)
         lines_total += script_begin.count('\n')
         
@@ -473,13 +493,13 @@ class CodeEngine(object):
                                                input_line=c.input_line))
             
             # Actual code
-            code_index[c.input_instance] = CodeIndex(c.input_command, c.input_line_int, lines_total, lines_user, inline_count)
+            lines_input = c.code.count('\n')
+            code_index[c.input_instance] = CodeIndex(c.input_file, c.input_command, c.input_line_int, lines_total, lines_user, lines_input, inline_count)
             script.append(c.code)
             if c.is_inline:
                 inline_count += 1
-            nl = c.code.count('\n')
-            lines_total += nl
-            lines_user += nl
+            lines_total += lines_input
+            lines_user += lines_input
             
             # Wrapper after
             script.append(wrapper_end)
@@ -498,15 +518,15 @@ class CodeEngine(object):
                                                input_line=c.input_line))
             
             # Actual code
-            code_index[c.input_instance] = CodeIndex(c.input_command, c.input_line_int, lines_total, lines_user, inline_count)
+            lines_input = c.code.count('\n')
+            code_index[c.input_instance] = CodeIndex(c.input_file, c.input_command, c.input_line_int, lines_total, lines_user, lines_input, inline_count)
             if c.input_command == 'i':
                 script.append(self.formatter.format(code=c.code.rstrip('\n')))
                 inline_count += 1
             else:
                 script.append(c.code)
-            nl = c.code.count('\n')
-            lines_total += nl
-            lines_user += nl                
+            lines_total += lines_input
+            lines_user += lines_input                
             
             # Wrapper after
             script.append(wrapper_end)
@@ -525,13 +545,13 @@ class CodeEngine(object):
                                                input_line=c.input_line))
             
             # Actual code
-            code_index[c.input_instance] = CodeIndex(c.input_command, c.input_line_int, lines_total, lines_user, inline_count)
+            lines_input = c.code.count('\n')
+            code_index[c.input_instance] = CodeIndex(c.input_file, c.input_command, c.input_line_int, lines_total, lines_user, lines_input, inline_count)
             script.append(c.code)
             if c.is_inline:
                 inline_count += 1
-            nl = c.code.count('\n')
-            lines_total += nl
-            lines_user += nl
+            lines_total += lines_input
+            lines_user += lines_input
             
             # Wrapper after
             script.append(wrapper_end)
@@ -551,12 +571,12 @@ class SubCodeEngine(CodeEngine):
     '''
     def __init__(self, base, name, language=None, extension=None, command=None, 
                  template=None, wrapper=None, formatter=None, errors=None,
-                 warnings=None, linenumbers=None, console=None, 
-                 created=None, startup=None, extend=None):
+                 warnings=None, linenumbers=None, lookbehind=False,
+                 console=None, created=None, startup=None, extend=None):
         
         self._rawargs = (name, language, extension, command, template, wrapper, 
                          formatter, errors, warnings,
-                         linenumbers, console, startup, created)
+                         linenumbers, lookbehind, console, startup, created)
                          
         base_rawargs = engine_dict[base]._rawargs
         args = []
@@ -596,10 +616,10 @@ class PythonConsoleEngine(CodeEngine):
     '''
     def __init__(self, name, startup=None):
         CodeEngine.__init__(self, name=name, language='python', 
-                               extension='', command='', template='', 
-                               wrapper='', formatter='', errors=None, 
-                               warnings=None, linenumbers=None, console=True, 
-                               startup=startup, created=None)
+                            extension='', command='', template='', 
+                            wrapper='', formatter='', errors=None, 
+                            warnings=None, linenumbers=None, lookbehind=False,
+                            console=True, startup=startup, created=None)
 
 
 
@@ -623,7 +643,8 @@ python_template = '''
     sys.path.append('{{utilspath}}')    
     from pythontex_utils import PythonTeXUtils
     pytex = PythonTeXUtils()
-        
+    
+    pytex.docdir = os.getcwd()
     if os.path.isdir('{{workingdir}}'):
         os.chdir('{{workingdir}}')
         if os.getcwd() not in sys.path:
@@ -631,6 +652,8 @@ python_template = '''
     else:
         if len(sys.argv) < 2 or sys.argv[1] != '--manual':
             sys.exit('Cannot find directory {{workingdir}}')
+    if pytex.docdir not in sys.path:
+        sys.path.append(pytex.docdir)
     
     {{extend}}
     
@@ -660,7 +683,7 @@ python_wrapper = '''
     '''
 
 
-CodeEngine('python', 'python', '.py', 'python {{file}}.py',
+CodeEngine('python', 'python', '.py', '{{python}} {{file}}.py',
               python_template, python_wrapper, 'print(pytex.formatter({{code}}))',
               'Error:', 'Warning:', ['line {{number}}', ':{{number}}:'])
 
@@ -696,7 +719,7 @@ ruby_template = '''
     class RubyTeXUtils
         attr_accessor :input_family, :input_session, :input_restart, 
                 :input_command, :input_context, :input_args, 
-                :input_instance, :input_line, :dependencies, :created
+                :input_instance, :input_line, :dependencies, :created, :docdir
         def initialize
             @dependencies = Array.new
             @created = Array.new
@@ -728,12 +751,14 @@ ruby_template = '''
             
     rbtex = RubyTeXUtils.new
     
+    rbtex.docdir = Dir.pwd
     if File.directory?('{{workingdir}}')
         Dir.chdir('{{workingdir}}')
         $LOAD_PATH.push(Dir.pwd) unless $LOAD_PATH.include?(Dir.pwd)
     elsif ARGV[0] != '--manual'
         abort('Cannot change to directory {{workingdir}}')
     end
+    $LOAD_PATH.push(rbtex.docdir) unless $LOAD_PATH.include?(rbtex.docdir)
     
     {{extend}}
     
@@ -756,13 +781,15 @@ ruby_wrapper = '''
     puts '{{stdout_delim}}'
     $stderr.puts '{{stderr_delim}}'
     rbtex.before
+    
     {{code}}
+    
     rbtex.after
     '''
 
-CodeEngine('ruby', 'ruby', '.rb', 'ruby {{file}}.rb', ruby_template, 
+CodeEngine('ruby', 'ruby', '.rb', '{{ruby}} {{file}}.rb', ruby_template, 
               ruby_wrapper, 'puts rbtex.formatter({{code}})', 
-              ['Error)', '(Errno'], 'warning:', ':{{number}}:')
+              ['Error)', '(Errno', 'error'], 'warning:', ':{{number}}:')
 
 SubCodeEngine('ruby', 'rb')
 
@@ -787,6 +814,7 @@ julia_template = '''
         
         _dependencies::Array{String}
         _created::Array{String}
+        docdir::String
         
         formatter::Function
         before::Function
@@ -843,7 +871,8 @@ julia_template = '''
     end
     
     jltex = JuliaTeXUtils()
-            
+    
+    jltex.docdir = pwd()
     try
         cd("{{workingdir}}")
         if !(contains(LOAD_PATH, pwd()))
@@ -854,6 +883,9 @@ julia_template = '''
             error("Could not find directory {{workingdir}}")
         end
     end
+    if !(contains(LOAD_PATH, jltex.docdir))
+        push!(LOAD_PATH, jltex.docdir)
+    end 
     
     {{extend}}
     
@@ -875,14 +907,16 @@ julia_wrapper = '''
     
     println("{{stdout_delim}}")
     write(STDERR, "{{stderr_delim}}\\n")
-    jltex.before()    
+    jltex.before()   
+    
     {{code}}
+    
     jltex.after()
     '''
 
-CodeEngine('julia', 'julia', '.jl', 'julia {{file}}.jl', julia_template, 
+CodeEngine('julia', 'julia', '.jl', '{{julia}} {{file}}.jl', julia_template, 
               julia_wrapper, 'println(jltex.formatter({{code}}))', 
-              'ERROR:', 'WARNING:', ':{{number}}')
+              'ERROR:', 'WARNING:', ':{{number}}', True)
 
 SubCodeEngine('julia', 'jl')
 

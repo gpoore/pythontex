@@ -37,10 +37,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 import sys
-if sys.version_info[0] == 2:
-    import pythontex2 as pythontex
-elif sys.version_info[0] == 3:
-    import pythontex3 as pythontex
+if sys.version_info.major == 2:
+    if sys.version_info.minor >= 7:
+        import pythontex2 as pythontex
+    else:
+        sys.exit('PythonTeX require Python 2.7; you are using 2.{0}'.format(sys.version_info.minor))
+elif sys.version_info.major == 3:
+    if sys.version_info.minor >= 2:
+        import pythontex3 as pythontex
+    else:
+        sys.exit('PythonTeX require Python 3.2+; you are using 3.{0}'.format(sys.version_info.minor))
  
 # The "if" statement is needed for multiprocessing under Windows; see the 
 # multiprocessing documentation.

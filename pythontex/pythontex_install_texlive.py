@@ -246,11 +246,12 @@ if platform.system() == 'Windows':
     else:
         message = '''
                   Could not create a wrapper for launching pythontex.py and 
-                  depythontex.py.  You will need to create a wrapper manually, 
-                  or use a batch file.  Sample batch files are included with 
-                  the main PythonTeX files.  The wrapper or batch file should 
-                  be in a location on the Windows PATH.  The bin/ directory 
-                  in your TeX distribution may be a good location.
+                  depythontex.py; did not find runscript.exe.  You will need 
+                  to create a wrapper manually, or use a batch file.  Sample 
+                  batch files are included with the main PythonTeX files.  
+                  The wrapper or batch file should be in a location on the 
+                  Windows PATH.  The bin/ directory in your TeX distribution 
+                  may be a good location.
                   
                   The scripts pythontex.py and depythontex.py are located in 
                   the following directory:

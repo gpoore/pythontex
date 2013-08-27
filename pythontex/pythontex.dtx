@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2013/06/24 Version~0.12beta ]
+    [2013/08/26 Version~0.12]
 %</package>
 %
 %<*driver>
@@ -38,7 +38,7 @@
 \usepackage[svgnames]{xcolor}
 \usepackage{environ}
 \usepackage{enumitem}
-\usepackage[fixlr=false]{pythontex} %Need fixlr=false so can demo issue
+\usepackage{pythontex}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,urlcolor=Green,linkcolor=blue}
 \newcommand{\pytxtodo}[1]{}
@@ -68,7 +68,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{2880}
+% \CheckSum{2928}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -86,6 +86,22 @@
 %   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
 %
+%
+%
+% \begin{changelog}{v0.12}{2013/08/26}
+% \item Added support for the Julia language, with the \texttt{julia} and \texttt{jl} families of commands and environments.  (Note that Pygments only added Julia support in version 1.6.)
+% \item Warnings and errors are now synchronized with the line numbers of files brought in via \texttt{\string\input}, \texttt{\string\include}, etc.  This is accomplished using the \texttt{currfile} package.
+% \item Added package option \texttt{gobble}.  When \texttt{gobble=auto}, all code is dedented before being executed and/or typeset.  The current implementation is functional but basic; it will be improved and extended in the future.
+% \item The document root directory is now always added to \texttt{sys.path} (or its equivalent), even when it is not the working directory. (The working directory has been added to \texttt{sys.path} since v0.12beta.)  The document directory is added after the working directory, so that the working directory has precedence.
+% \item Fixed a bug in \texttt{console} commands and environments; \texttt{sys.path} now contains the working and document directories, and the working directory is now the output directory by default.  This parallels the behavior of non-\texttt{console} commands and environments.
+% \item Added command-line option \texttt{-{}-interpreter} that allows an interpreter to be invoked via a specific command.  This allows, for example, a specific version of Python to be invoked.
+% \item Improved synchronization of stderr in cases when an error is triggered far after its origin (for example, an error caused by a multiline string that is lacking a closing quote/delimiter, and thus may span several chunks of user code).
+% \item Modified usage of the \texttt{shlex} module to work around its lack of Unicode support in Python versions prior to 2.7.3.
+% \item Fixed a bug from v0.12beta that prevented \texttt{\string\inputpygments} from working when \texttt{pygments=true}.
+% \item Fixed a bug with counters that caused errors when content spanning multiple columns was created within a \texttt{tabular} environment.
+% \item Added checking for compatible Python versions in \texttt{pythontex.py}.
+% \item Improved execution of \texttt{*.bat} and \texttt{*.cmd} files under Windows.  The solution from v0.12beta allowed \texttt{*.bat} and \texttt{*.cmd} to be found and executed when the extension was not given, but did not give correct return codes.
+% \end{changelog}
 %
 % \begin{changelog}{v0.12beta}{2013/06/24}
 % \item Merged \texttt{pythontex\_types*.py} into a single replacement \texttt{pythontex\_engines.py} compatible with both Python 2 and 3.  It is now much simpler to add support for additional languages.
@@ -114,7 +130,7 @@
 % \item Added the \texttt{depythontex} option \texttt{-{}-graphicspath}.  This adds the \texttt{outputdir} to the graphics path of the \texttt{depythontex} document.
 % \item The installer now provides more options for installation locations.  It will now create missing directories if desired.
 % \item The working directory (\texttt{workingdir}) is now appended to \texttt{sys.path}, so that code there may be imported.
-% \item Under Windows, \texttt{subprocess.Popen()} is now invoked with \texttt{shell=True} if \texttt{shell=False} results in a WindowsError.  This allows commands involving \texttt{*.bat} and \texttt{*.cmd} files to be executed; otherwise, only \texttt{*.exe} can be found and run.
+% \item Under Windows, \texttt{subprocess.Popen()} is now invoked with \texttt{shell=True} if \texttt{shell=False} results in a WindowsError.  This allows commands involving \texttt{*.bat} and \texttt{*.cmd} files to be executed when the extension is not specified; otherwise, only \texttt{*.exe} can be found and run.
 % \item The path to utils is now found in \texttt{pythontex.py} via \texttt{sys.path[0]} rather than \texttt{kpsewhich}.  This allows the PythonTeX scripts to be executed in an arbitrary location; they no longer must be installed in a texmf tree where \texttt{kpsewhich} can find them.
 % \item Added \texttt{rerun} value \texttt{never}.
 % \item At the end of each run, data and macros are only saved if modified, improving efficiency.
@@ -300,7 +316,7 @@
 %
 % \subsection{Installing \pytex} 
 %
-% \pytex\ requires a \TeX\ installation.  It has been tested with  \href{http://www.tug.org/texlive/}{\TeX\ Live} and  \href{http://miktex.org/}{MiK\TeX}, but should work with other distributions.  The following \LaTeX\ packages, with their dependencies, are also required:  |fancyvrb|, |etex|, |etoolbox|, |xstring|, |pgfopts|, |newfloat|, and |color| or |xcolor|.  If you are creating and including graphics, you will also need |graphicx|.  The \href{http://www.ctan.org/pkg/mdframed}{\texttt{mdframed}} package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors; \href{http://www.ctan.org/pkg/tcolorbox}{\texttt{tcolorbox}} and \href{http://www.ctan.org/pkg/framed}{\texttt{framed}} are alternatives.
+% \pytex\ requires a \TeX\ installation.  It has been tested with  \href{http://www.tug.org/texlive/}{\TeX\ Live} and  \href{http://miktex.org/}{MiK\TeX}, but should work with other distributions.  The following \LaTeX\ packages, with their dependencies, are required:  |fancyvrb|, |etex|, |etoolbox|, |xstring|, |pgfopts|, |newfloat|, |currfile|, and |color| or |xcolor|.  A current \TeX\ installation is recommended, since some features require recent versions of the packages.  If you are creating and including graphics, you will also need |graphicx|.  The \href{http://www.ctan.org/pkg/mdframed}{\texttt{mdframed}} package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors; \href{http://www.ctan.org/pkg/tcolorbox}{\texttt{tcolorbox}} and \href{http://www.ctan.org/pkg/framed}{\texttt{framed}} are alternatives.
 %
 % \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools, although many scientific packages are now compatible with Python 3.  \pytex\ is compatible with Python 2.7 and 3.2+.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile |pythontex_gallery.tex|, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}. 
 %
@@ -390,9 +406,15 @@
 % \item |--hashdependencies=[{true,false}]| This determines whether dependencies (external files highlighted by Pygments, code dependencies specified via |pytex.add_dependencies()|, etc.) are checked for changes via their hashes or modification times.  By default, mtime is used, since it is faster.  The package option |hashdependencies| is equivalent.
 %
 % \item |--verbose| This gives more verbose output, including a list of all processes that are launched.
-% \end{itemize}
 %
-% \pytex\ currently does not provide means to choose between multiple Python installations; it will use the default Python installation.  Support for multiple installations is unlikely to be added, since a cross-platform solution would be required.\footnote{Python 3.3's \texttt{py} launcher for Windows may make this more feasible.}  If you need to work with multiple installations, you may wish to modify |pythontex_engines.py| to create additional command and environment families that invoke different versions of Python, based on your system.
+% \item |--interpreter| This allows the interpreter for a given language to be specified.  The argument should be in the form
+% \begin{verbatim}
+%--interpreter "<interpreter>:<command>, <interp>:<cmd>, ..."
+% \end{verbatim}
+% where |<interpreter>| is |python|, |ruby|, etc., and |<command>| is the command for invoking the desired interpreter.  The argument to |--interpreter| may also be in the form of a Python dictionary.  The argument need not be enclosed in quotation marks if it contains no spaces.
+%
+% For example, by default Python code is executed with whatever interpreter the |python| command invokes.  But Python 3 could be specified using |--interpreter python:python3| (many Linux distributions) or |--interpreter "python:py -3"| (Windows, with Python 3.3 installed so that the |py| wrapper is available).
+% \end{itemize}
 %
 % \pytex\ attempts to check for a wide range of errors and return meaningful error messages.  But due to the interaction of \LaTeX\ and Python code, some strange errors are possible.  If you cannot make sense of errors when using \pytex, the simplest thing to try is deleting all files created by \pytex, then recompiling.  By default, these files are stored in a directory called |pythontex-files-|\meta{jobname}, in the same directory as your .tex document.  See Section \ref{sec:troubleshooting} for more details regarding troubleshooting.
 %
@@ -416,6 +438,17 @@
 % \DescribeMacro{usefamily=\meta{basename}/\marg{basename1,~basename2,~...}}
 %
 % By default, only the |py|, |sympy|, and |pylab| families of commands and environments are defined, to prevent possible package conflicts.\footnote{For example, a \texttt{\string\ruby} command for Ruby code, and the \texttt{\string\ruby} command defined by the Ruby package in the \href{http://www.ctan.org/pkg/cjk}{CJK package}.}  This option defines preconfigured families for other available languages.  It takes either a single language base name, or a list of comma-separated names enclosed in curly braces.  Currently, the Ruby families |rb| and |ruby| may be created.
+%
+%
+% \DescribeMacro{gobble=none/auto default:none}
+%
+% This option is still under development and may change somewhat in future releases.  If that occurs, equivalent functionality will be provided.  
+%
+% This option determines how code indentation is handled.  By default, indentation is left as-is; leading whitespace is significant.  |auto| will dedent all code by gobbling the largest common leading whitespace, using Python's |textwrap.dedent()|.\footnote{It would be possible to do the dedent on the \LaTeX\ side, as is done manually in the \texttt{fancyvrb} and \texttt{listings} packages with the \texttt{gobble} option and is done automatically in the \texttt{lstautogobble} package.  This is not done for stability and security reasons.  \texttt{lstautogobble} determines the dedent by extracting the leading whitespace from the first line of code, and then applying this dedent to each subsequent line.  This is adequate for \textbf{typesetting} code, since the worst-case scenario is that a subsequent line with less indentation will be typeset with the first few characters missing.  Such an approach is not acceptable when the code will be \textbf{executed}, since a few missing characters could in principle cause serious damage.  Doing the dedent on the Python side ensures that no characters are discarded, even if that results in an indentation error.}  Keep in mind that Python's dedent will not work correctly with mixed tabs and spaces.
+%
+% The |gobble| option always works correctly with \textbf{executed} code.  However, currently the option \textbf{only works with typeset code when Pygments is used}.  The option is currently only available at the document level, but finer-grained control is planned in the future.
+%
+% The |gobble| option is supported by |depythontex|.
 %
 %
 % \DescribeMacro{beta=\meta{none}/true/false default:false \meta{none}=true}
@@ -1178,11 +1211,24 @@
 %
 % \subsection{Ruby}
 %
-% Support for Ruby was added in v0.12.  Ruby support should be almost at the same level as that for Python.  The utilities class is called |RubyTeXUtils|, and the class instance is |rbtex|.  The variables and methods are the same as those for Python (Section~\ref{sec:usage:commands:utilities-class}), except that there is not currently a |set_formatter()| method.  (The Python utilities class has the special SymPy formatter, but there aren't yet any specialized formatters for Ruby.)
+% Support for Ruby was added in v0.12.  Ruby support should be almost at the same level as that for Python.
+%
+% The utilities class is called |RubyTeXUtils|, and the class instance is |rbtex|.  The variables and methods are the same as those for Python (Section~\ref{sec:usage:commands:utilities-class}), except that there is not currently a |set_formatter()| method.  (The Python utilities class has the special SymPy formatter, but there aren't yet any specialized formatters for Ruby.)
 %
 % A family of commands and environments for Ruby is not created by default.  Two base names are provided for families:  |ruby| and |rb|.  Preconfigured families for these names may be created via the |usefamily| package option.  Keep in mind that a |ruby| command is defined as part of the Ruby package in the  \href{http://www.ctan.org/pkg/cjk}{CJK package}.  I am unaware of a package that provides an |\rb| command.
 %
 % Ruby exceptions are synchronized with the document, but the line numbering does not always correspond to the Python equivalent.  For example, suppose that |\pyc{1+}| is on line 10 of a document.  The SyntaxError will then be synchronized with line 10.  If |\rubyc{1+}| were on the same line, the resulting error would be synchronized with line 11.  This is because Ruby allows addition to continue on subsequent lines of code, so an error is only raised when the next line of code that is executed does not contain a number (there is always template code after user code).
+%
+%
+% \subsection{Julia}
+%
+% Support for Julia was added in v0.12.  Julia support should be at almost the same level as that for Python.  The format of Julia stderr is somethat different from that of Python and Ruby.  This required a modified parsing and synchronization algorithm.  The current system is functional but will likely change somewhat in the future.
+%
+% The utilities class is called |JuliaTeXUtils|, and the class instance is |jltex|.  The variables and methods are the same as those for Python (Section~\ref{sec:usage:commands:utilities-class}), except that there is not currently a |set_formatter()| method.  (The Python utilities class has the special SymPy formatter, but there aren't yet any specialized formatters for Julia.)
+%
+% A family of commands and environments for Ruby is not created by default.  Two base names are provided for families:  |julia| and |jl|.  Preconfigured families for these names may be created via the |usefamily| package option.  Keep in mind that Pygments only added Julia support in version 1.6, so you may need to update your Pygments installation, or just change the default lexer.
+%
+% Julia exceptions are synchronized with the document, but the line numbering does not always correspond to the Python equivalent.  This is because Julia allows expressions to be continued on subsequent lines in ways that Python does not.
 %
 %
 % \subsection{Adding support for a new language}
@@ -1239,7 +1285,7 @@
 % \item The instance name.  This will be the base name for commands and environments that use the instance.  For example, |\py|, |\pyc|, |pycode|, etc., rely on the |py| instance of the |CodeEngine| class.
 % \item The name of the language.  In some cases, this may be the same as the instance name.
 % \item The filename extension for scripts (with or without a period).
-% \item The command for running scripts.  The script that is executed should be referred to as ``|{{file}}.|\meta{extension}'' (without the quotes).\footnote{It might seem that the extension is redundant, since it is specified separately.  The command is specified in this form to simplify cases where there may be intermediary files in the execution process.}
+% \item The command for running scripts.  The script that is executed should be referred to as ``|{{file}}.|\meta{extension}'' (without the quotes).\footnote{It might seem that the extension is redundant, since it is specified separately.  The command is specified in this form to simplify cases where there may be intermediary files in the execution process.}  The interpreter may be hardcoded (|python {{file}}.py|), but it is best to leave it as a substitution field (|{{python}} {{file}}.py|) so that the |--interpreter| command-line option can be used to provide a specific interpreter.
 % \item The script template.
 % \item The wrapper template.
 % \item A template that specifies how code from commands like |\py| should be inserted into a call to the |formatter()| method.  The user code is specified by |{{code}}|.  The output of the |formatter()| method should be written to |stdout|, so something like |'print(pytex.formatter({{code}}))'| is needed.
@@ -1353,11 +1399,11 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{v0.12beta}
+\newcommand{\pytx@packageversion}{v0.12}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
-% A number of packages are required.  |fancyvrb| is used to typeset all code that is not inline, and its internals are used to format inline code as well.  |etex| provides extra registers, to avoid the (probably unlikely) possibility that the many counters required by \pytex\ will exhaust the supply. |etoolbox| is used for string comparison and boolean flags.  |xstring| provides string manipulation.  |pgfopts| is used to process package options, via the |pgfkeys| package.   |newfloat| allows the creation of a floating environment for code listings.  |xcolor| or |color| is needed for syntax highlighting with Pygments.
+% A number of packages are required.  |fancyvrb| is used to typeset all code that is not inline, and its internals are used to format inline code as well.  |etex| provides extra registers, to avoid the (probably unlikely) possibility that the many counters required by \pytex\ will exhaust the supply. |etoolbox| is used for string comparison and boolean flags.  |xstring| provides string manipulation.  |pgfopts| is used to process package options, via the |pgfkeys| package.   |newfloat| allows the creation of a floating environment for code listings.  |currfile| is needed to allow errors and warnings to be synchronized with content brought in via |\input|, |\include|, etc.  |xcolor| or |color| is needed for syntax highlighting with Pygments.
 %    \begin{macrocode}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
@@ -1365,6 +1411,7 @@
 \RequirePackage{xstring}
 \RequirePackage{pgfopts}
 \RequirePackage{newfloat}
+\RequirePackage{currfile}
 \AtBeginDocument{\@ifpackageloaded{color}{}{\RequirePackage{xcolor}}}
 %    \end{macrocode}
 %
@@ -1379,6 +1426,18 @@
 %    \begin{macrocode}
 \def\pytx@families{}
 \pgfkeys{/PYTX/pkgopt/usefamily/.estore in=\pytx@families}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \subsubsection{Gobble}
+% \begin{macro}{\pytx@opt@gobble}
+% This option determines how leading whitespace in user code is treated.
+%    \begin{macrocode}
+\def\pytx@opt@gobble{none}
+\pgfkeys{/PYTX/pkgopt/gobble/.is choice}
+\pgfkeys{/PYTX/pkgopt/gobble/none/.code=\def\pytx@opt@gobble{none}}
+\pgfkeys{/PYTX/pkgopt/gobble/auto/.code=\def\pytx@opt@gobble{auto}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1987,6 +2046,7 @@
     \immediate\write\pytx@codefile{version=\pytx@packageversion}%
     \immediate\write\pytx@codefile{outputdir=\pytx@outputdir}%
     \immediate\write\pytx@codefile{workingdir=\pytx@workingdir}%
+    \immediate\write\pytx@codefile{gobble=\pytx@opt@gobble}%
     \immediate\write\pytx@codefile{rerun=\pytx@opt@rerun}%
     \immediate\write\pytx@codefile{hashdependencies=\pytx@opt@hashdependencies}%
     \immediate\write\pytx@codefile{makestderr=\ifbool{pytx@opt@stderr}{true}{false}}%
@@ -2009,17 +2069,25 @@
 \def\pytx@argsrun{}
 \def\pytx@argspprint{}
 \def\pytx@WriteCodefileInfo{%
+    \ifcurrfile{\currfilebase}{\jobname}%
+        {\let\pytx@currfile\@empty}{\let\pytx@currfile\currfilename}%
     \immediate\write\pytx@codefile{\pytx@delim\pytx@type\pytx@delimchar%
         \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
         \arabic{\pytx@counter}\pytx@delimchar\pytx@cmd\pytx@delimchar%
         \pytx@context\pytx@delimchar\pytx@argsrun\pytx@delimchar%
-        \pytx@argspprint\pytx@delimchar\the\inputlineno\pytx@delimchar}%
+        \pytx@argspprint\pytx@delimchar%
+        \pytx@currfile\pytx@delimchar%
+        \the\inputlineno\pytx@delimchar}%
 }
 \newcommand{\pytx@WriteCodefileInfoExt}[1][]{%
+    \ifcurrfile{\currfilebase}{\jobname}%
+            {\let\pytx@currfile\@empty}{\let\pytx@currfile\currfilename}%
     \immediate\write\pytx@codefile{\pytx@delim\pytx@type\pytx@delimchar%
         \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
         0\pytx@delimchar\pytx@cmd\pytx@delimchar%
-        \pytx@context\pytx@delimchar\pytx@args\pytx@delimchar%
+        \pytx@context\pytx@delimchar\pytx@argsrun\pytx@delimchar%
+        \pytx@argspprint\pytx@delimchar%
+        \pytx@currfile\pytx@delimchar%
         \the\inputlineno\pytx@delimchar#1}%
 }
 %    \end{macrocode}
@@ -2328,6 +2396,8 @@
         \pytx@outputdir\pytx@delimchar}%
     \immediate\write\pytx@depyfile{=>DEPYTHONTEX:SETTINGS\pytx@delimchar graphicx=%
             \ifcsname graphicspath\endcsname true\else false\fi\pytx@delimchar}%
+    \immediate\write\pytx@depyfile{=>DEPYTHONTEX:SETTINGS\pytx@delimchar gobble=%
+            \pytx@opt@gobble\pytx@delimchar}%
 }%
 }{}
 %    \end{macrocode}
@@ -2494,7 +2564,7 @@
     \endgroup
     \def\pytx@argdetok{\detokenize{#1}}%
     \def\pytx@arg{#1}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
     \pytx@InlineShow
@@ -2885,7 +2955,7 @@
 %    \begin{macrocode}
 \def\pytx@BeginBlockEnvFV[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%
@@ -2937,7 +3007,7 @@
 %    \begin{macrocode}
 \def\pytx@BeginVerbEnvFV[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%
@@ -2996,7 +3066,7 @@
 %    \begin{macrocode}
 \def\pytx@BeginEnvPyg[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%
@@ -3119,7 +3189,7 @@
 %    \begin{macrocode}
 \def\pytx@BeginCodeEnv[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \pytx@WriteCodefileInfo
     \begingroup
@@ -3222,7 +3292,7 @@
 %    \begin{macrocode}
 \def\pytx@BeginConsEnvFV[#1]{%
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%
@@ -3451,6 +3521,8 @@
 \renewcommand{\do}[1]{%
     \ifstrequal{#1}{ruby}{\makepythontexfamily[pyglexer=ruby]{ruby}}{}%
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
+    \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
+    \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}
@@ -3676,7 +3748,7 @@
     \edef\pytx@type{PYG#1}%
     \edef\pytx@cmd{verbatim}%
     \edef\pytx@session{default}%
-    \edef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+    \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
     \edef\pytx@linecount{\pytx@counter @line}%
     \pytx@CheckCounter{\pytx@linecount}%

@@ -76,15 +76,15 @@ else:
 
 # Script parameters
 # Version
-version = 'v0.12beta'
+version = 'v0.12'
 
 
 
 
 class Pytxcode(object):
-    def __init__(self, data):
+    def __init__(self, data, gobble):
         self.delims, self.code = data.split('#\n', 1)
-        self.input_family, self.input_session, self.input_restart, self.input_instance, self.input_command, self.input_context, self.input_args_run, self.input_args_prettyprint, self.input_line = self.delims.split('#')
+        self.input_family, self.input_session, self.input_restart, self.input_instance, self.input_command, self.input_context, self.input_args_run, self.input_args_prettyprint, self.input_file, self.input_line = self.delims.split('#')
         self.input_instance_int = int(self.input_instance)        
         self.input_line_int = int(self.input_line)
         self.key_run = self.input_family + '#' + self.input_session + '#' + self.input_restart
@@ -116,7 +116,10 @@ class Pytxcode(object):
             self.is_typeset = False
         else:
             self.is_typeset = True
-
+        
+        if gobble == 'auto':
+            self.code = textwrap.dedent(self.code)
+            
 
 
 
@@ -151,7 +154,7 @@ def process_argv(data, temp_data):
                         help='hash dependencies (such as external data) to check for modification, rather than using mtime; equivalent to package option')
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
                         help='verbose output')
-    
+    parser.add_argument('--interpreter', default=None, help='set a custom interpreter; argument should be in the form "<interpreter>:<command>, <interp>:<cmd>, ..." where <interpreter> is "python", "ruby", etc., and <command> is the command for invoking the interpreter; argument may also be in the form of a Python dictionary')
     args = parser.parse_args()
     
     # Store the parsed argv in data and temp_data          
@@ -172,6 +175,20 @@ def process_argv(data, temp_data):
     else:
         temp_data['hashdependencies'] = False
     temp_data['verbose'] = args.verbose
+    # Update interpreter_dict based on interpreter
+    if args.interpreter is not None:
+        interp_list = args.interpreter.lstrip('{').rstrip('}').split(',')
+        for interp in interp_list:
+            if interp:
+                try:
+                    k, v = interp.split(':')
+                    k = k.strip(' \'"')
+                    v = v.strip(' \'"')
+                    interpreter_dict[k] = v
+                except:
+                    print('Invalid --interpreter argument')
+                    return sys.exit(2)
+    
     
     if args.TEXNAME is not None:
         # Determine if we a dealing with just a filename, or a name plus 
@@ -248,7 +265,6 @@ def load_code_get_settings(data, temp_data):
     '''
     Load the code file, preprocess the code, and extract the settings.
     '''
-    
     # Bring in the .pytxcode file as a single string
     raw_jobname = data['raw_jobname']
     encoding = data['encoding']
@@ -357,6 +373,7 @@ def load_code_get_settings(data, temp_data):
     settings_func['version'] = set_kv_data
     settings_func['outputdir'] = set_kv_data
     settings_func['workingdir'] = set_kv_data
+    settings_func['gobble'] = set_kv_data
     settings_func['rerun'] = set_kv_temp_data_if_not_default
     settings_func['hashdependencies'] = set_kv_temp_data_if_not_default
     settings_func['makestderr'] = set_kv_data
@@ -380,7 +397,7 @@ def load_code_get_settings(data, temp_data):
                 settings_func[key](key, val)
             except KeyError:
                 print('* PythonTeX warning')
-                print('    Unknown option "' + content + '"')
+                print('    Unknown option "' + key + '"')
                 temp_data['warnings'] += 1
 
     # Check for compatility between the .pytxcode and the script
@@ -401,7 +418,8 @@ def load_code_get_settings(data, temp_data):
     # in faster output, but that would involve a good bit of additional 
     # logic, which probably isn't worth it for a feature that will rarely be
     # changed.
-    data['vitals'] = (data['version'], data['encoding'], settings['fvextfile'])
+    data['vitals'] = (data['version'], data['encoding'], 
+                      settings['gobble'], settings['fvextfile'])
     
     # Create tuples of vital quantities
     data['code_vitals'] = (settings['workingdir'], settings['keeptemps'],
@@ -419,10 +437,10 @@ def load_code_get_settings(data, temp_data):
     # Store code
     # Do this last, so that Pygments settings are available
     if pytxcode.startswith('=>PYTHONTEX#'):
-        # The list() is needed because map() returns an iterator in Python 3
-        temp_data['pytxcode'] = list(map(Pytxcode, pytxcode.split('=>PYTHONTEX#')[1:]))
+        gobble = settings['gobble']
+        temp_data['pytxcode'] = [Pytxcode(c, gobble) for c in pytxcode.split('=>PYTHONTEX#')[1:]]
     else:
-        temp_data['pytxcode'] = list()
+        temp_data['pytxcode'] = []
 
 
 
@@ -962,17 +980,18 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     # needs to be executed, based on previous testing, except for custom code.
     for key in code_dict:
         input_family = key.split('#')[0]
-        # Uncomment the following for debugging
+        # Uncomment the following for debugging, and comment out what follows
         '''run_code(encoding, outputdir, workingdir, code_dict[key],
                                                  engine_dict[input_family].language,
                                                  engine_dict[input_family].command,
-                                                 engine_dict[input_family].created
+                                                 engine_dict[input_family].created,
                                                  engine_dict[input_family].extension,
                                                  makestderr, stderrfilename,
                                                  code_index_dict[key],
                                                  engine_dict[input_family].errors,
                                                  engine_dict[input_family].warnings,
                                                  engine_dict[input_family].linenumbers,
+                                                 engine_dict[input_family].lookbehind,
                                                  keeptemps, hashdependencies)'''
         tasks.append(pool.apply_async(run_code, [encoding, outputdir, 
                                                  workingdir, code_dict[key],
@@ -985,6 +1004,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
                                                  engine_dict[input_family].errors,
                                                  engine_dict[input_family].warnings,
                                                  engine_dict[input_family].linenumbers,
+                                                 engine_dict[input_family].lookbehind,
                                                  keeptemps, hashdependencies]))
         if verbose:
             print('    - Code process ' + key.replace('#', ':'))
@@ -1155,8 +1175,8 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
 
 def run_code(encoding, outputdir, workingdir, code_list, language, command, 
              command_created, extension, makestderr, stderrfilename, 
-             code_index, errorsig, warningsig, linesig, keeptemps,
-             hashdependencies):
+             code_index, errorsig, warningsig, linesig, stderrlookbehind, 
+             keeptemps, hashdependencies):
     '''
     Function for multiprocessing code files
     '''
@@ -1192,18 +1212,35 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
     out_file = open(out_file_name, 'w', encoding=encoding)
     err_file = open(err_file_name, 'w', encoding=encoding)
     # Note that command is a string, which must be converted to list
-    # Must double-escape any backslashes so that they survive shlex.split()
+    # Must double-escape any backslashes so that they survive `shlex.split()`
     script = os.path.join(outputdir, basename)
-    exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\')))
+    # `shlex.split()` only works with Unicode after 2.7.2
+    if (sys.version_info.major == 2 and sys.version_info.micro < 3):
+        exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'))))
+        exec_cmd = [unicode(elem) for elem in exec_cmd]
+    else:
+        exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\')))
     # Add any created files due to the command
     # This needs to be done before attempts to execute, to prevent orphans
     for f in command_created:
         files.append(f.format(file=script))
     try:
         proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=err_file)
-    except WindowsError:
-        proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=err_file, shell=True)
-    proc.wait()
+    except WindowsError as e:
+        if e.errno == 2:
+            # Batch files won't be found when called without extension. They
+            # would be found if `shell=True`, but then getting the right
+            # exit code is tricky.  So we perform some `cmd` trickery that
+            # is essentially equivalent to `shell=True`, but gives correct 
+            # exit codes.  Note that `subprocess.Popen()` works with strings
+            # under Windows; a list is not required.
+            exec_cmd_string = ' '.join(exec_cmd)
+            exec_cmd_string = 'cmd /C "@echo off & call {0} & if errorlevel 1 exit 1"'.format(exec_cmd_string)
+            proc = subprocess.Popen(exec_cmd_string, stdout=out_file, stderr=err_file)
+        else:
+            raise
+        
+    proc.wait()        
     out_file.close()
     err_file.close()
     
@@ -1334,20 +1371,20 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
             it = iter(code_index.items())
             index_now = next(it)
             index_next = index_now
-            start_errindent = None
+            start_errgobble = None
             for n, line in enumerate(err_ud):
                 if basename in line:
-                    # Get the indentation.  This is used to determine if 
+                    # Get the gobbleation.  This is used to determine if 
                     # other lines containing the basename are a continuation,
                     # or separate messages.
-                    errindent = match('(\s*)', line).groups()[0]
-                    if start_errindent is None:
-                        start_errindent = errindent
+                    errgobble = match('(\s*)', line).groups()[0]
+                    if start_errgobble is None:
+                        start_errgobble = errgobble
                     # Only issue a message and track down the line numer if
                     # this is indeed the start of a new message, rather than
                     # a continuation of an old message that happens to 
                     # contain the basename
-                    if errindent == start_errindent:
+                    if errgobble == start_errgobble:
                         # Determine the corresponding line number in the document
                         found = False
                         for pattern in linesig:
@@ -1363,43 +1400,75 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                                     index_now, index_next = index_next, next(it)
                                 except:
                                     break
-                            doclinenum = str(index_now[1].input_line_int + errlinenum - index_now[1].lines_total - 1)
+                            if errlinenum > index_now[1].lines_total + index_now[1].lines_input:
+                                doclinenum = str(index_now[1].input_line_int + index_now[1].lines_input)
+                            else:
+                                doclinenum = str(index_now[1].input_line_int + errlinenum - index_now[1].lines_total - 1)
+                            input_file = index_now[1].input_file
                         else:
                             doclinenum = '??'
+                            input_file = '??'
                         
                         # Try to determine if we are dealing with an error or a 
                         # warning.
                         found = False
                         index = n
-                        while index < len(err_ud):
-                            # The order here is important.  If a line matches 
-                            # both the error and warning patterns, default to 
-                            # error.
-                            future_line = err_ud[index]
-                            if (index > n and basename in future_line and 
-                                    future_line.startswith(start_errindent)):
-                                break
-                            for pattern in warningsig:
-                                if pattern in err_ud[index]:
-                                    warnings += 1
-                                    alert_type = 'warning'
-                                    found = True
+                        if stderrlookbehind:
+                            while index >= 0:
+                                # The order here is important.  If a line matches 
+                                # both the error and warning patterns, default to 
+                                # error.
+                                past_line = err_ud[index]
+                                if (index < n and basename in past_line):
                                     break
-                            for pattern in errorsig:
-                                if pattern in err_ud[index]:
-                                    errors += 1
-                                    alert_type = 'error'
-                                    found = True
+                                for pattern in warningsig:
+                                    if pattern in past_line:
+                                        warnings += 1
+                                        alert_type = 'warning'
+                                        found = True
+                                        break
+                                for pattern in errorsig:
+                                    if pattern in past_line:
+                                        errors += 1
+                                        alert_type = 'error'
+                                        found = True
+                                        break
+                                if found:
                                     break
-                            if found:
-                                break
-                            index += 1
+                                index -= 1
+                        else:
+                            while index < len(err_ud):
+                                # The order here is important.  If a line matches 
+                                # both the error and warning patterns, default to 
+                                # error.
+                                future_line = err_ud[index]
+                                if (index > n and basename in future_line and 
+                                        future_line.startswith(start_errgobble)):
+                                    break
+                                for pattern in warningsig:
+                                    if pattern in future_line:
+                                        warnings += 1
+                                        alert_type = 'warning'
+                                        found = True
+                                        break
+                                for pattern in errorsig:
+                                    if pattern in future_line:
+                                        errors += 1
+                                        alert_type = 'error'
+                                        found = True
+                                        break
+                                if found:
+                                    break
+                                index += 1
                         # If an error or warning wasn't positively identified,
                         # increment unknowns.
                         if not found:
                             unknowns += 1
                             alert_type = 'unknown'
-                        err_messages_ud.append('* PythonTeX stderr - {0} on line {1}:'.format(alert_type, doclinenum))
+                        if input_file:
+                            err_messages_ud.append('* PythonTeX stderr - {0} on line {1} in "{2}":'.format(alert_type, doclinenum, input_file))
+                        else:
+                            err_messages_ud.append('* PythonTeX stderr - {0} on line {1}:'.format(alert_type, doclinenum))
                     err_messages_ud.append('  ' + line.replace(outputdir, '<outputdir>').rstrip('\n'))
                 else:
                     err_messages_ud.append('  ' + line.rstrip('\n'))
@@ -1410,6 +1479,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                 it = iter(code_index.items())
                 index_now = next(it)
                 index_next = index_now
+                it_last = it
+                index_now_last = index_now
+                index_next_last = index_next
+                err_key_last_int = -1
                 for n, line in enumerate(err_ud):
                     if basename in line:
                         # Determine the corresponding line number in the document
@@ -1422,17 +1495,29 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             except:
                                 pass
                         if found:
+                            if index_next[1].lines_total >= errlinenum:
+                                it = it_last
+                                index_now = index_now_last
+                                index_next = index_next_last
+                            else:
+                                it_last = it
+                                index_now_last = index_now
+                                index_next_last = index_next
                             while index_next[1].lines_total < errlinenum:
                                 try:
                                     index_now, index_next = index_next, next(it)
                                 except:
+                                    index_now = index_next
                                     break
                             if index_now[0].endswith('CC'):
                                 process = False
                             else:
                                 process = True
-                                if len(index_now[1].input_command) > 0:
-                                    codelinenum = str(index_now[1].lines_user + errlinenum - index_now[1].lines_total - index_now[1].inline_count)
+                                if len(index_now[1].input_command) > 1:
+                                    if errlinenum > index_now[1].lines_total + index_now[1].lines_input:
+                                        codelinenum = str(index_now[1].lines_user + index_now[1].lines_input + 1)
+                                    else:
+                                        codelinenum = str(index_now[1].lines_user + errlinenum - index_now[1].lines_total - index_now[1].inline_count)
                                 else:
                                     codelinenum = '1'
                         else:
@@ -1444,7 +1529,9 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             process = False
                         
                         if process:
-                            err_key = basename + '_' + index_now[0]
+                            if int(index_now[0]) > err_key_last_int:
+                                err_key = basename + '_' + index_now[0]
+                                err_key_last_int = int(index_now[0])
                             line = line.replace(str(errlinenum), str(codelinenum), 1)
                             if fullbasename_correct in line:
                                 fullbasename = fullbasename_correct
@@ -1463,7 +1550,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                         err_dict[err_key].append(line)
         
         if err_d:
-            start_errindent = None
+            start_errgobble = None
             msg = []
             found_basename = False
             for n, line in enumerate(err_d):
@@ -1482,27 +1569,37 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             # environment
                             input_instance = last_delim.split('#')[1]
                             doclinenum = str(code_index[input_instance].input_line_int)
-                            # Try to identify alert
-                            found = False
+                            input_file = code_index[input_instance].input_file
+                            # Try to identify alert.  We have to parse all
+                            # lines for signs of errors and warnings.  This 
+                            # may result in overcounting, but it's the best
+                            # we can do--otherwise, we could easily 
+                            # undercount, or, finding a warning, miss a 
+                            # subsequent error.  When this code is actually
+                            # used, it's already a sign that normal parsing
+                            # has failed.
+                            found_error = False
+                            found_warning = False
                             for l in msg:
                                 for pattern in warningsig:
                                     if pattern in l:
                                         warnings += 1
-                                        alert_type = 'warning'
-                                        found = True
-                                        break
+                                        found_warning = True
                                 for pattern in errorsig:
                                     if pattern in l:
                                         errors += 1
-                                        alert_type = 'error'
-                                        found = True
-                                        break
-                                if found:
-                                    break
-                            if not found:
+                                        found_warning = True
+                            if found_error:
+                                alert_type = 'error'
+                            elif found_warning:
+                                alert_type = 'warning'
+                            else:
                                 unknowns += 1
                                 alert_type = 'unknown'
-                            err_messages_d.append('* PythonTeX stderr - {0} near line {1}:'.format(alert_type, doclinenum))
+                            if input_file:
+                                err_messages_d.append('* PythonTeX stderr - {0} near line {1} in "{2}":'.format(alert_type, doclinenum, input_file))
+                            else:
+                                err_messages_d.append('* PythonTeX stderr - {0} near line {1}:'.format(alert_type, doclinenum))
                         err_messages_d.extend(msg)
                     msg = []
                     found_basename = False
@@ -1511,17 +1608,17 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                     last_delim = line
                 elif basename in line:
                     found_basename = True
-                    # Get the indentation.  This is used to determine if 
+                    # Get the gobbleation.  This is used to determine if 
                     # other lines containing the basename are a continuation,
                     # or separate messages.
-                    errindent = match('(\s*)', line).groups()[0]
-                    if start_errindent is None:
-                        start_errindent = errindent
+                    errgobble = match('(\s*)', line).groups()[0]
+                    if start_errgobble is None:
+                        start_errgobble = errgobble
                     # Only issue a message and track down the line numer if
                     # this is indeed the start of a new message, rather than
                     # a continuation of an old message that happens to 
                     # contain the basename
-                    if errindent == start_errindent:
+                    if errgobble == start_errgobble:
                         # Determine the corresponding line number in the document
                         found = False
                         for pattern in linesig:
@@ -1536,44 +1633,81 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             input_instance, input_command = last_delim.split('#')[1:-1]
                             # Calculate the line number in the document
                             ei = code_index[input_instance]
-                            doclinenum = str(ei.input_line_int + errlinenum - ei.lines_total - 1)
+                            if errlinenum > ei.lines_total + ei.lines_input:
+                                doclinenum = str(ei.input_line_int + ei.lines_input)
+                            else:
+                                doclinenum = str(ei.input_line_int + errlinenum - ei.lines_total - 1)
+                            input_file = ei.input_file
                         else:
                             doclinenum = '??'
+                            input_file = '??'
                         
                         # Try to determine if we are dealing with an error or a 
                         # warning.
                         found = False
                         index = n
-                        while index < len(err_d):
-                            # The order here is important.  If a line matches 
-                            # both the error and warning patterns, default to 
-                            # error.
-                            future_line = err_d[index]
-                            if (future_line.startswith('=>PYTHONTEX:STDERR#') or 
-                                    (index > n and basename in future_line and future_line.startswith(start_errindent))):
-                                break
-                            for pattern in warningsig:
-                                if pattern in future_line:
-                                    warnings += 1
-                                    alert_type = 'warning'
-                                    found = True
+                        if stderrlookbehind:
+                            while index >= 0:
+                                # The order here is important.  If a line matches 
+                                # both the error and warning patterns, default to 
+                                # error.
+                                past_line = err_d[index]
+                                if (past_line.startswith('=>PYTHONTEX:STDERR#') or 
+                                        (index < n and basename in past_line)):
                                     break
-                            for pattern in errorsig:
-                                if pattern in future_line:
-                                    errors += 1
-                                    alert_type = 'error'
-                                    found = True
+                                for pattern in warningsig:
+                                    if pattern in past_line:
+                                        warnings += 1
+                                        alert_type = 'warning'
+                                        found = True
+                                        break
+                                for pattern in errorsig:
+                                    if pattern in past_line:
+                                        errors += 1
+                                        alert_type = 'error'
+                                        found = True
+                                        break
+                                if found:
                                     break
-                            if found:
-                                break
-                            index += 1
+                                index -= 1
+                        else:
+                            while index < len(err_d):
+                                # The order here is important.  If a line matches 
+                                # both the error and warning patterns, default to 
+                                # error.
+                                future_line = err_d[index]
+                                if (future_line.startswith('=>PYTHONTEX:STDERR#') or 
+                                        (index > n and basename in future_line and future_line.startswith(start_errgobble))):
+                                    break
+                                for pattern in warningsig:
+                                    if pattern in future_line:
+                                        warnings += 1
+                                        alert_type = 'warning'
+                                        found = True
+                                        break
+                                for pattern in errorsig:
+                                    if pattern in future_line:
+                                        errors += 1
+                                        alert_type = 'error'
+                                        found = True
+                                        break
+                                if found:
+                                    break
+                                index += 1
                         # If an error or warning wasn't positively identified,
                         # assume error for safety but indicate uncertainty.
                         if not found:
                             unknowns += 1
                             alert_type = 'unknown'
-                        msg.append('* PythonTeX stderr - {0} on line {1}:'.format(alert_type, doclinenum))
-                    msg.append('  ' + line.replace(outputdir, '<outputdir>').rstrip('\n'))
+                        if input_file:
+                            msg.append('* PythonTeX stderr - {0} on line {1} in "{2}":'.format(alert_type, doclinenum, input_file))
+                        else:
+                            msg.append('* PythonTeX stderr - {0} on line {1}:'.format(alert_type, doclinenum))
+                    # Clean up the stderr format a little, to keep it compact
+                    line = line.replace(outputdir, '<outputdir>').rstrip('\n')
+                    if '/<outputdir>' in line or '\\<outputdir>' in line:
+                        line = sub(r'(?:(?:[A-Z]:\\)|(?:~?/)).*<outputdir>', '<outputdir>', line)
+                    msg.append('  ' + line)
                 else:
                     msg.append('  ' + line.rstrip('\n'))
             # Deal with any leftover messages
@@ -1583,27 +1717,37 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                     # environment
                     input_instance = last_delim.split('#')[1]
                     doclinenum = str(code_index[input_instance].input_line_int)
-                    # Try to identify alert
-                    found = False
+                    input_file = code_index[input_instance].input_file
+                    # Try to identify alert.  We have to parse all
+                    # lines for signs of errors and warnings.  This 
+                    # may result in overcounting, but it's the best
+                    # we can do--otherwise, we could easily 
+                    # undercount, or, finding a warning, miss a 
+                    # subsequent error.  When this code is actually
+                    # used, it's already a sign that normal parsing
+                    # has failed.
+                    found_error = False
+                    found_warning = False
                     for l in msg:
                         for pattern in warningsig:
                             if pattern in l:
                                 warnings += 1
-                                alert_type = 'warning'
-                                found = True
-                                break
+                                found_warning = True
                         for pattern in errorsig:
                             if pattern in l:
                                 errors += 1
-                                alert_type = 'error'
-                                found = True
-                                break
-                        if found:
-                            break
-                    if not found:
+                                found_warning = True
+                    if found_error:
+                        alert_type = 'error'
+                    elif found_warning:
+                        alert_type = 'warning'
+                    else:
                         unknowns += 1
                         alert_type = 'unknown'
-                    err_messages_d.append('* PythonTeX stderr - {0} near line {1}:'.format(alert_type, doclinenum))
+                    if input_file:
+                        err_messages_d.append('* PythonTeX stderr - {0} near line {1} in "{2}":'.format(alert_type, doclinenum, input_file))
+                    else:
+                        err_messages_d.append('* PythonTeX stderr - {0} near line {1}:'.format(alert_type, doclinenum))
                 err_messages_d.extend(msg)
             
             # Create .stderr
@@ -1630,10 +1774,41 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             # Calculate the line number in the document
                             # Account for inline
                             ei = code_index[input_instance]
-                            if len(input_command) > 0:
-                                codelinenum = str(ei.lines_user + errlinenum - ei.lines_total - ei.inline_count)
+                            # Store the `input_instance` in case it's 
+                            # incremented later
+                            last_input_instance = input_instance
+                            # If the error or warning was actually triggered
+                            # later on (for example, multiline string with
+                            # missing final delimiter), look ahead and 
+                            # determine the correct input_instance, so that
+                            # we get the correct line number.  We don't
+                            # associate the created stderr with this later
+                            # instance, however, but rather with the instance
+                            # in which the error began.  Doing that might 
+                            # possibly be preferable in some cases, but would
+                            # also require that the current stderr be split
+                            # between multiple instances, requiring extra
+                            # parsing.
+                            while errlinenum > ei.lines_total + ei.lines_input:
+                                next_input_instance = str(int(input_instance) + 1)
+                                if next_input_instance in code_index:
+                                    next_ei = code_index[next_input_instance]
+                                    if errlinenum > next_ei.lines_total:
+                                        input_instance = next_input_instance
+                                        ei = next_ei
+                                    else:
+                                        break
+                                else:
+                                    break
+                            if len(input_command) > 1:
+                                if errlinenum > ei.lines_total + ei.lines_input:
+                                    codelinenum = str(ei.lines_user + ei.lines_input + 1)
+                                else:
+                                    codelinenum = str(ei.lines_user + errlinenum - ei.lines_total - ei.inline_count)
                             else:
                                 codelinenum = '1'
+                            # Reset `input_instance`, in case incremented
+                            input_instance = last_input_instance
                         else:
                             codelinenum = '??'
                             messages.append('* PythonTeX notice')
@@ -1700,6 +1875,17 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                     {0} message(s) could not be classified
                     Based on the return code, they were interpreted as {1}'''
         messages[0] += textwrap.dedent(unknowns_message.format(unknowns, unknowns_type))
+    
+    # Take care of anything that has escaped detection thus far.
+    if proc.returncode == 1 and not errors:
+        errors += 1
+        command_message = '''
+                * PythonTeX error
+                    An error occurred but no error messages were identified.
+                    This may indicate a bad command or missing program.
+                    The following command was executed:
+                        "{0}"'''
+        messages[0] += textwrap.dedent(command_message.format(' '.join(exec_cmd)))
     
     # Add any stderr messages; otherwise, clear the default message header
     if err_messages_ud:
@@ -1768,18 +1954,12 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
         else:
             content = c.code
         processed = highlight(content, lexer[c.input_family], formatter[c.input_family])
-        if c.is_inline or (not c.is_extfile and content.count('\n') < fvextfile):
+        if c.is_inline or content.count('\n') < fvextfile:
             # Highlighted code brought in via macros needs SaveVerbatim
             processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
                             r'\\begin{{SaveVerbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.input_family, c.input_session, c.input_restart, c.input_instance), processed, count=1)
             processed = processed.rsplit('\\', 1)[0] + '\\end{SaveVerbatim}\n\n'                    
             pygments_macros[c.key_typeset].append(processed)
-        elif c.is_extfile and content:
-            fname = os.path.join(outputdir, c.extfile + '.pygtex')
-            f = open(fname, 'w', encoding=encoding)
-            f.write(processed)
-            f.close
-            pygments_files[c.key_typeset].append(fname)
         else:
             fname = os.path.join(outputdir, c.key_typeset.replace('#', '_') + '.pygtex')
             f = open(fname, 'w', encoding=encoding)
@@ -1863,6 +2043,24 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
             self.console_code = deque()
             # Delimiters are passed straight through and need newlines
             self.console_code.append('=>PYTHONTEX#STARTUP##\n')
+            cons_config = '''
+                    import os
+                    import sys
+                    docdir = os.getcwd()
+                    if os.path.isdir('{workingdir}'):
+                        os.chdir('{workingdir}')
+                        if os.getcwd() not in sys.path:
+                            sys.path.append(os.getcwd())
+                    else:
+                        sys.exit('Cannot find directory {workingdir}')
+                    
+                    if docdir not in sys.path:
+                        sys.path.append(docdir)
+                    
+                    del docdir
+                    '''
+            cons_config = cons_config.format(workingdir=workingdir)[1:]
+            self.console_code.extend(textwrap.dedent(cons_config).splitlines())
             # Code is processed and doesn't need newlines
             self.console_code.extend(startup.splitlines())
             for c in cons_list:
@@ -1943,7 +2141,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                 for line in console_content_lines:
                     if (not line.startswith(sys.ps1) and 
                             not line.startswith(sys.ps2) and 
-                            not line.isspace()):
+                            line and not line.isspace()):
                         exception = True
                         break
                 if exception:
