@@ -11,6 +11,7 @@
 
 The PythonTeX package allows you to enter Python code within a LaTeX 
 document, execute the code, and access its output in the original document.
+Since v0.12, it also supports the Ruby and Julia languages.
 
 PythonTeX provides fast, user-friendly access to Python from within LaTeX.
 Python code is only executed when it has been modified, or when it meets 
@@ -53,7 +54,7 @@ created for pythontex.py and depythontex.py.
 * /scripts/pythontex/
 
   - pythontex.py, pythontex2.py, and pythontex3.py
-  - pythontex_types2.py and pythontex_types3.py
+  - pythontex_engines.py
   - pythontex_utils.py
   - depythontex.py, depythontex2.py, and depythontex3.py
 
