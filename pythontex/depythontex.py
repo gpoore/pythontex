@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
 This is the PythonTeX wrapper script.  It automatically detects the version
