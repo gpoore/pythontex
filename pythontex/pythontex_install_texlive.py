@@ -126,6 +126,7 @@ try:
 except:
     print('Cannot automatically find TEXMF paths.')
     print('kpsewhich does not exist or could not be used.')
+    path_choice = 4
     texmf_path = input('Please enter a valid installation path:\n')
 if should_exit:
     sys.exit()
