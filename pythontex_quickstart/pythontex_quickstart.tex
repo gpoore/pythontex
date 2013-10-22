@@ -1,13 +1,33 @@
 \documentclass[twocolumn]{article}
 
+% Engine-specific settings
+% Detect pdftex/xetex/luatex, and load appropriate font packages.
+% This is inspired by the approach in the iftex package.
+% pdftex:
+\expandafter\ifx\csname pdfmatch\endcsname\relax
+\else
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\expandafter\ifx\csname XeTeXinterchartoks\endcsname\relax
+\else
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\expandafter\ifx\csname directlua\endcsname\relax
+\else
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
 \usepackage[margin=1in]{geometry}
 \usepackage{microtype}
 
 \usepackage{pythontex}
 
 \usepackage[svgnames]{xcolor}
-
-\usepackage{nopageno}
 
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,urlcolor=Green,linkcolor=blue}
@@ -30,7 +50,7 @@
 
 \section*{Compiling}
 
-Compiling a document that uses \pytex\ involves three steps:  run latex, run \texttt{pythontex.py}, and finally run latex again.  You may wish to create a symlink or launching wrapper for \texttt{pythontex.py}, if one was not created during installation.  \pytex\ is compatible with the pdfLaTeX, XeLaTeX, and LuaLaTeX engines.  There are minor engine-specific differences.
+Compiling a document that uses \pytex\ involves three steps:  run \LaTeX, run \texttt{pythontex.py}, and finally run \LaTeX\ again.  You may wish to create a symlink or launching wrapper for \texttt{pythontex.py}, if one was not created during installation.  \pytex\ is compatible with the pdfLaTeX, XeLaTeX, and LuaLaTeX engines.  There are minor engine-specific differences.
 
 
 \section*{Commands}
@@ -88,6 +108,40 @@ The \pygment{latex}{\begin} and \pygment{latex}{\end} of an environment should b
 
 \pytex\ also provides the \texttt{depythontex} utility, which creates a copy of a document in which all \pytex\ commands and environments have been replaced by their output.  The resulting document is more suitable for journal submission, sharing, and conversion to other document formats.
 
+
+\section*{Extended characters}
+
+\pytex\ supports extended characters under all \LaTeX\ engines.  For example, consider the following example from Python:
+\begin{pygments}{python}
+my_string = '¥ § ß Ğ Ð Ñ Ö þ ø'
+\end{pygments}
+This requires some engine-specific packages.
+
+\begin{itemize}
+\item Under pdfLaTeX, your documents need
+\begin{pygments}{latex}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\end{pygments}
+or a similar configuration.
+\item Under LuaLaTeX, your documents need
+\begin{pygments}{latex}
+\usepackage{fontspec}
+\end{pygments}
+or a similar configuration.
+\item Under XeLaTeX, your documents need
+\begin{pygments}{latex}
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+\end{pygments}
+or a similar configuration.
+\end{itemize}
+
+If you are using Python 2, you will also need to specify that you are using Unicode.  You may want
+\begin{pygments}{python}
+from __future__ import unicode_literals
+\end{pygments}
+at the beginning of your Python code.  Or you can just load the \pytex\ package with the option \verb|pyfuture=all|, which will import \verb|unicode_literals| automatically.
 
 
 \end{document}
