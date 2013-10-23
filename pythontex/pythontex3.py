@@ -497,9 +497,15 @@ def get_old_data(data, old_data, temp_data):
     else:
         temp_data['loaded_old_data'] = False
     
-    # Set the utilspath
-    # Need the path with forward slashes, so escaping isn't necessary
-    data['utilspath'] = sys.path[0].replace('\\', '/')
+    if os.path.isfile(os.path.join(sys.path[0], 'pythontex_utils.py')):
+        # Need the path with forward slashes, so escaping isn't necessary
+        data['utilspath'] = sys.path[0].replace('\\', '/')
+    else:
+        print('* PythonTeX error')
+        print('    Could not determine the utils path from sys.path[0]')
+        print('    The file "pythontex_utils.py" may be missing')
+        return sys.exit(1)
+
 
 
 
