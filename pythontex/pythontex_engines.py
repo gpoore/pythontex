@@ -640,7 +640,8 @@ python_template = '''
         sys.stdout = codecs.getwriter('{{encoding}}')(sys.stdout.buffer, 'strict')
         sys.stderr = codecs.getwriter('{{encoding}}')(sys.stderr.buffer, 'strict')
     
-    sys.path.append('{{utilspath}}')    
+    if '{{utilspath}}' and '{{utilspath}}' not in sys.path:
+        sys.path.append('{{utilspath}}')    
     from pythontex_utils import PythonTeXUtils
     pytex = PythonTeXUtils()
     

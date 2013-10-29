@@ -498,14 +498,15 @@ def get_old_data(data, old_data, temp_data):
         temp_data['loaded_old_data'] = False
     
     # Set the utilspath
+    # Assume that if the utils aren't in the same location as 
+    # `pythontex.py`, then they are somewhere else on `sys.path` that
+    # will always be available (for example, installed as a Python module),
+    # and thus specifying a path isn't necessary.
     if os.path.isfile(os.path.join(sys.path[0], 'pythontex_utils.py')):
         # Need the path with forward slashes, so escaping isn't necessary
         data['utilspath'] = sys.path[0].replace('\\', '/')
     else:
-        print('* PythonTeX error')
-        print('    Could not determine the utils path from sys.path[0]')
-        print('    The file "pythontex_utils.py" may be missing')
-        return sys.exit(1)
+        data['utilspath'] = ''
 
 
 
@@ -1873,7 +1874,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
         unknowns_message = '''
                 * PythonTeX notice
                     {0} message(s) could not be classified
-                    Based on the return code, they were interpreted as {1}'''
+                    Interpreted as {1}, based on the return code(s)'''
         messages[0] += textwrap.dedent(unknowns_message.format(unknowns, unknowns_type))
     
     # Take care of anything that has escaped detection thus far.

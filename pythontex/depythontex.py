@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 '''
 This is the PythonTeX wrapper script.  It automatically detects the version
 of Python, and then imports the correct code from depythontex2.py or 
