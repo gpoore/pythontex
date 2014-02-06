@@ -20,10 +20,10 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2013/08/26 Version~0.12]
+    [2014/02/06 Version~0.13-beta ]
 
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{v0.12}
+\newcommand{\pytx@packageversion}{v0.13-beta}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
 \RequirePackage{etoolbox}
@@ -230,7 +230,7 @@
         !expandafter!scantokens!expandafter{#1!empty}}%
 }%
 !endgroup
-\expandafter\ifx\csname directlua\endcsname\relax\else
+\ifx\directlua\pytx@undefined\else
 \def\pytx@SVMCR#1 {%
     \edef\pytx@tmp{\csname #1\endcsname}%
     \pytx@SVMCR@i}
@@ -238,13 +238,22 @@
     \expandafter\gdef\pytx@tmp{#1}%
 }
 \fi
-\newcommand{\definepythontexcontext}[1]{%
+\ifx\directlua\relax\else
+\def\pytx@SVMCR#1 {%
+    \edef\pytx@tmp{\csname #1\endcsname}%
+    \pytx@SVMCR@i}
+\long\def\pytx@SVMCR@i#1\endpytx@SVMCR{%
+    \expandafter\gdef\pytx@tmp{#1}%
+}
+\fi
+\newcommand{\setpythontexcontext}[1]{%
+    \Depythontex{cmd:setpythontexcontext:m:n}%
     \def\pytx@SetContext{%
         \edef\pytx@context{#1}%
     }%
 }
-\definepythontexcontext{}
-\@onlypreamble\definepythontexcontext
+\setpythontexcontext{}
+\@onlypreamble\setpythontexcontext
 \newcommand{\restartpythontexsession}[1]{%
     \Depythontex{cmd:restartpythontexsession:m:n}%
     \def\pytx@SetGroup{%
@@ -1241,7 +1250,7 @@
             {\PackageWarning{\pytx@packagename}%
                 {A "listing" environment already exists \MessageBreak
                  \pytx@packagename\space will not create one \MessageBreak
-                 Use \string\setpythontexlistingenv to create a custom listing environment}}%
+                 Use \string\setpythontexlistingenv\space to create a custom listing environment}}%
     \else
         \ifbool{pytx@listingenv}{}{\DeclareFloatingEnvironment[fileext=lopytx]{listing}}
     \fi

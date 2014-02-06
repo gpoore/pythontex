@@ -4,19 +4,19 @@
 % Detect pdftex/xetex/luatex, and load appropriate font packages.
 % This is inspired by the approach in the iftex package.
 % pdftex:
-\expandafter\ifx\csname pdfmatch\endcsname\relax
+\ifx\pdfmatch\undefined
 \else
     \usepackage[T1]{fontenc}
     \usepackage[utf8]{inputenc}
 \fi
 % xetex:
-\expandafter\ifx\csname XeTeXinterchartoks\endcsname\relax
+\ifx\XeTeXinterchartoks\undefined
 \else
     \usepackage{fontspec}
     \defaultfontfeatures{Ligatures=TeX}
 \fi
 % luatex:
-\expandafter\ifx\csname directlua\endcsname\relax
+\ifx\directlua\undefined
 \else
     \usepackage{fontspec}
 \fi
@@ -151,6 +151,8 @@ h = Integral(exp(-phi**2), (phi, 0, oo))
 \section{Plots with matplotlib}
 
 We can create plots with matplotlib, perfectly matching the plot fonts with the document fonts.  No more searching for the code that created a figure!
+
+It is possible to pass page dimensions and similar contextual information from the \LaTeX\ side to the Python side.  If you want your figures to be, for example, a particular fraction of the page width, you can pass the value of \pygment{latex}{\textwidth} to the Python side, and use it in creating your figures.  See \pygment{latex}{\setpythontexcontext} in the main documentation for details.
 
 You may want to use matplotlib's PGF backend when creating plots.
 

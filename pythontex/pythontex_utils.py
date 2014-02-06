@@ -6,7 +6,7 @@ The utilities class provides variables and methods for the individual
 Python scripts created and executed by PythonTeX.  An instance of the class 
 named "pytex" is automatically created in each individual script.
 
-Copyright (c) 2012-2013, Geoffrey M. Poore
+Copyright (c) 2012-2014, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -40,14 +40,14 @@ class PythonTeXUtils(object):
     
     String variables for keeping track of TeX information.  Most are 
     actually needed; the rest are included for completeness.
-        * input_family
-        * input_session
-        * input_restart
-        * input_command
-        * input_context
-        * input_args
-        * input_instance
-        * input_line
+        * family
+        * session
+        * restart
+        * command
+        * context
+        * args
+        * instance
+        * line
     
     Future file handle for output that is saved via macros
         * macrofile
@@ -62,6 +62,63 @@ class PythonTeXUtils(object):
         '''
         self.set_formatter(fmtr)
     
+    # We need a function that will process the raw `context` into a 
+    # dictionary with attributes
+    _context_raw = None
+    class _DictWithAttr(dict):
+        pass
+    def set_context(self, expr):
+        '''
+        Convert the string `{context}` into a dict with attributes
+        '''
+        if not expr or expr == self._context_raw:
+            pass
+        else:
+            self._context_raw = expr
+            self.context = self._DictWithAttr()
+            k_and_v = [map(lambda x: x.strip(), kv.split('=')) for kv in expr.split(',')]
+            for k, v in k_and_v:
+                if v.startswith('int::'):
+                    v = int(float(v[5:]))
+                elif v.startswith('float::'):
+                    v = float(v[7:])
+                elif v.startswith('str::'):
+                    v = v[5:]
+                self.context[k] = v
+                setattr(self.context, k, v)
+    
+    # A primary use for contextual information is to pass dimensions from the
+    # TeX side to the Python side.  To make that as convenient as possible,
+    # we need some length conversion functions.
+    # Conversion reference:  http://tex.stackexchange.com/questions/41370/what-are-the-possible-dimensions-sizes-units-latex-understands
+    def pt_to_in(self, expr):
+        '''
+        Convert points to inches.  Accepts numbers, strings of digits, and 
+        strings of digits that end with `pt`.
+        '''
+        try:
+            ans = expr/72.27
+        except:
+            if expr.endswith('pt'):
+                expr = expr[:-2]
+            ans = float(expr)/72.27
+        return ans
+    def pt_to_cm(self, expr):
+        '''
+        Convert points to centimeters.
+        '''
+        return self.pt_to_in(expr)*2.54
+    def pt_to_mm(self, expr):
+        '''
+        Convert points to millimeters.
+        '''
+        return self.pt_to_in(expr)*25.4
+    def pt_to_bp(self, expr):
+        '''
+        Convert points to big (DTP or PostScript) points.
+        '''
+        return self.pt_to_in(expr)*72
+        
     
     # We need a context-aware interface to SymPy's latex printer.  The 
     # appearance of typeset math should depend on where it appears in a 

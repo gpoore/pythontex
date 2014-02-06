@@ -17,7 +17,7 @@ document (script for execution).
 
 
 
-Copyright (c) 2012-2013, Geoffrey M. Poore
+Copyright (c) 2012-2014, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -42,8 +42,8 @@ interpreter_dict['file'] = '{file}'
 engine_dict = {}
 
 
-CodeIndex = namedtuple('CodeIndex', ['input_file', 'input_command', 
-                                     'input_line_int', 'lines_total', 
+CodeIndex = namedtuple('CodeIndex', ['input_file', 'command', 
+                                     'line_int', 'lines_total', 
                                      'lines_user', 'lines_input',
                                      'inline_count'])
 
@@ -100,19 +100,13 @@ class CodeEngine(object):
             self.template = template
             self.wrapper = wrapper
             self.formatter = formatter
-        # Perform some additional formatting on some strings.  Dedent.
-        # Change from {{ }} tags for replacement fields to { } tags that
-        # are compatible with Python's string format() method, which is much
-        # more efficient than a template engine.
+        # Perform some additional formatting on some strings.
         self.extension = self.extension.lstrip('.')
-        self.command = self._dejinja(self.command)
-        self.template = self._dedent(self._dejinja(self.template))
-        self.wrapper = self._dedent(self._dejinja(self.wrapper))
+        self.template = self._dedent(self.template)
+        self.wrapper = self._dedent(self.wrapper)
         # Make sure formatter string ends with a newline
-        if self.formatter.endswith('\n'):
-            self.formatter = self._dejinja(self.formatter)
-        else:
-            self.formatter = self._dejinja(self.formatter) + '\n'
+        if not self.formatter.endswith('\n'):
+            self.formatter = self.formatter + '\n'
         
         # Type check errors, warnings, and linenumbers
         if errors is None:
@@ -158,7 +152,7 @@ class CodeEngine(object):
                         raise TypeError('CodeEngine needs "warnings" to contain strings')
             self.warnings = warnings
         if linenumbers is None:
-            linenumbers = 'line {{number}}'
+            linenumbers = 'line {number}'
         if sys.version_info[0] == 2:
             if isinstance(linenumbers, basestring):
                 linenumbers = [linenumbers]
@@ -177,7 +171,7 @@ class CodeEngine(object):
                 if not isinstance(l, str):
                     raise TypeError('CodeEngine needs "linenumbers" to contain strings')
         # Need to replace tags
-        linenumbers = [l.replace('{{number}}', r'(\d+)') for l in linenumbers]
+        linenumbers = [l.replace('{number}', r'(\d+)') for l in linenumbers]
         self.linenumbers = linenumbers
 
         # Type check lookbehind
@@ -250,25 +244,6 @@ class CodeEngine(object):
         s = textwrap.dedent(s)
         while s.startswith('\n'):
             s = s[1:]
-        return s
-    
-    def _dejinja(self, s):
-        '''
-        Switch all `{{ }}` tags into `{ }`, and all normal braces `{ }` into 
-        `{{ }}`, so that Python's string format() method may be used.  Also 
-        strip any whitespace surrounding the field name.
-        
-        This will fail if literal `{{` and `}}` are needed.  If those are 
-        ever needed, then options for custom tags will be needed.
-        '''
-        lst = [t.replace('{', '{{') for t in s.split('{{')]
-        for n in range(1, len(lst)):
-            lst[n] = lst[n].lstrip(' ')
-        s = '{'.join(lst)
-        lst = [t.replace('}', '}}') for t in s.split('}}')]
-        for n in range(0, len(lst)-1):
-            lst[n] = lst[n].rstrip(' ')
-        s = '}'.join(lst)
         return s
         
     def _register(self):
@@ -441,15 +416,15 @@ class CodeEngine(object):
         try:
             script_begin, script_end = self.template.split('{body}')
         except:
-            raise ValueError('Template for ' + self.name + ' is missing {{body}}')
+            raise ValueError('Template for ' + self.name + ' is missing {body}')
         
         # Add beginning to script
         script_begin = script_begin.format(encoding=encoding, future=future, 
                                            utilspath=utilspath, workingdir=workingdir,
                                            extend=self.extend,
-                                           input_family=code_list[0].input_family,
-                                           input_session=code_list[0].input_session,
-                                           input_restart=code_list[0].input_restart,
+                                           family=code_list[0].family,
+                                           session=code_list[0].session,
+                                           restart=code_list[0].restart,
                                            dependencies_delim='=>PYTHONTEX:DEPENDENCIES#',
                                            created_delim='=>PYTHONTEX:CREATED#')
         script.append(script_begin)
@@ -459,7 +434,7 @@ class CodeEngine(object):
         try:
             wrapper_begin, wrapper_end = self.wrapper.split('{code}')
         except:
-            raise ValueError('Wrapper for ' + self.name + ' is missing {{code}}')
+            raise ValueError('Wrapper for ' + self.name + ' is missing {code}')
         if not self.language.startswith('python'):
             # In the event of a syntax error at the end of user code, Ruby
             # (and perhaps others) will use the line number from the NEXT
@@ -472,9 +447,9 @@ class CodeEngine(object):
             # parts of the wrapper.
             wrapper_begin = wrapper_begin.rstrip(' \t\n') + '\n'
             wrapper_end = wrapper_end.lstrip(' \t\n')
-        stdout_delim = '=>PYTHONTEX:STDOUT#{input_instance}#{input_command}#'
-        stderr_delim = '=>PYTHONTEX:STDERR#{input_instance}#{input_command}#'
-        wrapper_begin = wrapper_begin.replace('{stdout_delim}', stdout_delim).replace('{stderr_delim}', stderr_delim)
+        stdoutdelim = '=>PYTHONTEX:STDOUT#{instance}#{command}#'
+        stderrdelim = '=>PYTHONTEX:STDERR#{instance}#{command}#'
+        wrapper_begin = wrapper_begin.replace('{stdoutdelim}', stdoutdelim).replace('{stderrdelim}', stderrdelim)
         wrapper_begin_offset = wrapper_begin.count('\n')
         wrapper_end_offset = wrapper_end.count('\n')
         
@@ -486,15 +461,15 @@ class CodeEngine(object):
         for c in cc_list_begin:
             # Wrapper before
             lines_total += wrapper_begin_offset
-            script.append(wrapper_begin.format(input_command=c.input_command,
-                                               input_context=c.input_context,
-                                               input_args=c.input_args_run,
-                                               input_instance=c.input_instance,
-                                               input_line=c.input_line))
+            script.append(wrapper_begin.format(command=c.command,
+                                               context=c.context,
+                                               args=c.args_run,
+                                               instance=c.instance,
+                                               line=c.line))
             
             # Actual code
             lines_input = c.code.count('\n')
-            code_index[c.input_instance] = CodeIndex(c.input_file, c.input_command, c.input_line_int, lines_total, lines_user, lines_input, inline_count)
+            code_index[c.instance] = CodeIndex(c.input_file, c.command, c.line_int, lines_total, lines_user, lines_input, inline_count)
             script.append(c.code)
             if c.is_inline:
                 inline_count += 1
@@ -511,16 +486,16 @@ class CodeEngine(object):
         for c in code_list:
             # Wrapper before
             lines_total += wrapper_begin_offset
-            script.append(wrapper_begin.format(input_command=c.input_command,
-                                               input_context=c.input_context,
-                                               input_args=c.input_args_run,
-                                               input_instance=c.input_instance,
-                                               input_line=c.input_line))
+            script.append(wrapper_begin.format(command=c.command,
+                                               context=c.context,
+                                               args=c.args_run,
+                                               instance=c.instance,
+                                               line=c.line))
             
             # Actual code
             lines_input = c.code.count('\n')
-            code_index[c.input_instance] = CodeIndex(c.input_file, c.input_command, c.input_line_int, lines_total, lines_user, lines_input, inline_count)
-            if c.input_command == 'i':
+            code_index[c.instance] = CodeIndex(c.input_file, c.command, c.line_int, lines_total, lines_user, lines_input, inline_count)
+            if c.command == 'i':
                 script.append(self.formatter.format(code=c.code.rstrip('\n')))
                 inline_count += 1
             else:
@@ -538,15 +513,15 @@ class CodeEngine(object):
         for c in cc_list_end:
             # Wrapper before
             lines_total += wrapper_begin_offset
-            script.append(wrapper_begin.format(input_command=c.input_command,
-                                               input_context=c.input_context,
-                                               input_args=c.input_args_run,
-                                               input_instance=c.input_instance,
-                                               input_line=c.input_line))
+            script.append(wrapper_begin.format(command=c.command,
+                                               context=c.context,
+                                               args=c.args_run,
+                                               instance=c.instance,
+                                               line=c.line))
             
             # Actual code
             lines_input = c.code.count('\n')
-            code_index[c.input_instance] = CodeIndex(c.input_file, c.input_command, c.input_line_int, lines_total, lines_user, lines_input, inline_count)
+            code_index[c.instance] = CodeIndex(c.input_file, c.command, c.line_int, lines_total, lines_user, lines_input, inline_count)
             script.append(c.code)
             if c.is_inline:
                 inline_count += 1
@@ -625,68 +600,69 @@ class PythonConsoleEngine(CodeEngine):
 
 
 python_template = '''
-    # -*- coding: {{encoding}} -*-
+    # -*- coding: {encoding} -*-
     
-    {{future}}
+    {future}
     
     import os
     import sys
     import codecs
     
     if sys.version_info[0] == 2:
-        sys.stdout = codecs.getwriter('{{encoding}}')(sys.stdout, 'strict')
-        sys.stderr = codecs.getwriter('{{encoding}}')(sys.stderr, 'strict')
+        sys.stdout = codecs.getwriter('{encoding}')(sys.stdout, 'strict')
+        sys.stderr = codecs.getwriter('{encoding}')(sys.stderr, 'strict')
     else:
-        sys.stdout = codecs.getwriter('{{encoding}}')(sys.stdout.buffer, 'strict')
-        sys.stderr = codecs.getwriter('{{encoding}}')(sys.stderr.buffer, 'strict')
+        sys.stdout = codecs.getwriter('{encoding}')(sys.stdout.buffer, 'strict')
+        sys.stderr = codecs.getwriter('{encoding}')(sys.stderr.buffer, 'strict')
     
-    if '{{utilspath}}' and '{{utilspath}}' not in sys.path:
-        sys.path.append('{{utilspath}}')    
+    if '{utilspath}' and '{utilspath}' not in sys.path:
+        sys.path.append('{utilspath}')    
     from pythontex_utils import PythonTeXUtils
     pytex = PythonTeXUtils()
     
     pytex.docdir = os.getcwd()
-    if os.path.isdir('{{workingdir}}'):
-        os.chdir('{{workingdir}}')
+    if os.path.isdir('{workingdir}'):
+        os.chdir('{workingdir}')
         if os.getcwd() not in sys.path:
             sys.path.append(os.getcwd())
     else:
         if len(sys.argv) < 2 or sys.argv[1] != '--manual':
-            sys.exit('Cannot find directory {{workingdir}}')
+            sys.exit('Cannot find directory {workingdir}')
     if pytex.docdir not in sys.path:
         sys.path.append(pytex.docdir)
     
-    {{extend}}
+    {extend}
     
-    pytex.input_family = '{{input_family}}'
-    pytex.input_session = '{{input_session}}'
-    pytex.input_restart = '{{input_restart}}'
+    pytex.id = '{family}_{session}_{restart}'
+    pytex.family = '{family}'
+    pytex.session = '{session}'
+    pytex.restart = '{restart}'
     
-    {{body}}
+    {body}
 
     pytex.cleanup()
     '''
 
 python_wrapper = '''
-    pytex.input_command = '{{input_command}}'
-    pytex.input_context = '{{input_context}}'
-    pytex.input_args = '{{input_args}}'
-    pytex.input_instance = '{{input_instance}}'
-    pytex.input_line = '{{input_line}}'
+    pytex.command = '{command}'
+    pytex.set_context('{context}')
+    pytex.args = '{args}'
+    pytex.instance = '{instance}'
+    pytex.line = '{line}'
     
-    print('{{stdout_delim}}')
-    sys.stderr.write('{{stderr_delim}}\\n')
+    print('{stdoutdelim}')
+    sys.stderr.write('{stderrdelim}\\n')
     pytex.before()
     
-    {{code}}
+    {code}
     
     pytex.after()
     '''
 
 
-CodeEngine('python', 'python', '.py', '{{python}} {{file}}.py',
-              python_template, python_wrapper, 'print(pytex.formatter({{code}}))',
-              'Error:', 'Warning:', ['line {{number}}', ':{{number}}:'])
+CodeEngine('python', 'python', '.py', '{python} {file}.py',
+              python_template, python_wrapper, 'print(pytex.formatter({code}))',
+              'Error:', 'Warning:', ['line {number}', ':{number}:'])
 
 SubCodeEngine('python', 'py')
 
@@ -712,18 +688,20 @@ PythonConsoleEngine('sympycon', startup='from sympy import *')
 
 
 ruby_template = '''
-    # -*- coding: {{encoding}} -*-
+    # -*- coding: {encoding} -*-
     
-    $stdout.set_encoding('{{encoding}}')
-    $stderr.set_encoding('{{encoding}}')
+    $stdout.set_encoding('{encoding}')
+    $stderr.set_encoding('{encoding}')
     
     class RubyTeXUtils
-        attr_accessor :input_family, :input_session, :input_restart, 
-                :input_command, :input_context, :input_args, 
-                :input_instance, :input_line, :dependencies, :created, :docdir
+        attr_accessor :id, :family, :session, :restart, 
+                :command, :context, :args, 
+                :instance, :line, :dependencies, :created,
+                :docdir, :_context_raw
         def initialize
             @dependencies = Array.new
             @created = Array.new
+            @_context_raw = nil
         end
         def formatter(expr)
             return expr.to_s
@@ -738,14 +716,39 @@ ruby_template = '''
         def add_created(*expr)
             self.created.push(*expr)
         end
-        def cleanup
-            puts '{{dependencies_delim}}'
-            if @dependencies
-                @dependencies.each { |x| puts x }
+        def set_context(expr)
+            if expr != "" and expr != @_context_raw
+                @context = expr.split(',').map{{|x| x1,x2 = x.split('='); {{x1.strip() => x2.strip()}}}}.reduce(:merge)
+                @_context_raw = expr
             end
-            puts '{{created_delim}}'
+        end
+        def pt_to_in(expr)
+            if expr.is_a?String
+                if expr.end_with?'pt'
+                    expr = expr[0..-3]
+                end
+                return expr.to_f/72.27
+            else
+                return expr/72.27
+            end
+        end
+        def pt_to_cm(expr)
+            return pt_to_in(expr)*2.54
+        end
+        def pt_to_mm(expr)
+            return pt_to_in(expr)*25.4
+        end
+        def pt_to_bp(expr)
+            return pt_to_in(expr)*72
+        end
+        def cleanup
+            puts '{dependencies_delim}'
+            if @dependencies
+                @dependencies.each {{ |x| puts x }}
+            end
+            puts '{created_delim}'
             if @created
-                @created.each { |x| puts x }
+                @created.each {{ |x| puts x }}
             end
         end        
     end
@@ -753,44 +756,45 @@ ruby_template = '''
     rbtex = RubyTeXUtils.new
     
     rbtex.docdir = Dir.pwd
-    if File.directory?('{{workingdir}}')
-        Dir.chdir('{{workingdir}}')
+    if File.directory?('{workingdir}')
+        Dir.chdir('{workingdir}')
         $LOAD_PATH.push(Dir.pwd) unless $LOAD_PATH.include?(Dir.pwd)
     elsif ARGV[0] != '--manual'
-        abort('Cannot change to directory {{workingdir}}')
+        abort('Cannot change to directory {workingdir}')
     end
     $LOAD_PATH.push(rbtex.docdir) unless $LOAD_PATH.include?(rbtex.docdir)
     
-    {{extend}}
+    {extend}
     
-    rbtex.input_family = '{{input_family}}'
-    rbtex.input_session = '{{input_session}}'
-    rbtex.input_restart = '{{input_restart}}'
+    rbtex.id = '{family}_{session}_{restart}'
+    rbtex.family = '{family}'
+    rbtex.session = '{session}'
+    rbtex.restart = '{restart}'
     
-    {{body}}
+    {body}
 
     rbtex.cleanup
     '''
 
 ruby_wrapper = '''
-    rbtex.input_command = '{{input_command}}'
-    rbtex.input_context = '{{input_context}}'
-    rbtex.input_args = '{{input_args}}'
-    rbtex.input_instance = '{{input_instance}}'
-    rbtex.input_line = '{{input_line}}'
+    rbtex.command = '{command}'
+    rbtex.set_context('{context}')
+    rbtex.args = '{args}'
+    rbtex.instance = '{instance}'
+    rbtex.line = '{line}'
     
-    puts '{{stdout_delim}}'
-    $stderr.puts '{{stderr_delim}}'
+    puts '{stdoutdelim}'
+    $stderr.puts '{stderrdelim}'
     rbtex.before
     
-    {{code}}
+    {code}
     
     rbtex.after
     '''
 
-CodeEngine('ruby', 'ruby', '.rb', '{{ruby}} {{file}}.rb', ruby_template, 
-              ruby_wrapper, 'puts rbtex.formatter({{code}})', 
-              ['Error)', '(Errno', 'error'], 'warning:', ':{{number}}:')
+CodeEngine('ruby', 'ruby', '.rb', '{ruby} {file}.rb', ruby_template, 
+              ruby_wrapper, 'puts rbtex.formatter({code})', 
+              ['Error)', '(Errno', 'error'], 'warning:', ':{number}:')
 
 SubCodeEngine('ruby', 'rb')
 
@@ -804,24 +808,31 @@ julia_template = '''
     # So can't set stdout and stderr encoding
     
     type JuliaTeXUtils
-        input_family::String
-        input_session::String
-        input_restart::String
-        input_command::String
-        input_context::String
-        input_args::String
-        input_instance::String
-        input_line::String
+        id::String
+        family::String
+        session::String
+        restart::String
+        command::String
+        context::Dict
+        args::String
+        instance::String
+        line::String
         
-        _dependencies::Array{String}
-        _created::Array{String}
+        _dependencies::Array{{String}}
+        _created::Array{{String}}
         docdir::String
+        _context_raw::String
         
         formatter::Function
         before::Function
         after::Function
         add_dependencies::Function
         add_created::Function
+        set_context::Function
+        pt_to_in::Function
+        pt_to_cm::Function
+        pt_to_mm::Function
+        pt_to_bp::Function
         cleanup::Function
         
         self::JuliaTeXUtils
@@ -831,6 +842,7 @@ julia_template = '''
             self.self = self
             self._dependencies = Array(String, 0)
             self._created = Array(String, 0)
+            self._context_raw = ""
             
             function formatter(expr)
                 string(expr)
@@ -855,12 +867,47 @@ julia_template = '''
             end
             self.add_created = add_created
             
+            function set_context(expr)
+                if expr != "" && expr != self._context_raw
+                    self.context = {{strip(x[1]) => strip(x[2]) for x in map(x -> split(x, "="), split(expr, ","))}}
+                    self._context_raw = expr
+                end
+            end
+            self.set_context = set_context
+            
+            function pt_to_in(expr)
+                if isa(expr, String)
+                    if sizeof(expr) > 2 && expr[end-1:end] == "pt"
+                        expr = expr[1:end-2]
+                    end
+                    return float(expr)/72.27
+                else
+                    return expr/72.27
+                end
+            end
+            self.pt_to_in = pt_to_in
+            
+            function pt_to_cm(expr)
+                return self.pt_to_in(expr)*2.54
+            end
+            self.pt_to_cm = pt_to_cm
+            
+            function pt_to_mm(expr)
+                return self.pt_to_in(expr)*25.4
+            end
+            self.pt_to_mm = pt_to_mm
+            
+            function pt_to_bp(expr)
+                return self.pt_to_in(expr)*72
+            end
+            self.pt_to_bp = pt_to_bp
+                        
             function cleanup()
-                println("{{dependencies_delim}}")
+                println("{dependencies_delim}")
                 for f in self._dependencies
                     println(f)
                 end
-                println("{{created_delim}}")
+                println("{created_delim}")
                 for f in self._created
                     println(f)
                 end
@@ -874,50 +921,52 @@ julia_template = '''
     jltex = JuliaTeXUtils()
     
     jltex.docdir = pwd()
+    println(jltex.docdir)
     try
-        cd("{{workingdir}}")
-        if !(contains(LOAD_PATH, pwd()))
+        cd("{workingdir}")
+        if !(in(pwd(), LOAD_PATH))
             push!(LOAD_PATH, pwd())
         end
     catch
         if !(length(ARGS) > 0 && ARGS[1] == "--manual")
-            error("Could not find directory {{workingdir}}")
+            error("Could not find directory {workingdir}")
         end
     end
-    if !(contains(LOAD_PATH, jltex.docdir))
+    if !(in(jltex.docdir, LOAD_PATH))
         push!(LOAD_PATH, jltex.docdir)
     end 
     
-    {{extend}}
+    {extend}
     
-    jltex.input_family = "{{input_family}}"
-    jltex.input_session = "{{input_session}}"
-    jltex.input_restart = "{{input_restart}}"
+    jltex.id = "{family}_{session}_{restart}"
+    jltex.family = "{family}"
+    jltex.session = "{session}"
+    jltex.restart = "{restart}"
     
-    {{body}}
+    {body}
     
     jltex.cleanup()
     '''
 
 julia_wrapper = '''
-    jltex.input_command = "{{input_command}}"
-    jltex.input_context = "{{input_context}}"
-    jltex.input_args = "{{input_args}}"
-    jltex.input_instance = "{{input_instance}}"   
-    jltex.input_line = "{{input_line}}"
+    jltex.command = "{command}"
+    jltex.set_context("{context}")
+    jltex.args = "{args}"
+    jltex.instance = "{instance}"   
+    jltex.line = "{line}"
     
-    println("{{stdout_delim}}")
-    write(STDERR, "{{stderr_delim}}\\n")
+    println("{stdoutdelim}")
+    write(STDERR, "{stderrdelim}\\n")
     jltex.before()   
     
-    {{code}}
+    {code}
     
     jltex.after()
     '''
 
-CodeEngine('julia', 'julia', '.jl', '{{julia}} {{file}}.jl', julia_template, 
-              julia_wrapper, 'println(jltex.formatter({{code}}))', 
-              'ERROR:', 'WARNING:', ':{{number}}', True)
+CodeEngine('julia', 'julia', '.jl', '{julia} {file}.jl', julia_template, 
+              julia_wrapper, 'println(jltex.formatter({code}))', 
+              'ERROR:', 'WARNING:', ':{number}', True)
 
 SubCodeEngine('julia', 'jl')
 

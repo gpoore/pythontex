@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 '''
@@ -47,7 +47,7 @@ example, typeset code may have a different appearance or layout when it is
 typeset with a different package.
 
 
-Copyright (c) 2013, Geoffrey M. Poore
+Copyright (c) 2013-2014, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -72,11 +72,12 @@ import argparse
 from collections import defaultdict
 from re import match, sub, search
 import textwrap
+import codecs
 
 
 # Script parameters
 # Version
-version = 'v0.12'
+version = 'v0.13-beta'
 
 
 
@@ -680,10 +681,10 @@ parser.add_argument('--preamble', default=None,
                     help='line of commands to add to output preamble')
 parser.add_argument('--graphicspath', default=False, action='store_true',
                     help=r'Add the outputdir to the graphics path, by modifying an existing \graphicspath command or adding one.')
+parser.add_argument('-o', '--output', default=None,
+                    help='output file')
 parser.add_argument('TEXNAME',
                     help='LaTeX file')
-parser.add_argument('OUTFILE', nargs='?', default=None,
-                    help='output file; by default, <filename>.<ext> is converted into depythontex_<filename>.<ext>')
 args = parser.parse_args()
 
 # Process argv
@@ -717,8 +718,9 @@ elif args.listing == 'pythontex':
 
 
 # Let the user know things have started
-print('This is DePythonTeX {0}'.format(version))
-sys.stdout.flush()
+if args.output is not None:
+    print('This is DePythonTeX {0}'.format(version))
+    sys.stdout.flush()
 
 
 
@@ -738,17 +740,14 @@ if not os.path.isfile(texfile_name):
         print('    Could not locate file "' + texfile_name + '"')
         sys.exit(1)
 # Make sure we have a valid outfile
-if args.OUTFILE is None:
-    p, f_name = os.path.split(texfile_name)
-    outfile_name = os.path.join(p, 'depythontex_' + f_name)
-else:
-    outfile_name = os.path.expanduser(os.path.normcase(args.OUTFILE))
-if not args.overwrite and os.path.isfile(outfile_name):
-    print('* DePythonTeX warning:')
-    print('    Output file "' + outfile_name + '" already exists')
-    ans = input('    Do you want to overwrite this file? [y,n]\n    ')
-    if ans != 'y':
-        sys.exit(1)
+if args.output is not None:
+    outfile_name = os.path.expanduser(os.path.normcase(args.output))
+    if not args.overwrite and os.path.isfile(outfile_name):
+        print('* DePythonTeX warning:')
+        print('    Output file "' + outfile_name + '" already exists')
+        ans = input('    Do you want to overwrite this file? [y,n]\n    ')
+        if ans != 'y':
+            sys.exit(1)
 # Make sure the .depytx file exists    
 depytxfile_name = texfile_name.rsplit('.')[0] + '.depytx'
 if not os.path.isfile(depytxfile_name):
@@ -794,7 +793,8 @@ if settings['version'] != version:
 # Go ahead and open the outfile, even though we don't need it until the end
 # This lets us change working directories for convenience without worrying 
 # about having to modify the outfile path
-outfile = open(outfile_name, 'w', encoding=encoding)
+if args.output is not None:
+    outfile = open(outfile_name, 'w', encoding=encoding)
 
 
 
@@ -1362,11 +1362,15 @@ for n, line in enumerate(texout):
         if startline == n:
             if bool(search(r'\\usepackage(?:\[.*?\]){0,1}\{pythontex\}', line)):
                 texout[n] = sub(r'\\usepackage(?:\[.*?\]){0,1}\{pythontex\}', '', line)
+                if texout[n].isspace():
+                    texout[n] = ''
                 break
         else:
             content = ''.join(texout[startline:n+1])
             if bool(search(r'(?s)\\usepackage(?:\[.*?\]\s*){0,1}\{pythontex\}', content)):
                 replacement = sub(r'(?s)\\usepackage(?:\[.*?\]\s*){0,1}\{pythontex\}', '', content)
+                if replacement.isspace():
+                    replacement = ''
                 texout[startline] = replacement
                 for l in range(startline+1, n+1):
                     texout[l] = ''
@@ -1401,6 +1405,16 @@ if forced_double_space_list:
 
 
 # Write output
-for line in texout:
-    outfile.write(line)
-outfile.close()
+if args.output is not None:
+    for line in texout:
+        outfile.write(line)
+    outfile.close()
+else:
+    if sys.version_info[0] == 2:
+        sys.stdout = codecs.getwriter(encoding)(sys.stdout, 'strict')
+        sys.stderr = codecs.getwriter(encoding)(sys.stderr, 'strict')
+    else:
+        sys.stdout = codecs.getwriter(encoding)(sys.stdout.buffer, 'strict')
+        sys.stderr = codecs.getwriter(encoding)(sys.stderr.buffer, 'strict')
+    for line in texout:
+        sys.stdout.write(line)

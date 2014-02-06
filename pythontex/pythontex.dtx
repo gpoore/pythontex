@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2013/08/26 Version~0.12]
+    [2014/02/06 Version~0.13-beta ]
 %</package>
 %
 %<*driver>
@@ -45,16 +45,14 @@
 %\newcommand{\pytxtodo}[1]{\textcolor{red}{TO~DO: \scantokens{#1}}}
 \newcommand{\changestext}{}
 \NewEnviron{changelog}[2]{%
-    \g@addto@macro\changestext{\item[#1] (#2) \begin{itemize}}%
+    \g@addto@macro\changestext{\subsection*{\textbf{#1} (#2)}}%
     \expandafter\g@addto@macro\expandafter\changestext\expandafter{\BODY}%
-    \g@addto@macro\changestext{\end{itemize}}%
+    \g@addto@macro\changestext{}%
 }
 \newcommand{\PrintChangelog}{%
     \addcontentsline{toc}{section}{Version History}
     \section*{Version History}%
-    \begin{description}%
     \changestext
-    \end{description}%
 }
 \EnableCrossrefs
 \CodelineIndex
@@ -68,7 +66,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{2928}
+% \CheckSum{2947}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -87,8 +85,36 @@
 %   Right brace   \}     Tilde         \~}
 %
 %
+% \begin{changelog}{v0.13-beta}{2014/02/06}
+% \textbf{New features}
+% \begin{itemize}
+% \item Switching to GitHub's Releases for downloads.
+% \item TeX information such as page dimensions may now be easily passed to the programming-language side, using the new \texttt{\string\setpythontexcontext} command.  Contextual information is stored in the \texttt{context} attribute of the utilities class, which is a dictionary (and also has attributes in Python).
+% \item The utilities class now has \texttt{pt\_to\_in()}, \texttt{pt\_to\_cm()}, and \texttt{pt\_to\_mm()} methods for converting units of TeX points into inches, centimeters, and millimeters.  These work with integers and floats, as well as strings that consist of numbers and optionally end in ``pt''.  There is also a \texttt{pt\_to\_bp()} for converting TeX points (1/72.27 inch) into big (DTP or PostScript) points (1/72 inch).
+% \item Expanded Quickstart.  Quickstart is now compatible with all LaTeX engines.  Quickstart now avoids \texttt{microtype} issues on some systems (\#32).
+% \item Added information on citing PythonTeX (\#28).
+% \item Utilities class has a new attribute \texttt{id}, which is a string that joins the command family name, session name, and session restart parameters with underscores.  This may be used in creating files that need a name that contains a unique, session-based identifier (for example, names for figures that are saved automatically).
+% \end{itemize}
+% \textbf{Backward-incompatible changes}
+% \begin{itemize}
+% \item All utilities-class attributes with names of the form \texttt{input\_*} have been renamed with the ``\texttt{input\_}'' removed.  Among other things, this makes it easier to access the \texttt{context} attribute (\texttt{pytex.context} vs.\ \texttt{pytex.input\_context}).
+% \item \texttt{depythontex} now has \texttt{-o} and \texttt{-{}-output} command-line options for specifying the name of the output file.  If an output file is not specified, then output is written to \texttt{stdout}.  This allows \texttt{depythontex} output to be piped to another program.
+% \item All scripts \texttt{*2.py} now have shebangs with \texttt{env python2}, and all scripts \texttt{*3.py} now have shebangs with \texttt{env python3}.  This allows the wrapper scripts (\texttt{env python} shebang) to be used with the default Python installation, and the numbered scripts to be used with specific versions.  Remember that except for console content, the \texttt{-{}-interpreter} option is what determines the Python version that actually executes code.  The version of Python used to launch \texttt{pythontex.py} merely determines the version that manages code execution.  (\texttt{-{}-interpreter} support for console content is coming.)
+% \item Changed the template style used in the \texttt{CodeEngine} class.  Replacement fields are now surrounded by single curly braces (as in Python's format string syntax), rather than double curly braces.  Literal curly braces are obtained by doubling braces.  This allows the use of literal adjacent double braces in templates, which was not possible previously.
+% \item The Julia template now uses the new \texttt{in()} function, replacing \texttt{contains()}.  This requires Julia v0.2.0+.
+% \end{itemize}
+% \textbf{Bugfixes}
+% \begin{itemize}
+% \item Modified test for LuaTeX, so that \texttt{\string\directlua} is not \texttt{\string\let} to \texttt{\string\relax} if it does not exist.  This was causing incompatibility with \texttt{babel} under pdfTeX and XeTeX (\#33).
+% \item Added missing shebangs to \texttt{depythontex*.py}.  Handling of \texttt{utilspath} is now more forgiving, so that \texttt{pythontex\_utils.py} can be installed in alternate locations (\#23).
+% \item \texttt{depythontex} no longer leaves a blank line where \texttt{\string\usepackage\{pythontex\}} was removed.
+% \item Console environments typeset with \texttt{fancyvrb} no longer end with an unnecessary empty line.
+% \item Fixed bug in installer when \texttt{kpsewhich} was not found (\#21).
+% \end{itemize}
+% \end{changelog}
 %
 % \begin{changelog}{v0.12}{2013/08/26}
+% \begin{itemize}
 % \item Added support for the Julia language, with the \texttt{julia} and \texttt{jl} families of commands and environments.  (Note that Pygments only added Julia support in version 1.6.)
 % \item Warnings and errors are now synchronized with the line numbers of files brought in via \texttt{\string\input}, \texttt{\string\include}, etc.  This is accomplished using the \texttt{currfile} package.
 % \item Added package option \texttt{gobble}.  When \texttt{gobble=auto}, all code is dedented before being executed and/or typeset.  The current implementation is functional but basic; it will be improved and extended in the future.
@@ -101,9 +127,11 @@
 % \item Fixed a bug with counters that caused errors when content spanning multiple columns was created within a \texttt{tabular} environment.
 % \item Added checking for compatible Python versions in \texttt{pythontex.py}.
 % \item Improved execution of \texttt{*.bat} and \texttt{*.cmd} files under Windows.  The solution from v0.12beta allowed \texttt{*.bat} and \texttt{*.cmd} to be found and executed when the extension was not given, but did not give correct return codes.
+% \end{itemize}
 % \end{changelog}
 %
 % \begin{changelog}{v0.12beta}{2013/06/24}
+% \begin{itemize}
 % \item Merged \texttt{pythontex\_types*.py} into a single replacement \texttt{pythontex\_engines.py} compatible with both Python 2 and 3.  It is now much simpler to add support for additional languages.
 % \item Added support for the Ruby language as a demonstration of new capabilities.  The \texttt{ruby} and \texttt{rb} families of commands and environments may be enabled via the new \texttt{usefamily} package option.  Support for additional languages is coming soon.  See the new section in the documentation on support for other languages for more information.
 % \item Reimplemented treatment of Pygments content for better efficiency.  Now a Pygments process only runs if there is content to highlight.  Eliminated redundant highlighting of unmodified code.
@@ -136,9 +164,11 @@
 % \item At the end of each run, data and macros are only saved if modified, improving efficiency.
 % \item The number of temporary files required by each process was reduced by one.  All macros for commands like \texttt{\string\py} are now returned within stdout, rather than in their own file.
 % \item Fixed a bug with \texttt{\string\stderrpythontex}; it was defaulting to \texttt{verb} rather than \texttt{verbatim} mode.
+% \end{itemize}
 % \end{changelog}
 %
 % \begin{changelog}{v0.11}{2013/04/21}
+% \begin{itemize}
 % \item As the first non-beta release, this version adds several features and introduces several changes.  You should read these release notes carefully, since some changes are not backwards-compatible.  Changes are based on a thorough review of all current and planned features.  PythonTeX's capabilities have already grown beyond what was originally intended, and a long list of features still remains to be implemented.  As a result, some changes are needed to ensure consistent syntax and naming in the future.  Insofar as possible, all command names and syntax will be frozen after this release.
 % \item Added the \texttt{pythontex.py} and \texttt{depythontex.py} wrapper scripts.  When run, these detect the current version of Python and import the correct PythonTeX code.  It is still possible to run \texttt{pythontex*.py} and \texttt{depythontex*.py} directly, but the new wrapper scripts should be used instead for simplicity.  There is now only a single \texttt{pythontex\_utils.py}, which works with both Python 2 and Python 3.  
 % \item Added the \texttt{beta} package option.  This makes the current version behave like v0.11beta, for compatibility.  This option is temporary and will probably only be retained for a few releases.
@@ -159,9 +189,11 @@
 % \item Added \texttt{autostdout} package option and \texttt{\string\setpythontexautostdout}, to complement \texttt{autoprint}.  Added |prettyprinter| and |prettyprintinline| package options to complement new settings commands.
 % \item Added quickstart guide.
 % \item Installer now installs gallery and quickstart files, if present.
+% \end{itemize}
 % \end{changelog}
 %
 % \begin{changelog}{v0.11beta}{2013/02/17}
+% \begin{itemize}
 % \item Commands like \texttt{\string\py} can now bring in any valid LaTeX code, including verbatim content, under the pdfTeX and XeTeX engines.  Verbatim content was not allowed previously.  LuaTeX cannot bring in verbatim, due to a known bug.
 % \item Added package option \texttt{depythontex} and scripts \texttt{depythontex*.py}.  These allow a PythonTeX document to be converted into a pure LaTeX document, with no Python dependency.  The package option creates an auxiliary file with extension \texttt{.depytx}.  The \texttt{depythontex*.py} scripts take this auxiliary file and the original LaTeX document, and combine the two to produce a new document that does not rely on the PythonTeX package.  All PythonTeX commands and environments are replaced by their output.   All Python-generated content is substituted directly into the document.  By default, all typeset code is wrapped in \texttt{\string\verb} and \texttt{verbatim}, but \texttt{depythontex*.py} has a \texttt{-{}-listing} option that allows \texttt{fancyvrb}, \texttt{listings}, \texttt{minted}, or \texttt{pythontex} to be used instead.
 % \item The current PythonTeX version is now saved in the \texttt{.pytxcode}.  If this does not match the version of the PythonTeX scripts, a warning is issued.  This makes it easier to determine errors due to version mismatches.
@@ -170,9 +202,11 @@
 % \item Fixed a bug with PythonTeX verbatim commands and environments that use Pygments.  The verbatim commands and environments were incorrectly treated as if they had the attributes of executed code in the v0.10beta series.
 % \item Fixed a bug from the v0.10beta series that sometimes prevented imports from \texttt{\_\_future\_\_} from working when there were multiple sessions.
 % \item Fixed a bug related to hashing dependencies' mtime under Python 3.
+% \end{itemize}
 % \end{changelog}
 %
 % \begin{changelog}{v0.10beta2}{2013/01/23}
+% \begin{itemize}
 % \item Improved \texttt{pythontex*.py}'s handling of the name of the file being processed.  A warning is no longer raised if the name is given with an extension; extensions are now processed (stripped) automatically.  The filename may now contain a path to the file, so you need not run \texttt{pythontex*.py} from within the document's directory.
 % \item Added command-line option \texttt{-{}-verbose} for more verbose output.  Currently, this prints a list of all processes that are launched.
 % \item Fixed a bug that could crash \texttt{pythontex*.py} when the package option \texttt{pygments=false}.
@@ -181,9 +215,11 @@
 % \item Revised treatment of any content that custom code attempts to print.  Custom code is not allowed to print to the document (see documentation).  If custom code attempts to print, a warning is raised, and the printed content is included in the \texttt{pythontex*.py} run summary.
 % \item One-line entries in stderr, such as those produced by Python's \texttt{warnings.warn()}, were not previously parsed because they are of the form \texttt{:<linenumber>:} rather than \texttt{line~<linenumber>}.  These are now parsed and synchronized with the document.  They are also correctly parsed for inclusion in the document via \texttt{\string\stderrpythontex}.
 % \item If the package option \texttt{stderrfilename} is changed, all sessions that produced errors or warnings are now re-executed automatically, so that their stderr content is properly updated with the new filename.
+% \end{itemize}
 % \end{changelog}
 %
 % \begin{changelog}{v0.10beta}{2013/01/09}
+% \begin{itemize}
 % \item Backward-incompatible: Redid treatment of command-line options for \texttt{pythontex*.py}, using Python's \texttt{argparse} module.  Run \texttt{pythontex*.py} with option \texttt{-h} to see new command line options.
 % \item Deprecated: \texttt{\string\setpythontexcustomcode} is deprecated in favor of the \texttt{\string\pythontexcustomc} command and \texttt{pythontexcustomcode} environment.  These allow entry of pure code, unlike \texttt{\string\setpythontexcustomcode}.  These also allow custom code to be added to the beginning or end of a session, via an optional argument.  Improved treatment of errors and warnings associated with custom code.
 % \item The summary of errors and warnings now correctly differentiates errors and warnings produced by user code, rather than treating all of them as errors.  By default, \texttt{pythontex*.py} now returns an exit code of 1 if there were errors.
@@ -212,9 +248,11 @@
 % \item Fixed a bug that sometimes caused incorrect line numbers with \texttt{stderr} content.  Improved processing of stderr.
 % \item Fixed a bug in automatic detection of pre-existing listings environment.
 % \item Improved the detection of imports from \texttt{\_\_future\_\_}.  Detection should now be stricter, faster, and more accurate.
+% \end{itemize}
 % \end{changelog}
 %
 % \begin{changelog}{v0.9beta3}{2012/07/17}
+% \begin{itemize}
 % \item Added Unicode support, which required the Python code to be split into one set for Python 2 and another set for Python 3.  This will require any old installation to be completely removed, and a new installation created from scratch.
 % \item Refactoring of Python code.  Documents should automatically re-execute all code after updating to the new version.  Otherwise, you should delete the PythonTeX directory and run PythonTeX.
 % \item Improved installation script.
@@ -224,14 +262,19 @@
 % \item Rewrote pythontex\_utils*.py, creating a new, context-aware interface to SymPy's LatexPrinter class.
 % \item Content brought in via macros no longer uses labels.  Rather, long defs are used, which allows line breaks.
 % \item Pygments highlighting is now default for PythonTeX commands and environments
+% \end{itemize}
 % \end{changelog}
 %
 % \begin{changelog}{v0.9beta2}{2012/05/09}
+% \begin{itemize}
 % \item Changed Python output extension to .stdout.
+% \end{itemize}
 % \end{changelog}
 %
 % \begin{changelog}{v0.9beta}{2012/04/27}
+% \begin{itemize}
 % \item Initial public beta release.
+% \end{itemize}
 % \end{changelog}
 %
 %
@@ -258,7 +301,7 @@
 %
 % Because documents that use \pytex\ mix \LaTeX\ and Python code, they are less suitable than plain \LaTeX\ documents for journal submission, sharing, and conversion to other formats.  \pytex\ includes a |depythontex| utility that creates a copy of a document in which all \pytex\ content is replaced by its output.
 %
-% While Python is the focus of \pytex, adding basic support for an additional language is usually as simple as creating a new class instance and a few templates, usually totaling less than 100 lines of code.  The following languages are already have built-in support:  Ruby.
+% While Python is the focus of \pytex, adding basic support for an additional language is usually as simple as creating a new class instance and a few templates, usually totaling less than 100 lines of code.  The following languages already have built-in support:  Ruby and Julia.
 % \end{abstract}
 %
 %
@@ -310,13 +353,21 @@
 % Now at this point there will almost certainly be some reader, sooner or later, who wants to object, ``But what about language \textit{X}!''  Well, yes, in some respects the choice to use Python did come down to personal preference.  But you should give Python a try, if you haven't already.  You may also wish to consider the many interfaces that are available between Python and other languages.  If you still aren't satisfied, keep in mind \pytex's ``language-independent'' implementation!  In many cases, adding support for additional languages is relatively simple (see Section~\ref{sec:other-languages}).
 %
 %
+% \section{Citing \pytex}
+% \label{sec:citing}
+% 
+% If you use \pytex\ in your writing and research, please consider citing it in any resulting publications.  Currently, the best paper to cite is the one published in the 2013 SciPy proceedings.  Several additional papers about \pytex\ are now under review or in preparation; this list will be edited when they are published.
+% \begin{itemize}
+% \item ``Reproducible Documents with PythonTeX,'' Geoffrey M.\ Poore.  \textit{Proceedings of the 12th Python in Science Conference} (2013), pp.\ 73--79.  Full text and Bib\TeX\ entry available at \url{http://conference.scipy.org/proceedings/scipy2013/poore.html}.
+% \end{itemize}
+%
 %
 % \section{Installing and running}
 % \label{sec:installing-and-running}
 %
 % \subsection{Installing \pytex} 
 %
-% \pytex\ requires a \TeX\ installation.  It has been tested with  \href{http://www.tug.org/texlive/}{\TeX\ Live} and  \href{http://miktex.org/}{MiK\TeX}, but should work with other distributions.  The following \LaTeX\ packages, with their dependencies, are required:  |fancyvrb|, |etex|, |etoolbox|, |xstring|, |pgfopts|, |newfloat|, |currfile|, and |color| or |xcolor|.  A current \TeX\ installation is recommended, since some features require recent versions of the packages.  If you are creating and including graphics, you will also need |graphicx|.  The \href{http://www.ctan.org/pkg/mdframed}{\texttt{mdframed}} package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors; \href{http://www.ctan.org/pkg/tcolorbox}{\texttt{tcolorbox}} and \href{http://www.ctan.org/pkg/framed}{\texttt{framed}} are alternatives.
+% \pytex\ requires a \TeX\ installation.  It has been tested with  \href{http://www.tug.org/texlive/}{\TeX\ Live} and  \href{http://miktex.org/}{MiK\TeX}, but should work with other distributions.  The following \LaTeX\ packages, with their dependencies, are required:  |fancyvrb|, |etex|, |etoolbox|, |xstring|, |pgfopts|, |newfloat| (part of the |caption| bundle), |currfile|, and |color| or |xcolor|.  A current \TeX\ installation is recommended, since some features require recent versions of the packages.  If you are creating and including graphics, you will also need |graphicx|.  The \href{http://www.ctan.org/pkg/mdframed}{\texttt{mdframed}} package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors; \href{http://www.ctan.org/pkg/tcolorbox}{\texttt{tcolorbox}} and \href{http://www.ctan.org/pkg/framed}{\texttt{framed}} are alternatives.
 %
 % \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools, although many scientific packages are now compatible with Python 3.  \pytex\ is compatible with Python 2.7 and 3.2+.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile |pythontex_gallery.tex|, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}. 
 %
@@ -437,7 +488,7 @@
 %
 % \DescribeMacro{usefamily=\meta{basename}/\marg{basename1,~basename2,~...}}
 %
-% By default, only the |py|, |sympy|, and |pylab| families of commands and environments are defined, to prevent possible package conflicts.\footnote{For example, a \texttt{\string\ruby} command for Ruby code, and the \texttt{\string\ruby} command defined by the Ruby package in the \href{http://www.ctan.org/pkg/cjk}{CJK package}.}  This option defines preconfigured families for other available languages.  It takes either a single language base name, or a list of comma-separated names enclosed in curly braces.  Currently, the Ruby families |rb| and |ruby| may be created.
+% By default, only the |py|, |sympy|, and |pylab| families of commands and environments are defined, to prevent possible package conflicts.\footnote{For example, a \texttt{\string\ruby} command for Ruby code, and the \texttt{\string\ruby} command defined by the Ruby package in the \href{http://www.ctan.org/pkg/cjk}{CJK package}.}  This option defines preconfigured families for other available languages.  It takes either a single language base name, or a list of comma-separated names enclosed in curly braces.  Currently, the Ruby families |rb| and |ruby| and the Julia families |jl| and |julia| may be created.
 %
 %
 % \DescribeMacro{gobble=none/auto default:none}
@@ -758,6 +809,8 @@
 %
 %  All non-|console| families import |pythontex_utils.py|, and create an instance of the \pytex\ utilities class called |pytex|.  This provides various utilities for interfacing with \LaTeX\ and \pytex.
 %
+% The utilities class has an attribute |context|.  This is a dictionary that contains contextual information, such as page dimensions, from the \TeX\ side.  Values may also be accessed as attributes rather than as dictionary keys.  To determine what contextual information is available, and for additional details, see |\setpythontexcontext| under Section~\ref{sec:usage:advanced-usage}.  For working with contextual data, the utilities class provides |pt_to_in()|, |pt_to_cm()|, |pt_to_mm()|, and |pt_to_bp()| methods for converting from \TeX\ points to other units.
+%
 % The utilities class provides an interface for determining how Python objects are converted into strings in commands such as |\py|.  The |pytex.set_formatter(|\meta{formatter}|)| method is used to set the conversion.  Two formatters are provided:
 % \begin{itemize}
 % \item |'str'| converts Python objects to a string, using the |str()| function under Python 3 and the |unicode()| function under Python 2.  (The use of |unicode()| under Python 2 should not cause problems, even if you have not imported |unicode_literals| and are not using unicode strings.  All encoding issues should be taken care of automatically by the utilities class.)
@@ -823,8 +876,7 @@
 % An example of using the |after()| method to automatically save and include all matplotlib figures created in a command or environment is shown below.  This example is designed for the |pylab| family of commands, or when |from pylab import *| is used.  If |pyplot| is imported as |plt| instead, then |plt.get_fignums()|, |plt.figure()|, |plt.savefig()|, |plt.close()|, etc., would be needed.
 % \begin{verbatim}
 %# Basename for figures that will be created
-%pytex.basename = '_'.join([pytex.input_type, pytex.input_session, 
-%                           pytex.input_restart])
+%pytex.basename = '_'.join([pytex.family, pytex.session, pytex.restart])
 %
 %# Need to keep track of total number of figures in each session
 %pytex.fignum = 0
@@ -1020,6 +1072,29 @@
 %
 %
 % \subsection{Advanced \pytex\ usage}
+% \label{sec:usage:advanced-usage}
+%
+% \DescribeMacro{\setpythontexcontext\marg{key-value~pairs}}
+%
+% This macro is used for passing contextual information such as page dimensions from the \TeX\ side to the Python/other language side.  \meta{key-value~pairs} is a set of comma-delimited key-value pairs.  An evaluated version of \meta{key-value~pairs} is passed to the programming language, wrapped in quotation marks to become a string.  Thus, \meta{key-value~pairs} should \emph{not} contain quotation marks, backslashes, or other characters that would prevent the evaluated contents from being the body of a normal, quoted string.
+%
+% As an example, the following would pass the values of |\textwidth| and |\textheight| to the Python side.
+%\begin{verbatim}
+%\setpythontexcontext{textwidth=\the\textwidth, textheight=\the\textheight}
+%\end{verbatim}
+% Python would receive a string something like |"textwidth=390pt, textheight=592pt"|.  This string would be parsed into key-value pairs, and the results stored in the |pytex.context| dictionary.  For Python, the keys also become the names of attributes of |pytex.context|.  Thus, the values may be accessed on the Python side via |pytex.context['textwidth']|, |pytex.context.textwidth|, etc.
+%
+% All contextual data is available as strings on the Python/other language side.  For convenience, the utilities class provides unit conversion methods for converting from \TeX\ points to inches, centimeters, millimeters, and big (DTP or PostScript) points.  These methods take integers, floats, or strings that consist of digits (optionally ending in ``pt''), and return floats.  For example, |pytex.pt_to_in()|, |pytex.pt_to_cm()|, |pytex.pt_to_mm()|, |pytex.pt_to_bp()|.  Keep in mind that the units of \TeX\ points are \href{http://tex.stackexchange.com/questions/41370/what-are-the-possible-dimensions-sizes-units-latex-understands}{$1/72.27$} of an inch, \emph{not} $1/72$ of an inch (which is a bp).
+%
+% There is also a type system for Python that allows the types of \meta{values} to be specified.  Any \meta{value} beginning with |int::| will become an integer; with |float::|, a float; with |str::|, a string.  For example, 
+%\begin{verbatim}
+%\setpythontexcontext{a=int::42, b=float::42, c=str::42}
+%\end{verbatim}
+% \textbf{This type system is still under development and is subject to change in the future.}  Once the system stabilizes, it will be extended to non-Python languages.  Comments on the type system are welcome.  The current reasoning is as follows.  The type system should not be too Python-specific, since \pytex\ is supporting additional languages; only a few types should be supported.  A prefix is preferable to something like |int(42)|, since that requires checking for the closing parenthesis and also means that a closing parenthesis is required after an argument that may contain a complex-looking jumble of \TeX\ code, where it might be less visible.  The type declaration should go with the \meta{value} rather than the \meta{key}, because if more complex types are added later (or added by the user), a hierarchy of type declarations might be needed (for example, elements in a list), and that is impossible if the \meta{key} is assigned a type.  The use of double colons |::| is somewhat arbitrary; it is reminiscent of type declarations in some languages, should be rare in strings that the user would want to pass to the Python/other language side, and is less prone to misinterpretation that a space (|int 42|) or a single colon (|int:42|).
+%
+% The context may only be set in the preamble.
+%
+% Technical note:  Contextual data is cached, so the dictionary (and its attributes, if applicable) is only updated when contextual data changes.  This largely eliminates any potential overhead from contextual data.
 %
 % \DescribeMacro{\restartpythontexsession\marg{counter~value(s)}}
 %
@@ -1089,7 +1164,7 @@
 %
 % \item Run the |depythontex.py| script.  This takes the following arguments.
 %     \begin{itemize}
-%     \item |--encoding ENCODING| This is the encoding of the \LaTeX\ file and all related files.  If an encoding is not specified, UTF-8 is assumed.
+%     \item |--encoding| This is the encoding of the \LaTeX\ file and all related files.  If an encoding is not specified, UTF-8 is assumed.
 %     \item |--overwrite| This turns off the user prompt in the event that a file already exists with the output name, making overwriting automatic.
 %     \item |--listing| This option specifies the commands and environments that are used for any typeset code.  This can be |verbatim|, |fancyvrb|, |listings|, |minted|, or |pythontex|.\footnote{The \texttt{pythontex} option is included for completeness.  In most cases, you would probably use \texttt{depythontex} to remove all dependence on \pytex.  But sometimes it might be useful to remove all Python code while still using \pytex\ for syntax highlighting.}  |verbatim| is used by default.  An appropriate |\usepackage| command is automatically added to the output document's preamble.
 %
@@ -1101,8 +1176,8 @@
 % A Python-style dict will also be accepted.
 %     \item |--preamble| This option allows additional commands to be added to the output document's preamble.  This is useful when you want the output document to load a package that was automatically loaded by \pytex, such as |upquote|.
 %     \item |--graphicspath| This option adds the |outputdir| to any existing graphics path defined by |\graphicspath|, or adds a |\graphicspath| command if one does not already exist.  This causes the |depythontex| document to automatically look in the |outputdir| for graphics.  Only use this option if you want to continue using the |outputdir| with the |depythontex| document.  Graphics are further discussed below.
+%     \item |-o| |--output|  The name of the output file.  If no name is given, the converted file is written to |stdout|.
 %     \item |TEXNAME| The name of the \LaTeX\ file whose \pytex\ dependence is to be removed.  
-%     \item |[OUTFILE]| By default, the script takes a file |<filename>.<ext>| and creates a new file called |depythontex_<filename>.<ext>|.  If a name is given for the output file, that is used instead.
 %     \end{itemize}
 % \item Compile the |depythontex| file, and compare it to the original.
 %
@@ -1241,13 +1316,13 @@
 %
 % \subsubsection{Template}
 %
-% \pytex\ executes user code by inserting it in a script template.  Replacement fields in the template are indicated by double curly braces:  |{{|\meta{field}|}}|.  Space between \meta{field} and the braces is allowed; |{{ |\meta{field}| }}| is valid.  Replacement fields (\textbf{including} the braces) should be surrounded by quotation marks or equivalent when the replacement is to be a string rather than literal code.
+% \pytex\ executes user code by inserting it in a script template.  Replacement fields in the template are indicated by curly braces:  |{|\meta{field}|}|.\footnote{This follows Python's \href{http://docs.python.org/2/library/string.html\#formatstrings}{format string syntax}.  Literal curly braces are obtained by doubling.}  Space between \meta{field} and the braces is not allowed.  Replacement fields (\textbf{including} the braces) should be surrounded by quotation marks or equivalent when the replacement is to be a string rather than literal code.
 %
 % The template should perform the following tasks.
 % \begin{itemize}
-% \item Set the script encoding.  The |{{encoding}}| field will be replaced with a user-specified encoding or the default |UTF-8|.  If you are not using anything beyond ASCII, this is not strictly necessary.
-% \item Python templates should have a |{{future}}| field at the beginning, for compability with Python 2 and the package option |pyfuture|.\footnote{The beginning of user code is parsed for imports from \texttt{\_\_future\_\_}. Any imports are collected and inserted into the \texttt{\{\{future\}\}} field.}
-% \item Set the |stdout| and |stderr| encoding, again using |{{encoding}}|.  As before, this is not strictly necessary when only ASCII support is needed.
+% \item Set the script encoding.  The |{encoding}| field will be replaced with a user-specified encoding or the default |UTF-8|.  If you are not using anything beyond ASCII, this is not strictly necessary.
+% \item Python templates should have a |{future}| field at the beginning, for compability with Python 2 and the package option |pyfuture|.\footnote{The beginning of user code is parsed for imports from \texttt{\_\_future\_\_}. Any imports are collected and inserted into the \texttt{\{\{future\}\}} field.}
+% \item Set the |stdout| and |stderr| encoding, again using |{encoding}|.  As before, this is not strictly necessary when only ASCII support is needed.
 % \item Create a language-specific equivalent of the \pytex\ utilities class.\footnote{Python templates can import the \pytex\ utilities class.  In that case, \texttt{sys.path.append('\{\{utilspath\}\}')} is needed before the import, so that the location of the utilities class is known.}  Create an instance of this class.  It is recommended that the class be called \meta{language~name}|TeXUtils| and the instance \meta{language~extension}|tex|, by analogy with the Python case.\footnote{The class could be called \meta{language~name}\texttt{TeX}.  In that case, the class and the instance would have the very same name (except for capitalization) in cases where the language name and extension are the same (for example, Lua).  That is probably not desirable, and besides, \texttt{Utils} adds additional clarity.  The instance name \meta{language~extension}\texttt{tex} is recommended because it will be short and easily remembered.  Plain \texttt{tex} could be used instead, but that would be less descriptive (it lacks the interface connotations) and would not remind the user of the language currently in use (which could be beneficial in a document combining multiple languages, each with its own slightly different utilities class).}   When the \meta{language~extension} is only a single character or is shared by multiple languages, it may be better to use the full \meta{language~name} or an abbreviation in the name of the class instance.
 %
 % For full \pytex\ support, the utilities class should provide the following methods:
@@ -1255,26 +1330,28 @@
 %     \item |formatter()|:  For formatting content for inline commands equivalent to |\py|.  This should take a single argument of any type.  By default, it should return a standard string representation of its argument.
 %     \item |before()| and |after()|:  Initially, these should do nothing; they are provided to be redefined by the user.  They should take no arguments.
 %     \item |add_dependencies()| and |add_created()|:  These should accept an arbitrary number of comma-separated strings (if supported by the language).  Each method should append its arguments to a list or equivalent data structure, for later use.
-%     \item |cleanup()|:  This prints a dependencies delimiter string |{{dependencies_delim}}| to |stdout|, then prints all dependencies (one per line), then prints a created files delimiter string |{{created_delim}}|, then prints all created files (one per line).  The delimiters should be printed even if there are no dependencies or created files.  The delimiters contain no backslashes or quotes.
+%     \item |cleanup()|:  This prints a dependencies delimiter string |{dependencies_delim}| to |stdout|, then prints all dependencies (one per line), then prints a created files delimiter string |{created_delim}|, then prints the names of all created files (one per line).  The delimiters should be printed even if there are no dependencies or created files.  The delimiters contain no backslashes or quotes.
 %     \end{itemize}
 % The utilities class should also provide several variables, as described below.
-% \item Attempt to change to the working directory |{{workingdir}}|.  Raise an error and exit if this is not possible.  For convenience, the script should check for a |--manual| command line argument.  If this argument is present, the script should proceed even if the working directory cannot be found.  This allows the user to manually invoke the script for debugging (the script can be saved via |keeptemps|).
+% \item Attempt to change to the working directory |{workingdir}|.  Raise an error and exit if this is not possible.  For convenience, the script should check for a |--manual| command line argument.  If this argument is present, the script should proceed even if the working directory cannot be found.  This allows the user to manually invoke the script for debugging (the script can be saved via |keeptemps|).
 %
 % The working directory should be added to the module search path (Python |sys.path|, Ruby |$:| or |$LOAD_PATH|, etc.), unless it is the same as the document root directory or is otherwise already on the module search path.
-% \item For full compatibility, the template should have an |{{extend}}| field where additional module imports or other code may be inserted.  This allows a basic template to be a created for each language.  The basic template may then be customized for specific purposes.  The |{{extend}}| field should be after the utilities class instance has been created, so that the workings of the utilities class (|formatter()|, |before()|, |after()|, etc.) may be customized by it.
-% \item \LaTeX-related variables of the utilities class instance that do not change should be set.  These use the fields |{{input_family}}|, |{{input_session}}|, and |{{input_restart}}|; all should be strings.  These variables should be named after the fields if possible (for example, |pytex.input_family|).  These variables are not strictly necessary, but they allow user code to access information about its \LaTeX\ context.
-% \item There should be a |{{body}}| field where the body of the script is inserted.
+% \item For full compatibility, the template should have an |{extend}| field where additional module imports or other code may be inserted.  This allows a basic template to be a created for each language.  The basic template may then be customized for specific purposes.  The |{extend}| field should be after the utilities class instance has been created, so that the workings of the utilities class (|formatter()|, |before()|, |after()|, etc.) may be customized by it.
+% \item \LaTeX-related variables of the utilities class instance that do not change should be set.  These use the fields |{input_family}|, |{input_session}|, and |{input_restart}|; all should be strings.  These variables should be named after the fields if possible (for example, |pytex.input_family|).  These variables are not strictly necessary, but they allow user code to access information about its origin on the \TeX\ side.
+% \item There should be a |{body}| field where the body of the script is inserted.
 % \item The script should end by calling the |cleanup()| method.
 % \end{itemize}
 %
 % \subsubsection{Wrapper}
 % Each chunk of user code is inserted into a wrapper template.  This performs the following tasks.
 % \begin{itemize}
-% \item Set additional \LaTeX-related utilities variables:  |{{input_command}}|, |{{input_context}}|, |{{input_args}}|, |{{input_instance}}|, |{{input_line}}|.  All of these should be strings.  They are not required, but make possible closer \LaTeX\ integration. |{{input_context}}| and |{{input_args}}| are not yet supported on the \LaTeX\ side, but will allow information about the \LaTeX\ context (for example, page width) and arguments from \LaTeX\ commands to be passed to user code.
-% \item Write a delimiter |{{stdout_delim}}| to |stdout| and a delimiter |{{stderr_delim}}| to |stderr|.  Both delimiters should be strings.  Both should be written in such a way that the delimiter is followed by a newline; the delimiters that are inserted in the wrapper template \textbf{do not} contain a newline.  For example, something like |"{{stderr_delim}}\n"| might be necessary.  The delimiters contain no backslashes or quotation marks.
+% \item Set additional \LaTeX-related utilities variables:  |{input_command}|, |{input_context}|, |{input_args}|, |{input_instance}|, |{input_line}|.  They are not required, but make possible closer \LaTeX\ integration.  |{input_args}| is not yet supported on the \LaTeX\ side, but will allow arguments from \LaTeX\ commands to be passed to user code.
+%
+% All utilities variables should be stored as strings, except for |input_context| and |input_args|.  If possible, these should be dictionaries or equivalent associative arrays of string keys that point to string values.  The dictionaries should be created by processing |{input_context}| and |{input_args}| into comma-separated lists of key-value pairs.  For example, if |{input_context}| is the string ``|k1=v1, k2=v2|'', then |pytex.input_context| should be a dictionary, and |pytex.input_context['k1']| should yield the string ``|v1|''.  The key-value pairs may optionally be accessed as attributes, when this is possible with a given language.  For example, |pytex.input_context.k1| could yield the string ``|v1|''.
+% \item Write a delimiter |{stdout_delim}| to |stdout| and a delimiter |{stderr_delim}| to |stderr|.  Both delimiters should be strings.  Both should be written in such a way that the delimiter is followed by a newline; the delimiters that are inserted in the wrapper template \textbf{do not} contain a newline.\footnote{This way, we don't have to assume that all languages will use \texttt{\string\n} for the newline character.}  For example, something like |"{stderr_delim}\n"| might be necessary.  The delimiters contain no backslashes or quotation marks.
 % \item Call |before()|.
-% \item Have a |{{code}}| field into which the current chunk of user code is inserted.
-% \item Call |after()|.  For languages like Ruby that allow statements to continue onto subsequent lines, without enclosing parentheses or other delimiters, the call to |after()| should immediately follow user code, without any intervenening empty lines.  That way, any syntax errors from the last line of user code will be caught as early as possible, and the corresponding line numbers will be more meaningful.
+% \item Have a |{code}| field into which the current chunk of user code is inserted.
+% \item Call |after()|.
 % \end{itemize}
 %
 % \subsubsection{The \texttt{CodeEngine} class}
@@ -1285,28 +1362,28 @@
 % \item The instance name.  This will be the base name for commands and environments that use the instance.  For example, |\py|, |\pyc|, |pycode|, etc., rely on the |py| instance of the |CodeEngine| class.
 % \item The name of the language.  In some cases, this may be the same as the instance name.
 % \item The filename extension for scripts (with or without a period).
-% \item The command for running scripts.  The script that is executed should be referred to as ``|{{file}}.|\meta{extension}'' (without the quotes).\footnote{It might seem that the extension is redundant, since it is specified separately.  The command is specified in this form to simplify cases where there may be intermediary files in the execution process.}  The interpreter may be hardcoded (|python {{file}}.py|), but it is best to leave it as a substitution field (|{{python}} {{file}}.py|) so that the |--interpreter| command-line option can be used to provide a specific interpreter.
+% \item The command for running scripts.  The script that is executed should be referred to as ``|{file}.|\meta{extension}'' (without the quotes).\footnote{It might seem that the extension is redundant, since it is specified separately.  The command is specified in this form to simplify cases where there may be intermediary files in the execution process.}  The interpreter may be hardcoded (|python {file}.py|), but it is best to leave it as a substitution field (|{python} {file}.py|) so that the |--interpreter| command-line option can be used to provide a specific interpreter.
 % \item The script template.
 % \item The wrapper template.
-% \item A template that specifies how code from commands like |\py| should be inserted into a call to the |formatter()| method.  The user code is specified by |{{code}}|.  The output of the |formatter()| method should be written to |stdout|, so something like |'print(pytex.formatter({{code}}))'| is needed.
+% \item A template that specifies how code from commands like |\py| should be inserted into a call to the |formatter()| method.  The user code is specified by |{code}|.  The output of the |formatter()| method should be written to |stdout|, so something like |'print(pytex.formatter({code}))'| is needed.
 % \item An optional list of strings (or an individual string) that gives patterns for identifying error messages.
 % \item An optional list of strings (or an individual string) that gives patterns for identifying warning messages.
-% \item An optional list of strings (or an individual string) that gives patterns for identifying code line numbers in |stderr|.  These patterns use the field |{{number}}|.  These patterns are searched for in any line of |stderr| that contains the name of the script that was executed.
+% \item An optional list of strings (or an individual string) that gives patterns for identifying code line numbers in |stderr|.  These patterns use the field |{number}|.  These patterns are searched for in any line of |stderr| that contains the name of the script that was executed.
 % \item An optional boolean that specifies whether the engine emulates an interactive console.  Currently, user-defined engines that emulate consoles are not supported.
 % \item An optional string of startup commands for engines that emulate consoles.
-% \item An optional list of strings (or an individual string) that specifies any files created during execution, beyond the script |{{file}}.|\meta{extension}.  The field |{{file}}| may be used in file names.
+% \item An optional list of strings (or an individual string) that specifies any files created during execution, beyond the script |{file}.|\meta{extension}.  The field |{file}| may be used in file names, if files are created with the same base name as the script; this could be useful with compiled languages, which might have a |{file}.|\meta{extension} that ultimately results in a |{file}.out|, |{file}.exe|, etc.
 % \end{itemize}
 %
 % An example of creating the |py| engine is shown below.  The |python_template| and |python_wrapper| are long enough that they are defined separately.
 % \begin{verbatim}
-%CodeEngine('py', 'python', '.py', 'python {{file}}.py',
-%       python_template, python_wrapper,
-%       'print(pytex.formatter({{code}}))',
-%       'Error:', 'Warning:', ['line {{number}}', ':{{number}}:'])
+%CodeEngine('py', 'python', '.py', 'python {file}.py',
+%           python_template, python_wrapper,
+%           'print(pytex.formatter({code}))',
+%           'Error:', 'Warning:', ['line {number}', ':{number}:'])
 % \end{verbatim}
 % The script template and wrapper templates may be defined with Python's triple-quoted strings.  All content within such a string may be indented for clarity, as can be seen in |pythontex_engines.py|.  Strings are automatically dedented when |CodeEngine| instances are created.
 %
-% In addition to the |CodeEngine| class, there is also a |SubCodeEngine| class.  It allows a new engine to be created based on an existing engine.  It requires the name of the engine from which to inherit and the name of the new engine.  All of the other arguments listed above are optional; if any are provided, they overwrite the inherited arguments.  The class also takes one additional optional argument, |extend|.  This is a string that specifies additional code to be entered in the inherited template, in the |{{extend}}| field.  Subengines of subengines may be created; in that case, any |extend|s are cumulative.
+% In addition to the |CodeEngine| class, there is also a |SubCodeEngine| class.  It allows a new engine to be created based on an existing engine.  It requires the name of the engine from which to inherit and the name of the new engine.  All of the other arguments listed above are optional; if any are provided, they overwrite the inherited arguments.  The class also takes one additional optional argument, |extend|.  This is a string that specifies additional code to be entered in the inherited template, in the |{extend}| field.  Subengines of subengines may be created; in that case, any |extend|s are cumulative.
 %
 % \subsubsection{Creating the \LaTeX\ interface}
 % Once a new engine has been created, access from the \LaTeX\ side must be provided.  \pytex\ provides a macro for this purpose.
@@ -1327,6 +1404,29 @@
 % \item If a \pytex\ document will not compile, you may want to delete the directory in which \pytex\ content is stored and try compiling from scratch.  It is possible for \pytex\ to become stuck in an unrecoverable loop.  Suppose you tell Python to print some \LaTeX\ code back to your \LaTeX\ document, but make a fatal \LaTeX\ syntax error in the printed content.  This syntax error prevents \LaTeX\ from compiling.  Now suppose you realize what happened and correct the syntax error.  The problem is that the corrected code cannot be executed until \LaTeX\ correctly compiles and saves the code externally, but \LaTeX\ cannot compile until the corrected code has already been executed.  One solution in such cases is to correct the code, delete all files in the \pytex\ directory, compile the \LaTeX\ document, and then run \pytex\ from scratch.  You can also disable the inclusion of printed content using the |debug| package options.
 %
 % \item Dollar signs \$ may appear as \textsterling\ in italic code comments typeset by Pygments.  This is a font-related issue.  One fix is to |\usepackage[T1]{fontenc}|.
+%
+% \item The |tabular| environment can conflict with \pytex\ under some circumstances, due to how |tabular| functions.  Among other things, printing within a |tabular| environment can cause errors, because printing involves bringing in external content via |\InputIfFileExists|, but that macro is not expandable.\footnote{For more information, see \href{http://tex.stackexchange.com/questions/50820/expandable-version-of-inputiffileexists-or-iffileexists}{this}, \href{http://tex.stackexchange.com/questions/50828/execute-non-expandable-code-inside-a-tabular-environment}{this}, and \href{http://tex.stackexchange.com/questions/50694/cannot-use-toprule-when-doing-input-inside-tabular-why}{this}.}  There are a few different ways to work around the limitations of |tabular|.
+% \begin{itemize}
+%\item Put the printed content in a macro definition, and use the macro in |tabular|. You will have to create a dummy version of the macro, to avoid errors before the macro is defined by \pytex.  An example is given below.  The |\global\def| is needed so that the macro is defined outside of the |pycode| environment.  
+%\begin{verbatim}
+%\let\row\relax
+%\begin{pycode}
+%print("\\global\\def\\row{a & b & c & d & e \\\\}")
+%\end{pycode}
+%
+%\begin{tabular}{|c|c|c|c|c|}
+%\row
+%\end{tabular}
+%\end{verbatim}
+%
+% \item Use |\py|. The end-of-row |\\| must be outside of the command.  Example:
+%\begin{verbatim}
+%\begin{tabular}{|c|c|c|c|c|}
+%\py{"a & b & c & d & e"} \\
+%\end{tabular}
+%\end{verbatim}
+% \end{itemize}
+%
 % \end{itemize}
 %
 %
@@ -1350,7 +1450,7 @@
 % \item Improved testing framework.
 % \item It might nice to include some methods in the \pytex\ utilities for formatting numbers (especially with SymPy and Pylab).
 % \item Test the behavior of files brought in via |\input| and |\include| that contain \pytex\ content.
-% \item Continue adding support for additional languages.  In preparation:  Julia.  Under consideration:  Perl, Lua, MATLAB, Mathematica, Sage, R, Octave.
+% \item Continue adding support for additional languages.  Under consideration:  Perl, Lua, MATLAB, Mathematica, Sage, R, Octave.
 % \end{itemize}
 %
 % \subsubsection{Modifications to consider}
@@ -1399,7 +1499,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{v0.12}
+\newcommand{\pytx@packageversion}{v0.13-beta}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
@@ -1833,7 +1933,7 @@
 %
 % This prevents the creation of unnecessary files, but it also has a significant drawback:  only some content can be saved in a standard macro.  In particular, verbatim content using |\verb| and |verbatim| will not work.  So we need a way to save anything in a macro.  The solution is to create a special macro that captures its argument verbatim.  The argument is then tokenized when it is used via |\scantokens|.  All of this requires a certain amount of catcode trickery.
 %
-% While this approach works with the XeTeX and pdfTeX engines, it does not work with the LuaTeX engine, which has a known bug in its implementation of |\scantokens|.\footnote{\url{http://tracker.luatex.org/view.php?id=733}}  So we provide a separate version for Lua\TeX\ that does not support verbatim.  The space after the |#1| is intentional, so that the newline at the beginning of the macro definition is gobbled, and the macro content will start with text rather than leading whitespace.
+% While this approach works with the XeTeX and pdfTeX engines, it does not work with the LuaTeX engine, which has a known bug in its implementation of |\scantokens|.\footnote{\url{http://tracker.luatex.org/view.php?id=733}}  So we provide a separate version for Lua\TeX\ that does not support verbatim.  The space after the |#1| is intentional, so that the newline at the beginning of the macro definition is gobbled, and the macro content will start with text rather than leading whitespace.  Two separate tests for LuaTeX are performed:  comparison with an undefined macro |\pytx@undefined|, which will work under most circumstances, and comparison with |\relax|, which serves as a backup in case a test for LuaTeX by another package |\let|'s |\directlua| to |\relax| (for example, an |\expandafter\ifx\csname directlua\endcsname\relax| test).
 %
 %    \begin{macrocode}
 \def\pytx@SVMCR#1{%
@@ -1851,7 +1951,15 @@
         !expandafter!scantokens!expandafter{#1!empty}}%
 }%
 !endgroup
-\expandafter\ifx\csname directlua\endcsname\relax\else
+\ifx\directlua\pytx@undefined\else
+\def\pytx@SVMCR#1 {%
+    \edef\pytx@tmp{\csname #1\endcsname}%
+    \pytx@SVMCR@i}
+\long\def\pytx@SVMCR@i#1\endpytx@SVMCR{%
+    \expandafter\gdef\pytx@tmp{#1}%
+}
+\fi
+\ifx\directlua\relax\else
 \def\pytx@SVMCR#1 {%
     \edef\pytx@tmp{\csname #1\endcsname}%
     \pytx@SVMCR@i}
@@ -1863,20 +1971,21 @@
 %
 %
 % \subsubsection{Code context}
-% \begin{macro}{\pytx@context}\begin{macro}{\pytx@SetContext}\begin{macro}{\definepythontexcontext}
+% \begin{macro}{\pytx@context}\begin{macro}{\pytx@SetContext}\begin{macro}{\setpythontexcontext}
 % It would be nice if when our code is executed, we could know something about its context, such as the style of its surroundings or information about page size.
 %
-% By default, no contextual information is passed to \LaTeX.  There is a wide variety of information that could be passed, but most use cases would only need a very specific subset.  Instead, the user can customize what information is passed to \LaTeX.  The |\definepythontexcontext| macro defines what is passed.  It creates the |\pytx@SetContext| macro, which creates |\pytx@context|, in which the expanded context information is stored.  The context should only be defined in the preamble, so that it is consistent throughout the document.
+% By default, no contextual information is passed to \LaTeX.  There is a wide variety of information that could be passed, but most use cases would only need a very specific subset.  Instead, the user can customize what information is passed to \LaTeX.  The |\setpythontexcontext| macro defines what is passed.  It creates the |\pytx@SetContext| macro, which creates |\pytx@context|, in which the expanded context information is stored.  The context should only be defined in the preamble, so that it is consistent throughout the document.
 %
 % If you are interested in typesetting mathematics based on math styles, you should use the |\mathchoice| macro rather than attempting to pass contextual information.
 %    \begin{macrocode}
-\newcommand{\definepythontexcontext}[1]{%
+\newcommand{\setpythontexcontext}[1]{%
+    \Depythontex{cmd:setpythontexcontext:m:n}%
     \def\pytx@SetContext{%
         \edef\pytx@context{#1}%
     }%
 }
-\definepythontexcontext{}
-\@onlypreamble\definepythontexcontext
+\setpythontexcontext{}
+\@onlypreamble\setpythontexcontext
 %    \end{macrocode}
 % \end{macro}\end{macro}\end{macro}
 %
@@ -3557,7 +3666,7 @@
             {\PackageWarning{\pytx@packagename}%
                 {A "listing" environment already exists \MessageBreak
                  \pytx@packagename\space will not create one \MessageBreak
-                 Use \string\setpythontexlistingenv to create a custom listing environment}}%
+                 Use \string\setpythontexlistingenv\space to create a custom listing environment}}%
     \else
         \ifbool{pytx@listingenv}{}{\DeclareFloatingEnvironment[fileext=lopytx]{listing}}
     \fi

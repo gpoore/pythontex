@@ -4,23 +4,24 @@
 % Detect pdftex/xetex/luatex, and load appropriate font packages.
 % This is inspired by the approach in the iftex package.
 % pdftex:
-\expandafter\ifx\csname pdfmatch\endcsname\relax
+\ifx\pdfmatch\undefined
 \else
     \usepackage[T1]{fontenc}
     \usepackage[utf8]{inputenc}
 \fi
 % xetex:
-\expandafter\ifx\csname XeTeXinterchartoks\endcsname\relax
+\ifx\XeTeXinterchartoks\undefined
 \else
     \usepackage{fontspec}
     \defaultfontfeatures{Ligatures=TeX}
 \fi
 % luatex:
-\expandafter\ifx\csname directlua\endcsname\relax
+\ifx\directlua\undefined
 \else
     \usepackage{fontspec}
 \fi
 % End engine-specific settings
+\usepackage{lmodern}
 
 \usepackage[margin=1in]{geometry}
 \usepackage{microtype}
@@ -48,23 +49,37 @@
 
 
 
+\section*{Installing}
+
+\pytex\ requires Python 2.7 or 3.2+.
+
+\pytex\ is included in TeX Live 2013.  It may be installed via the package manager.
+
+A Python installation script is included with the package.  It should be able to install the package in most situations.  Depending on the configuration of your system, you may have to run the installation script with administrative priviliges.
+
+Detailed installation information is available in the main documentation, \texttt{pythontex.pdf}.
+
 \section*{Compiling}
 
-Compiling a document that uses \pytex\ involves three steps:  run \LaTeX, run \texttt{pythontex.py}, and finally run \LaTeX\ again.  You may wish to create a symlink or launching wrapper for \texttt{pythontex.py}, if one was not created during installation.  \pytex\ is compatible with the pdfLaTeX, XeLaTeX, and LuaLaTeX engines.  There are minor engine-specific differences.
+Compiling a document that uses \pytex\ involves three steps:  run \LaTeX, run \texttt{pythontex.py}, and finally run \LaTeX\ again.  You may wish to create a symlink or launching wrapper for \texttt{pythontex.py}, if one was not created during installation.  \pytex\ is compatible with the pdfLaTeX, XeLaTeX, and LuaLaTeX engines, so you can use \texttt{latex}, \texttt{pdflatex}, \texttt{xelatex}, or \texttt{lualatex}.  There are minor engine-specific differences; see the main documentation for details.
+
+The last two compile steps are \emph{only} necessary when code needs to be executed or highlighted.  Otherwise, the document may be compiled just like a normal \LaTeX\ document; all output is cached.
 
 
-\section*{Commands}
 
-\pygment{latex}{\py} returns a string representation of its argument.  For example, \pygment{latex}{\py{2 + 4**2}} produces \py{2 + 4**2}, and \pygment{latex}{\py{'ABC'.lower()}} produces \py{'ABC'.lower()}.  \pygment{latex}{\py}'s argument can be delimited by curly braces, or by a matched pair of other characters (just like \pygment{latex}{\verb}).
+
+\section*{Basic commands}
+
+\pygment{latex}{\py} returns a string representation of its argument.  For example, \pygment{latex}{\py{2 + 4**2}} produces ``\py{2 + 4**2}'', and \pygment{latex}{\py{'ABC'.lower()}} produces ``\py{'ABC'.lower()}''.  \pygment{latex}{\py}'s argument can be delimited by curly braces, or by a matched pair of other characters (just like \pygment{latex}{\verb}).
 
 \pygment{latex}{\pyc} executes code.  By default, anything that is printed is automatically included in the document (see \texttt{autoprint}/\texttt{autostdout} in the main documentation).  For example, \pygment{latex}{\pyc{var = 2}} \pyc{var = 2} creates a variable, and then its value may be accessed later via \pygment{latex}{\py{var}}:  \py{var}.
 
-\pygment{latex}{\pyb} executes and typesets code.   For example, \pygment{latex}{\pyb{var = 2}} typesets \pyb{var = 2} in addition to creating the variable.  If anything is printed, it is not automatically included, but can be accessed via \pygment{latex}{\printpythontex} and \pygment{latex}{\stdoutpythontex}.
+\pygment{latex}{\pyb} executes and typesets code.   For example, \pygment{latex}{\pyb{var = 2}} typesets \pyb{var = 2} in addition to creating the variable.  If anything is printed, it is not automatically included, but can be accessed via \pygment{latex}{\printpythontex} or \pygment{latex}{\stdoutpythontex}.
 
-\pygment{latex}{\pyv} only typesets code.  For example, \pygment{latex}{\pyv{var = 2}} produces \pyv{var = 2}.
+\pygment{latex}{\pyv} only typesets code; nothing is executed.  For example, \pygment{latex}{\pyv{var = 2}} produces \pyv{var = 2}.
 
 
-\section*{Environments}
+\section*{Basic environments}
 
 There are \texttt{pycode}, \texttt{pyblock}, and \texttt{pyverbatim} environments, which are the environment equivalents of \pygment{latex}{\pyc}, \pygment{latex}{\pyb}, and \pygment{latex}{\pyv}.  For example,
 \begin{pygments}{text}
@@ -81,6 +96,21 @@ print(r'\textit{A message from Python!}')
 print(r'\end{center}')
 \end{pycode}
 
+The \pygment{latex}{\begin} and \pygment{latex}{\end} of an environment should be on lines by themselves.  Code in environments may be indented; see the \texttt{gobble} option in the main documentation for more details.
+
+
+\section*{More commands/environments}
+
+All commands and environments described so far have names beginning with \texttt{py}.  There are equivalent commands and environments that begin with \texttt{sympy}; these automatically include
+\begin{pygments}{python}
+from sympy import *
+\end{pygments}
+There are also equivalent commands and environments that begin with \texttt{pylab}; these automatically use matplotlib's \texttt{pylab} module via
+\begin{pygments}{python}
+from pylab import *
+\end{pygments}
+The \texttt{sympy} and \texttt{pylab} commands and environments execute code in separate sessions from the \texttt{py} commands and environments.  This can make it easier to avoid namespace conflicts.
+
 There is also a \texttt{pyconsole} environment that emulates a Python interactive console.  For example,
 \begin{pygments}{text}
 \begin{pyconsole}
@@ -93,48 +123,53 @@ yields
 var = 1 + 1
 var
 \end{pyconsole}
+Console variable values may be accessed inline via the \pygment{latex}{\pycon} command.  More console information is available in the main documentation.
+
+\section*{Working with Python 2}
+\pytex\ supports both Python 2 and 3.  Under Python 2, imports from \pygment{python}{__future__} will work so long as they are the first user-entered code in a given session.  \pytex\ imports most things from \pygment{python}{__future__} by default.  To control what is automatically imported, see the \texttt{pyfuture} and \texttt{pyconfuture} package options in the main documentation.
 
 
-The \pygment{latex}{\begin} and \pygment{latex}{\end} of an environment should be on lines by themselves.  Code in environments may be indented; see the \texttt{gobble} option in the documentation for more details.
+\section*{Support for additional languages}
+
+\pytex\ also provides support for additional languages.  Currently, Ruby and Julia support is included.  To enable commands and environments for these language, see the \texttt{usefamily} package option in the main documentation.
+
+Language support is provided via a template system; in most cases, a new language can be added with about 100 lines of template code.  If you would like support for a new language, please open an issue at \href{https://github.com/gpoore/pythontex}{GitHub}.  The main documentation also contains a summary of the process for adding languages.
 
 \section*{Macro programming}
 
-\pytex\ commands can be used inside other commands in macro programming.  They will usually work fine, but curly braces should be used as delimiters and special \LaTeX\ characters such as \texttt{\%} and \texttt{\#} should be avoided in the Python code.  \pytex\ environments cannot be used inside \LaTeX\ commands, due to the way \LaTeX\ deals with verbatim content and catcodes.
+\pytex\ commands can be used inside other commands in macro programming.  They will usually work fine, but curly braces should be used as delimiters and special \LaTeX\ characters such as \texttt{\%} and \texttt{\#} should be avoided in the Python code.  These limitations can be removed by passing arguments verbatim or through catcode trickery.  \pytex\ environments cannot normally be used inside \LaTeX\ commands, due to the way \LaTeX\ deals with verbatim content and catcodes.
 
 
 \section*{Additional features}
 
-\pytex\ provides many additional features.  The working and output directories can be specified.  The user can determine when code is executed with the package option \texttt{rerun}, based on factors such as modification and exit status.  By default, all commands and environments run in a single session, providing continuity.  Commands and environments accept an optional argument that specifies the session in which the code is executed; sessions run in parallel.  \pytex\ provides a utilities class that is always imported into each session.  The utilities class provides methods for tracking dependencies and automatically cleaning up created files.
+\pytex\ provides many additional features.  The working and output directories can be specified via \pygment{latex}{\setpythontexworkingdir} and \pygment{latex}{\setpythontexoutputdir}.  The user can determine when code is executed with the package option \texttt{rerun}, selecting factors such as modification and exit status.  By default, all commands and environments with the same base name (\texttt{py}, \texttt{sympy}, \texttt{pylab}, etc.) run in a single session, providing continuity.  Commands and environments accept an optional argument that specifies the session in which the code is executed; sessions run in parallel.  \pytex\ provides a utilities class that is always imported into each session.  The utilities class provides methods for tracking dependencies and automatically cleaning up created files.  The utilities class also allows information such as page width to be passed from the \TeX\ side to Python/other languages.  See the main documentation for additional information.
 
 \pytex\ also provides the \texttt{depythontex} utility, which creates a copy of a document in which all \pytex\ commands and environments have been replaced by their output.  The resulting document is more suitable for journal submission, sharing, and conversion to other document formats.
 
 
-\section*{Extended characters}
+\section*{Unicode support}
 
-\pytex\ supports extended characters under all \LaTeX\ engines.  For example, consider the following example from Python:
+\pytex\ supports Unicode under all \LaTeX\ engines.  For example, consider the following example from Python:
 \begin{pygments}{python}
 my_string = '¥ § ß Ğ Ð Ñ Ö þ ø'
 \end{pygments}
-This requires some engine-specific packages.
+This requires some engine-specific packages.  Typical packages are listed below.
 
 \begin{itemize}
-\item Under pdfLaTeX, your documents need
+\item pdfLaTeX:
 \begin{pygments}{latex}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \end{pygments}
-or a similar configuration.
-\item Under LuaLaTeX, your documents need
+\item LuaLaTeX:
 \begin{pygments}{latex}
 \usepackage{fontspec}
 \end{pygments}
-or a similar configuration.
-\item Under XeLaTeX, your documents need
+\item XeLaTeX:
 \begin{pygments}{latex}
 \usepackage{fontspec}
 \defaultfontfeatures{Ligatures=TeX}
 \end{pygments}
-or a similar configuration.
 \end{itemize}
 
 If you are using Python 2, you will also need to specify that you are using Unicode.  You may want

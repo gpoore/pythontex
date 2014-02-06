@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 '''
@@ -13,7 +13,7 @@ should be in the same directory.
 
 Licensed under the BSD 3-Clause License:
 
-Copyright (c) 2012-2013, Geoffrey M. Poore
+Copyright (c) 2012-2014, Geoffrey M. Poore
 
 All rights reserved.
 
@@ -76,7 +76,7 @@ else:
 
 # Script parameters
 # Version
-version = 'v0.12'
+version = 'v0.13-beta'
 
 
 
@@ -84,35 +84,35 @@ version = 'v0.12'
 class Pytxcode(object):
     def __init__(self, data, gobble):
         self.delims, self.code = data.split('#\n', 1)
-        self.input_family, self.input_session, self.input_restart, self.input_instance, self.input_command, self.input_context, self.input_args_run, self.input_args_prettyprint, self.input_file, self.input_line = self.delims.split('#')
-        self.input_instance_int = int(self.input_instance)        
-        self.input_line_int = int(self.input_line)
-        self.key_run = self.input_family + '#' + self.input_session + '#' + self.input_restart
-        self.key_typeset = self.key_run + '#' + self.input_instance
-        self.hashable_delims_run = self.key_typeset + '#' + self.input_command + '#' + self.input_context + '#' + self.input_args_run
-        self.hashable_delims_typeset = self.key_typeset + '#' + self.input_command + '#' + self.input_context + '#' + self.input_args_run
-        if len(self.input_command) > 1:
+        self.family, self.session, self.restart, self.instance, self.command, self.context, self.args_run, self.args_prettyprint, self.input_file, self.line = self.delims.split('#')
+        self.instance_int = int(self.instance)        
+        self.line_int = int(self.line)
+        self.key_run = self.family + '#' + self.session + '#' + self.restart
+        self.key_typeset = self.key_run + '#' + self.instance
+        self.hashable_delims_run = self.key_typeset + '#' + self.command + '#' + self.context + '#' + self.args_run
+        self.hashable_delims_typeset = self.key_typeset + '#' + self.command + '#' + self.context + '#' + self.args_run
+        if len(self.command) > 1:
             self.is_inline = False
             # Environments start on the next line
-            self.input_line_int += 1
-            self.input_line = str(self.input_line_int)
+            self.line_int += 1
+            self.line = str(self.line_int)
         else:
             self.is_inline = True
-        self.is_extfile = True if self.input_session.startswith('EXT:') else False
+        self.is_extfile = True if self.session.startswith('EXT:') else False
         if self.is_extfile:
-            self.extfile = os.path.expanduser(os.path.normcase(self.input_session.replace('EXT:', '', 1)))
-        self.is_cc = True if self.input_family.startswith('CC:') else False
-        self.is_pyg = True if self.input_family.startswith('PYG') else False
-        self.is_verb = True if self.input_restart.endswith('verb') else False
+            self.extfile = os.path.expanduser(os.path.normcase(self.session.replace('EXT:', '', 1)))
+        self.is_cc = True if self.family.startswith('CC:') else False
+        self.is_pyg = True if self.family.startswith('PYG') else False
+        self.is_verb = True if self.restart.endswith('verb') else False
         if self.is_cc:
-            self.input_instance += 'CC'
-            self.cc_type, self.cc_pos = self.input_family.split(':')[1:]
+            self.instance += 'CC'
+            self.cc_type, self.cc_pos = self.family.split(':')[1:]
         if self.is_verb or self.is_pyg or self.is_cc:
             self.is_cons = False
         else:
-            self.is_cons = engine_dict[self.input_family].console
+            self.is_cons = engine_dict[self.family].console
         self.is_code = False if self.is_verb or self.is_pyg or self.is_cc or self.is_cons else True
-        if self.input_command in ('c', 'code') or (self.input_command == 'i' and not self.is_cons):
+        if self.command in ('c', 'code') or (self.command == 'i' and not self.is_cons):
             self.is_typeset = False
         else:
             self.is_typeset = True
@@ -332,7 +332,7 @@ def load_code_get_settings(data, temp_data):
         else:
             settings[k] = v
     def set_kv_pygments(k, v):
-        input_family, lexer_opts, options = v.replace(' ','').split('|')
+        family, lexer_opts, options = v.replace(' ','').split('|')
         lexer = None
         lex_dict = {}
         opt_dict = {}
@@ -358,7 +358,7 @@ def load_code_get_settings(data, temp_data):
                     k = option
                     v = True
                 opt_dict[k] = v
-        if input_family != ':GLOBAL':
+        if family != ':GLOBAL':
             if 'lexer' in pygments_settings[':GLOBAL']:
                 lexer = pygments_settings[':GLOBAL']['lexer']
             lex_dict.update(pygments_settings[':GLOBAL']['lexer_options'])
@@ -367,9 +367,9 @@ def load_code_get_settings(data, temp_data):
                 opt_dict['style'] = 'default'
             opt_dict['commandprefix'] = 'PYG' + opt_dict['style']
         if lexer is not None:
-            pygments_settings[input_family]['lexer'] = lexer
-        pygments_settings[input_family]['lexer_options'] = lex_dict
-        pygments_settings[input_family]['formatter_options'] = opt_dict
+            pygments_settings[family]['lexer'] = lexer
+        pygments_settings[family]['lexer_options'] = lex_dict
+        pygments_settings[family]['formatter_options'] = opt_dict
     settings_func['version'] = set_kv_data
     settings_func['outputdir'] = set_kv_data
     settings_func['workingdir'] = set_kv_data
@@ -644,18 +644,18 @@ def hash_all(data, temp_data, old_data, engine_dict):
     # Store hashes
     code_hash_dict = {}
     for key in code_hasher:
-        input_family = key.split('#', 1)[0]
+        family = key.split('#', 1)[0]
         code_hash_dict[key] = (code_hasher[key].hexdigest(), 
-                               cc_hasher[input_family].hexdigest(),
-                               engine_dict[input_family].get_hash())
+                               cc_hasher[family].hexdigest(),
+                               engine_dict[family].get_hash())
     data['code_hash_dict'] = code_hash_dict
     
     cons_hash_dict = {}
     for key in cons_hasher:
-        input_family = key.split('#', 1)[0]
+        family = key.split('#', 1)[0]
         cons_hash_dict[key] = (cons_hasher[key].hexdigest(), 
-                               cc_hasher[input_family].hexdigest(),
-                               engine_dict[input_family].get_hash())
+                               cc_hasher[family].hexdigest(),
+                               engine_dict[family].get_hash())
     data['cons_hash_dict'] = cons_hash_dict
     
     typeset_hash_dict = {}
@@ -742,9 +742,9 @@ def hash_all(data, temp_data, old_data, engine_dict):
     
     if loaded_old_data and data['typeset_vitals'] == old_data['typeset_vitals']:
         for key in typeset_hash_dict:
-            input_family = key.split('#', 1)[0]
-            if input_family in pygments_settings:
-                if (not pygments_settings_changed[input_family] and
+            family = key.split('#', 1)[0]
+            if family in pygments_settings:
+                if (not pygments_settings_changed[family] and
                         key in old_typeset_hash_dict and 
                         typeset_hash_dict[key] == old_typeset_hash_dict[key]):
                     pygments_update[key] = False
@@ -769,8 +769,8 @@ def hash_all(data, temp_data, old_data, engine_dict):
             pygments_style_defs = old_data['pygments_style_defs']
     else:
         for key in typeset_hash_dict:
-            input_family = key.split('#', 1)[0]
-            if input_family in pygments_settings:
+            family = key.split('#', 1)[0]
+            if family in pygments_settings:
                 pygments_update[key] = True
             else:
                 pygments_update[key] = False
@@ -875,8 +875,8 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
         return -1
     last_instance = defaultdict(negative_one)
     for c in pytxcode:
-        if c.input_instance_int > last_instance[c.key_run]:
-            last_instance[c.key_run] = c.input_instance_int
+        if c.instance_int > last_instance[c.key_run]:
+            last_instance[c.key_run] = c.instance_int
             if c.is_code:
                 if code_update[c.key_run]:
                     code_dict[c.key_run].append(c)
@@ -909,16 +909,16 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
     # Also accumulate error indices for handling stderr
     code_index_dict = {}
     for key in code_dict:
-        input_family, input_session, input_restart = key.split('#')
-        fname = os.path.join(outputdir, input_family + '_' + input_session + '_' + input_restart + '.' + engine_dict[input_family].extension)
+        family, session, restart = key.split('#')
+        fname = os.path.join(outputdir, family + '_' + session + '_' + restart + '.' + engine_dict[family].extension)
         files[key].append(fname)
         sessionfile = open(fname, 'w', encoding=encoding)
-        script, code_index = engine_dict[input_family].get_script(encoding,
+        script, code_index = engine_dict[family].get_script(encoding,
                                                               utilspath,
                                                               workingdir,
-                                                              cc_dict_begin[input_family],
+                                                              cc_dict_begin[family],
                                                               code_dict[key],
-                                                              cc_dict_end[input_family])
+                                                              cc_dict_end[family])
         for lines in script:
             sessionfile.write(lines)
         sessionfile.close()
@@ -980,69 +980,69 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     # Add code processes.  Note that everything placed in the codedict 
     # needs to be executed, based on previous testing, except for custom code.
     for key in code_dict:
-        input_family = key.split('#')[0]
+        family = key.split('#')[0]
         # Uncomment the following for debugging, and comment out what follows
         '''run_code(encoding, outputdir, workingdir, code_dict[key],
-                                                 engine_dict[input_family].language,
-                                                 engine_dict[input_family].command,
-                                                 engine_dict[input_family].created,
-                                                 engine_dict[input_family].extension,
+                                                 engine_dict[family].language,
+                                                 engine_dict[family].command,
+                                                 engine_dict[family].created,
+                                                 engine_dict[family].extension,
                                                  makestderr, stderrfilename,
                                                  code_index_dict[key],
-                                                 engine_dict[input_family].errors,
-                                                 engine_dict[input_family].warnings,
-                                                 engine_dict[input_family].linenumbers,
-                                                 engine_dict[input_family].lookbehind,
+                                                 engine_dict[family].errors,
+                                                 engine_dict[family].warnings,
+                                                 engine_dict[family].linenumbers,
+                                                 engine_dict[family].lookbehind,
                                                  keeptemps, hashdependencies)'''
         tasks.append(pool.apply_async(run_code, [encoding, outputdir, 
                                                  workingdir, code_dict[key],
-                                                 engine_dict[input_family].language,
-                                                 engine_dict[input_family].command,
-                                                 engine_dict[input_family].created,
-                                                 engine_dict[input_family].extension,
+                                                 engine_dict[family].language,
+                                                 engine_dict[family].command,
+                                                 engine_dict[family].created,
+                                                 engine_dict[family].extension,
                                                  makestderr, stderrfilename,
                                                  code_index_dict[key],
-                                                 engine_dict[input_family].errors,
-                                                 engine_dict[input_family].warnings,
-                                                 engine_dict[input_family].linenumbers,
-                                                 engine_dict[input_family].lookbehind,
+                                                 engine_dict[family].errors,
+                                                 engine_dict[family].warnings,
+                                                 engine_dict[family].linenumbers,
+                                                 engine_dict[family].lookbehind,
                                                  keeptemps, hashdependencies]))
         if verbose:
             print('    - Code process ' + key.replace('#', ':'))
     
     # Add console processes
     for key in cons_dict:
-        input_family = key.split('#')[0]
-        if engine_dict[input_family].language.startswith('python'):
-            if input_family in pygments_settings:
+        family = key.split('#')[0]
+        if engine_dict[family].language.startswith('python'):
+            if family in pygments_settings:
                 # Uncomment the following for debugging
                 '''python_console(jobname, encoding, outputdir, workingdir, 
-                               fvextfile, pygments_settings[input_family],
-                               cc_dict_begin[input_family], cons_dict[key],
-                               cc_dict_end[input_family], engine_dict[input_family].startup,
-                               engine_dict[input_family].banner, 
-                               engine_dict[input_family].filename)'''
+                               fvextfile, pygments_settings[family],
+                               cc_dict_begin[family], cons_dict[key],
+                               cc_dict_end[family], engine_dict[family].startup,
+                               engine_dict[family].banner, 
+                               engine_dict[family].filename)'''
                 tasks.append(pool.apply_async(python_console, [jobname, encoding,
                                                                outputdir, workingdir,
                                                                fvextfile,
-                                                               pygments_settings[input_family],
-                                                               cc_dict_begin[input_family],
+                                                               pygments_settings[family],
+                                                               cc_dict_begin[family],
                                                                cons_dict[key],
-                                                               cc_dict_end[input_family],
-                                                               engine_dict[input_family].startup,
-                                                               engine_dict[input_family].banner,
-                                                               engine_dict[input_family].filename]))
+                                                               cc_dict_end[family],
+                                                               engine_dict[family].startup,
+                                                               engine_dict[family].banner,
+                                                               engine_dict[family].filename]))
             else:
                 tasks.append(pool.apply_async(python_console, [jobname, encoding,
                                                                outputdir, workingdir,
                                                                fvextfile,
                                                                None,
-                                                               cc_dict_begin[input_family],
+                                                               cc_dict_begin[family],
                                                                cons_dict[key],
-                                                               cc_dict_end[input_family],
-                                                               engine_dict[input_family].startup,
-                                                               engine_dict[input_family].banner,
-                                                               engine_dict[input_family].filename]))  
+                                                               cc_dict_end[family],
+                                                               engine_dict[family].startup,
+                                                               engine_dict[family].banner,
+                                                               engine_dict[family].filename]))  
         else:
             print('* PythonTeX error')
             print('    Currently, non-Python consoles are not supported')
@@ -1184,8 +1184,8 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
     import shlex
     
     # Create what's needed for storing results
-    input_family = code_list[0].input_family
-    input_session = code_list[0].input_session
+    family = code_list[0].family
+    session = code_list[0].session
     key_run = code_list[0].key_run
     files = []
     macros = []
@@ -1314,20 +1314,20 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                 if block:
                     delims, content = block.split('#\n', 1)
                     if content:
-                        input_instance, input_command = delims.split('#')
-                        if input_instance.endswith('CC'):
+                        instance, command = delims.split('#')
+                        if instance.endswith('CC'):
                             messages.append('* PythonTeX warning')
-                            messages.append('    Custom code for "' + input_family + '" attempted to print or write to stdout')
+                            messages.append('    Custom code for "' + family + '" attempted to print or write to stdout')
                             messages.append('    This is not supported; use a normal code command or environment')
                             messages.append('    The following content was written:')
                             messages.append('')
                             messages.extend(['    ' + l for l in content.splitlines()])
                             warnings += 1
-                        elif input_command == 'i':
-                            content = r'\pytx@SVMCR{pytx@MCR@' + key_run.replace('#', '@') + '@' + input_instance + '}\n' + content.rstrip('\n') + '\\endpytx@SVMCR\n\n'
+                        elif command == 'i':
+                            content = r'\pytx@SVMCR{pytx@MCR@' + key_run.replace('#', '@') + '@' + instance + '}\n' + content.rstrip('\n') + '\\endpytx@SVMCR\n\n'
                             macros.append(content)
                         else:
-                            fname = os.path.join(outputdir, basename + '_' + input_instance + '.stdout')
+                            fname = os.path.join(outputdir, basename + '_' + instance + '.stdout')
                             f = open(fname, 'w', encoding=encoding)
                             f.write(content)
                             f.close()
@@ -1402,9 +1402,9 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                                 except:
                                     break
                             if errlinenum > index_now[1].lines_total + index_now[1].lines_input:
-                                doclinenum = str(index_now[1].input_line_int + index_now[1].lines_input)
+                                doclinenum = str(index_now[1].line_int + index_now[1].lines_input)
                             else:
-                                doclinenum = str(index_now[1].input_line_int + errlinenum - index_now[1].lines_total - 1)
+                                doclinenum = str(index_now[1].line_int + errlinenum - index_now[1].lines_total - 1)
                             input_file = index_now[1].input_file
                         else:
                             doclinenum = '??'
@@ -1514,7 +1514,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                                 process = False
                             else:
                                 process = True
-                                if len(index_now[1].input_command) > 1:
+                                if len(index_now[1].command) > 1:
                                     if errlinenum > index_now[1].lines_total + index_now[1].lines_input:
                                         codelinenum = str(index_now[1].lines_user + index_now[1].lines_input + 1)
                                     else:
@@ -1541,7 +1541,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             if stderrfilename == 'full':
                                 line = line.replace(fullbasename, basename)
                             elif stderrfilename == 'session':
-                                line = line.replace(fullbasename, input_session)
+                                line = line.replace(fullbasename, session)
                             elif stderrfilename == 'genericfile':
                                 line = line.replace(fullbasename + '.' + extension, '<file>')
                             elif stderrfilename == 'genericscript':
@@ -1568,9 +1568,9 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                         if not found_basename:
                             # Get line number for command or beginning of
                             # environment
-                            input_instance = last_delim.split('#')[1]
-                            doclinenum = str(code_index[input_instance].input_line_int)
-                            input_file = code_index[input_instance].input_file
+                            instance = last_delim.split('#')[1]
+                            doclinenum = str(code_index[instance].line_int)
+                            input_file = code_index[instance].input_file
                             # Try to identify alert.  We have to parse all
                             # lines for signs of errors and warnings.  This 
                             # may result in overcounting, but it's the best
@@ -1631,13 +1631,13 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                                 pass
                         if found:
                             # Get info from last delim
-                            input_instance, input_command = last_delim.split('#')[1:-1]
+                            instance, command = last_delim.split('#')[1:-1]
                             # Calculate the line number in the document
-                            ei = code_index[input_instance]
+                            ei = code_index[instance]
                             if errlinenum > ei.lines_total + ei.lines_input:
-                                doclinenum = str(ei.input_line_int + ei.lines_input)
+                                doclinenum = str(ei.line_int + ei.lines_input)
                             else:
-                                doclinenum = str(ei.input_line_int + errlinenum - ei.lines_total - 1)
+                                doclinenum = str(ei.line_int + errlinenum - ei.lines_total - 1)
                             input_file = ei.input_file
                         else:
                             doclinenum = '??'
@@ -1716,9 +1716,9 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                 if not found_basename:
                     # Get line number for command or beginning of
                     # environment
-                    input_instance = last_delim.split('#')[1]
-                    doclinenum = str(code_index[input_instance].input_line_int)
-                    input_file = code_index[input_instance].input_file
+                    instance = last_delim.split('#')[1]
+                    doclinenum = str(code_index[instance].line_int)
+                    input_file = code_index[instance].input_file
                     # Try to identify alert.  We have to parse all
                     # lines for signs of errors and warnings.  This 
                     # may result in overcounting, but it's the best
@@ -1756,12 +1756,12 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                 process = False
                 for n, line in enumerate(err_d):
                     if line.startswith('=>PYTHONTEX:STDERR#'):
-                        input_instance, input_command = line.split('#')[1:-1]
-                        if input_instance.endswith('CC'):
+                        instance, command = line.split('#')[1:-1]
+                        if instance.endswith('CC'):
                             process = False
                         else:
                             process = True
-                            err_key = basename + '_' + input_instance
+                            err_key = basename + '_' + instance
                     elif process and basename in line:
                         found = False
                         for pattern in linesig:
@@ -1774,14 +1774,14 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                         if found:
                             # Calculate the line number in the document
                             # Account for inline
-                            ei = code_index[input_instance]
-                            # Store the `input_instance` in case it's 
+                            ei = code_index[instance]
+                            # Store the `instance` in case it's 
                             # incremented later
-                            last_input_instance = input_instance
+                            last_instance = instance
                             # If the error or warning was actually triggered
                             # later on (for example, multiline string with
                             # missing final delimiter), look ahead and 
-                            # determine the correct input_instance, so that
+                            # determine the correct instance, so that
                             # we get the correct line number.  We don't
                             # associate the created stderr with this later
                             # instance, however, but rather with the instance
@@ -1791,25 +1791,25 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             # between multiple instances, requiring extra
                             # parsing.
                             while errlinenum > ei.lines_total + ei.lines_input:
-                                next_input_instance = str(int(input_instance) + 1)
-                                if next_input_instance in code_index:
-                                    next_ei = code_index[next_input_instance]
+                                next_instance = str(int(instance) + 1)
+                                if next_instance in code_index:
+                                    next_ei = code_index[next_instance]
                                     if errlinenum > next_ei.lines_total:
-                                        input_instance = next_input_instance
+                                        instance = next_instance
                                         ei = next_ei
                                     else:
                                         break
                                 else:
                                     break
-                            if len(input_command) > 1:
+                            if len(command) > 1:
                                 if errlinenum > ei.lines_total + ei.lines_input:
                                     codelinenum = str(ei.lines_user + ei.lines_input + 1)
                                 else:
                                     codelinenum = str(ei.lines_user + errlinenum - ei.lines_total - ei.inline_count)
                             else:
                                 codelinenum = '1'
-                            # Reset `input_instance`, in case incremented
-                            input_instance = last_input_instance
+                            # Reset `instance`, in case incremented
+                            instance = last_instance
                         else:
                             codelinenum = '??'
                             messages.append('* PythonTeX notice')
@@ -1823,7 +1823,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                         if stderrfilename == 'full':
                             line = line.replace(fullbasename, basename)
                         elif stderrfilename == 'session':
-                            line = line.replace(fullbasename, input_session)
+                            line = line.replace(fullbasename, session)
                         elif stderrfilename == 'genericfile':
                             line = line.replace(fullbasename + '.' + extension, '<file>')
                         elif stderrfilename == 'genericscript':
@@ -1941,7 +1941,7 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
     # Actually parse and highlight the code.
     for c in pygments_list:
         if c.is_cons:
-            content = typeset_cache[c.key_run][c.input_instance]
+            content = typeset_cache[c.key_run][c.instance]
         elif c.is_extfile:
             if os.path.isfile(c.extfile):
                 f = open(c.extfile, encoding=encoding)
@@ -1954,11 +1954,11 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
                 messages.append('    The file was not pygmentized')
         else:
             content = c.code
-        processed = highlight(content, lexer[c.input_family], formatter[c.input_family])
+        processed = highlight(content, lexer[c.family], formatter[c.family])
         if c.is_inline or content.count('\n') < fvextfile:
             # Highlighted code brought in via macros needs SaveVerbatim
             processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
-                            r'\\begin{{SaveVerbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.input_family, c.input_session, c.input_restart, c.input_instance), processed, count=1)
+                            r'\\begin{{SaveVerbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance), processed, count=1)
             processed = processed.rsplit('\\', 1)[0] + '\\end{SaveVerbatim}\n\n'                    
             pygments_macros[c.key_typeset].append(processed)
         else:
@@ -2065,7 +2065,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
             # Code is processed and doesn't need newlines
             self.console_code.extend(startup.splitlines())
             for c in cons_list:
-                self.console_code.append('=>PYTHONTEX#{0}#{1}#\n'.format(c.input_instance, c.input_command))
+                self.console_code.append('=>PYTHONTEX#{0}#{1}#\n'.format(c.instance, c.command))
                 self.console_code.extend(c.code.splitlines())
             old_stdout = sys.stdout
             sys.stdout = self.iostdout
@@ -2105,7 +2105,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
     # isn't typeset
     cons_index = {}
     for c in cons_list:
-        cons_index[c.input_instance] = c.input_line    
+        cons_index[c.instance] = c.line    
     
     # Consolize the code
     con = Console(banner, filename)
@@ -2135,8 +2135,8 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
     for block in output[1:]:
         delims, console_content = block.split('#\n', 1)
         if console_content:
-            input_instance, input_command = delims.split('#')
-            if input_instance == 'STARTUP':
+            instance, command = delims.split('#')
+            if instance == 'STARTUP':
                 exception = False
                 console_content_lines = console_content.splitlines()
                 for line in console_content_lines:
@@ -2158,14 +2158,13 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                     messages.append('* PythonTeX stderr - {0} in console startup code:'.format(alert_type))
                     for line in console_content_lines:
                         messages.append('  ' + line)
-            elif input_command in ('c', 'code'):
+            elif command in ('c', 'code'):
                 exception = False
                 console_content_lines = console_content.splitlines()
                 for line in console_content_lines:
                     if (line and not line.startswith(sys.ps1) and 
                             not line.startswith(sys.ps2) and 
                             not line.isspace()):
-                        print('X' + line + 'X')
                         exception = True
                         break
                 if exception:
@@ -2178,15 +2177,15 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                     else:
                         errors += 1
                         alert_type = 'error (?)'
-                    if input_instance.endswith('CC'):
-                        messages.append('* PythonTeX stderr - {0} near line {1} in custom code for console:'.format(alert_type, cons_index[input_instance]))
+                    if instance.endswith('CC'):
+                        messages.append('* PythonTeX stderr - {0} near line {1} in custom code for console:'.format(alert_type, cons_index[instance]))
                     else:
-                        messages.append('* PythonTeX stderr - {0} near line {1} in console code:'.format(alert_type, cons_index[input_instance]))
+                        messages.append('* PythonTeX stderr - {0} near line {1} in console code:'.format(alert_type, cons_index[instance]))
                     messages.append('    Console code is not typeset, and should have no output')
                     for line in console_content_lines:
                         messages.append('  ' + line)
             else:
-                if input_command == 'i':
+                if command == 'i':
                     # Currently, there isn't any error checking for invalid
                     # content; it is assumed that a single line of commands 
                     # was entered, producing one or more lines of output.
@@ -2194,13 +2193,16 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                     # allow line breaks to be written to the .pytxcode, that
                     # should be a reasonable assumption.
                     console_content = console_content.split('\n', 1)[1]
-                if banner_text is not None and input_command == 'console':
+                elif console_content.endswith('\n\n'):
+                    # Trim unwanted trailing newlines
+                    console_content = console_content[:-1]
+                if banner_text is not None and command == 'console':
                     # Append banner to first appropriate environment
                     console_content = banner_text + console_content
                     banner_text = None
                 # Cache
-                key_typeset = key_run + '#' + input_instance
-                typeset_cache[input_instance] = console_content
+                key_typeset = key_run + '#' + instance
+                typeset_cache[instance] = console_content
                 # Process for LaTeX
                 if pygmentize:
                     processed = highlight(console_content, lexer, formatter)

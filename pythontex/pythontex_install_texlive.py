@@ -23,7 +23,7 @@ The script attempts to create a binary wrapper (Windows) or symlink
 depythontex*.py.
 
 
-Copyright (c) 2012-2013, Geoffrey M. Poore
+Copyright (c) 2012-2014, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -126,7 +126,8 @@ try:
 except:
     print('Cannot automatically find TEXMF paths.')
     print('kpsewhich does not exist or could not be used.')
-    path_choice = 4
+    # Need to create the variable that tracks the type of installation
+    path_choice = '4'
     texmf_path = input('Please enter a valid installation path:\n')
 if should_exit:
     sys.exit()

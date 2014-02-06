@@ -80,9 +80,9 @@ except:
 subprocess.call(['pdflatex', '-interaction=nonstopmode', 'pythontex_gallery.tex'])
 # Use minted-style listings, because Pandoc currently doesn't support some features of listings' `\lstinline`
 try:
-    subprocess.call(['depythontex', 'pythontex_gallery.tex', '--listing=minted'])
+    subprocess.call(['depythontex', '-o', 'depythontex_pythontex_gallery.tex', 'pythontex_gallery.tex', '--listing=minted'])
 except:
-    subprocess.call(['depythontex.py', 'pythontex_gallery.tex', '--listing=minted'])
+    subprocess.call(['depythontex.py', '-o', 'depythontex_pythontex_gallery.tex', 'pythontex_gallery.tex', '--listing=minted'])
 subprocess.call(['pandoc', '--standalone', '--mathjax', 'depythontex_pythontex_gallery.tex', '-o', 'pythontex_gallery.html'])
 
 

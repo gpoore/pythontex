@@ -27,7 +27,7 @@ unified.  This approach also allows greater customization of version-specific
 code than would be possible if automatic translation with a tool like 2to3 
 was required.
 
-Copyright (c) 2012-2013, Geoffrey M. Poore
+Copyright (c) 2012-2014, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -67,6 +67,8 @@ def from2to3(list_of_code):
         elif in_3:
             line = re.sub(indent + '#', indent, line, count=1)
         fixed.append(line)
+    if fixed[0].startswith('#!/usr/bin/env python2'):
+        fixed[0] = fixed[0].replace('python2', 'python3')
     return fixed
         
         
