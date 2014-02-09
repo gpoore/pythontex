@@ -152,6 +152,8 @@ def process_argv(data, temp_data):
     parser.add_argument('--hashdependencies', nargs='?', default='false', 
                         const='true', choices=('true', 'false'),                          
                         help='hash dependencies (such as external data) to check for modification, rather than using mtime; equivalent to package option')
+    parser.add_argument('--jobs', '-j', metavar='N', default=None, type=int,
+                        help='Allow N jobs at once, defaults to cpu_count().')
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
                         help='verbose output')
     parser.add_argument('--interpreter', default=None, help='set a custom interpreter; argument should be in the form "<interpreter>:<command>, <interp>:<cmd>, ..." where <interpreter> is "python", "ruby", etc., and <command> is the command for invoking the interpreter; argument may also be in the form of a Python dictionary')
@@ -174,6 +176,7 @@ def process_argv(data, temp_data):
         temp_data['hashdependencies'] = True
     else:
         temp_data['hashdependencies'] = False
+    temp_data['N_jobs'] = args.jobs
     temp_data['verbose'] = args.verbose
     # Update interpreter_dict based on interpreter
     if args.interpreter is not None:
@@ -936,6 +939,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     keeptemps = data['settings']['keeptemps']
     fvextfile = data['settings']['fvextfile']
     pygments_settings = data['pygments_settings']
+    N_jobs = temp_data['N_jobs']
     verbose = temp_data['verbose']
     
     code_dict = temp_data['code_dict']
@@ -964,13 +968,9 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     start_time = data['start_time']
     
     
-    # Set maximum number of concurrent processes for multiprocessing
-    # Accoding to the docs, cpu_count() may raise an error
-    try:
-        max_processes = multiprocessing.cpu_count()
-    except NotImplementedError:
-        max_processes = 1
-    pool = multiprocessing.Pool(max_processes)
+    # If N_jobs is None the docs states that it should defaults to cpu_count()
+    pool = multiprocessing.Pool(N_jobs)
+
     tasks = []
     
     # If verbose, print a list of processes
