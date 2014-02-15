@@ -61,6 +61,7 @@ import multiprocessing
 from pygments.styles import get_all_styles
 from pythontex_engines import *
 import textwrap
+import platform
 
 if sys.version_info[0] == 2:
     try:
@@ -152,6 +153,8 @@ def process_argv(data, temp_data):
     parser.add_argument('--hashdependencies', nargs='?', default='false', 
                         const='true', choices=('true', 'false'),                          
                         help='hash dependencies (such as external data) to check for modification, rather than using mtime; equivalent to package option')
+    parser.add_argument('-j', '--jobs', metavar='N', default=None, type=int,
+                        help='Allow N jobs at once; defaults to cpu_count().')
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
                         help='verbose output')
     parser.add_argument('--interpreter', default=None, help='set a custom interpreter; argument should be in the form "<interpreter>:<command>, <interp>:<cmd>, ..." where <interpreter> is "python", "ruby", etc., and <command> is the command for invoking the interpreter; argument may also be in the form of a Python dictionary')
@@ -174,8 +177,10 @@ def process_argv(data, temp_data):
         temp_data['hashdependencies'] = True
     else:
         temp_data['hashdependencies'] = False
+    temp_data['jobs'] = args.jobs
     temp_data['verbose'] = args.verbose
     # Update interpreter_dict based on interpreter
+    set_python_interpreter = False
     if args.interpreter is not None:
         interp_list = args.interpreter.lstrip('{').rstrip('}').split(',')
         for interp in interp_list:
@@ -185,10 +190,65 @@ def process_argv(data, temp_data):
                     k = k.strip(' \'"')
                     v = v.strip(' \'"')
                     interpreter_dict[k] = v
+                    if k == 'python':
+                        set_python_interpreter = True
                 except:
                     print('Invalid --interpreter argument')
                     return sys.exit(2)
-    
+    # If the Python interpreter wasn't set, then try to set an appropriate
+    # default value, based on how PythonTeX was launched (pythontex.py, 
+    # pythontex2.py, or pythontex3.py).
+    if not set_python_interpreter:
+        if temp_data['python'] == 2:
+            if platform.system() == 'Windows':
+                try:
+                    subprocess.check_output(['py', '--version'])
+                    interpreter_dict['python'] = 'py -2'
+                except:
+                    msg = '''
+                          * PythonTeX error:
+                              You have launched PythonTeX using pythontex{0}.py
+                              directly.  This should only be done when you want
+                              to use Python version {0}, but have a different
+                              version installed as the default.  (Otherwise, you
+                              should start PythonTeX with pythontex.py.)  For 
+                              this to work correctly, you should install Python
+                              version 3.3+, which has a Windows wrapper (py) that
+                              PythonTeX can use to run the correct version of 
+                              Python.  If you do not want to install Python 3.3+,
+                              you can also use the --interpreter command-line 
+                              option to tell PythonTeX how to access the version
+                              of Python you wish to use.
+                          '''.format(temp_data['python'])
+                    print(textwrap.dedent(msg[1:]))
+                    return sys.exit(2)
+            else:
+                interpreter_dict['python'] = 'python2'
+        elif temp_data['python'] == 3:
+            if platform.system() == 'Windows':
+                try:
+                    subprocess.check_output(['py', '--version'])
+                    interpreter_dict['python'] = 'py -3'
+                except:
+                    msg = '''
+                          * PythonTeX error:
+                              You have launched PythonTeX using pythontex{0}.py
+                              directly.  This should only be done when you want
+                              to use Python version {0}, but have a different
+                              version installed as the default.  (Otherwise, you
+                              should start PythonTeX with pythontex.py.)  For 
+                              this to work correctly, you should install Python
+                              version 3.3+, which has a Windows wrapper (py) that
+                              PythonTeX can use to run the correct version of 
+                              Python.  If you do not want to install Python 3.3+,
+                              you can also use the --interpreter command-line 
+                              option to tell PythonTeX how to access the version
+                              of Python you wish to use.
+                          '''.format(temp_data['python'])
+                    print(textwrap.dedent(msg[1:]))
+                    return sys.exit(2)
+            else:
+                interpreter_dict['python'] = 'python3'
     
     if args.TEXNAME is not None:
         # Determine if we a dealing with just a filename, or a name plus 
@@ -936,6 +996,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     keeptemps = data['settings']['keeptemps']
     fvextfile = data['settings']['fvextfile']
     pygments_settings = data['pygments_settings']
+    jobs = temp_data['jobs']
     verbose = temp_data['verbose']
     
     code_dict = temp_data['code_dict']
@@ -964,18 +1025,17 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     start_time = data['start_time']
     
     
-    # Set maximum number of concurrent processes for multiprocessing
-    # Accoding to the docs, cpu_count() may raise an error
-    try:
-        max_processes = multiprocessing.cpu_count()
-    except NotImplementedError:
-        max_processes = 1
-    pool = multiprocessing.Pool(max_processes)
+    # Create a pool for multiprocessing.  Set the maximum number of 
+    # concurrent processes to a user-specified value for jobs.  If the user
+    # has not specified a value, then it will be None, and 
+    # multiprocessing.Pool() will use cpu_count().
+    pool = multiprocessing.Pool(jobs)
     tasks = []
     
     # If verbose, print a list of processes
     if verbose:
-        print('\n* PythonTeX will run the following processes:')
+        print('\n* PythonTeX will run the following processes')
+        print('  (maximum concurrent processes = {0})'.format(jobs if jobs else multiprocessing.cpu_count()))
     
     # Add code processes.  Note that everything placed in the codedict 
     # needs to be executed, based on previous testing, except for custom code.
@@ -1214,13 +1274,17 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
     err_file = open(err_file_name, 'w', encoding=encoding)
     # Note that command is a string, which must be converted to list
     # Must double-escape any backslashes so that they survive `shlex.split()`
-    script = os.path.join(outputdir, basename)
+    script = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename)))
+    if os.path.isabs(script):
+        script_full = script
+    else:
+        script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
     # `shlex.split()` only works with Unicode after 2.7.2
     if (sys.version_info.major == 2 and sys.version_info.micro < 3):
-        exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'))))
+        exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'))))
         exec_cmd = [unicode(elem) for elem in exec_cmd]
     else:
-        exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\')))
+        exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\')))
     # Add any created files due to the command
     # This needs to be done before attempts to execute, to prevent orphans
     for f in command_created:
@@ -1707,7 +1771,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                     # Clean up the stderr format a little, to keep it compact
                     line = line.replace(outputdir, '<outputdir>').rstrip('\n')
                     if '/<outputdir>' in line or '\\<outputdir>' in line:
-                        line = sub(r'(?:(?:[A-Z]:\\)|(?:~?/)).*<outputdir>', '<outputdir>', line)
+                        line = sub(r'(?:(?:[A-Za-z]:\\)|(?:~?/)).*<outputdir>', '<outputdir>', line)
                     msg.append('  ' + line)
                 else:
                     msg.append('  ' + line.rstrip('\n'))
@@ -2251,7 +2315,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
 
 
 
-def main():
+def main(python=None):
     # Create dictionaries for storing data.
     #
     # All data that must be saved for subsequent runs is stored in "data".
@@ -2264,9 +2328,9 @@ def main():
     # For simplicity, variables will often be created within functions to
     # refer to dictionary values.
     data = {'version': version, 'start_time': time.time()}
-    temp_data = {'errors': 0, 'warnings': 0}
-    old_data = dict()    
-    
+    temp_data = {'errors': 0, 'warnings': 0, 'python': python}
+    old_data = dict()
+
     
     # Process command-line options.
     #
@@ -2360,4 +2424,12 @@ def main():
 # multiprocessing documentation.  It is also needed in this case when the 
 # script is invoked via the wrapper.
 if __name__ == '__main__':
-    main()
+    #// Python 2
+    #if sys.version_info.major != 2:
+    #    sys.exit('This version of the PythonTeX script requires Python 2.')
+    #\\ End Python 2
+    #// Python 3
+    if sys.version_info.major != 3:
+        sys.exit('This version of the PythonTeX script requires Python 3.')
+    #\\ End Python 3
+    main(python=sys.version_info.major)

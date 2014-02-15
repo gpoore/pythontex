@@ -1235,6 +1235,8 @@
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
     \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
+    \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
+    \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 \newbool{pytx@listingenv}

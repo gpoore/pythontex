@@ -65,6 +65,15 @@ from __future__ import unicode_literals
 import sys
 import os
 #// Python 2
+if sys.version_info.major != 2:
+    sys.exit('This version of the PythonTeX script requires Python 2.')
+#\\ End Python 2
+#// Python 3
+#if sys.version_info.major != 3:
+#    sys.exit('This version of the PythonTeX script requires Python 3.')
+#\\ End Python 3
+
+#// Python 2
 from io import open
 input = raw_input
 #\\ End Python 2
@@ -78,8 +87,6 @@ import codecs
 # Script parameters
 # Version
 version = 'v0.13-beta'
-
-
 
 
 # Functions and parameters for customizing the script output

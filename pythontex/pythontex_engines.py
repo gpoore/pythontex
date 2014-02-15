@@ -25,18 +25,20 @@ Licensed under the BSD 3-Clause License:
 '''
 
 # Imports
+import os
 import sys
 import textwrap
 from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
 
-interpreter_dict = {k:k for k in ('python', 'ruby', 'julia')}
+interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave')}
 # The {file} field needs to be replaced by itself, since the actual 
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is 
 # initialized.
 interpreter_dict['file'] = '{file}'
+interpreter_dict['File'] = '{File}'
 
 
 engine_dict = {}
@@ -265,6 +267,8 @@ class CodeEngine(object):
         `__future__` be at the very beginning of a script.
         '''
         # Take care of `--interpreter`
+        # The `interpreter_dict` has entries that allow `{file}` and
+        # `{outputdir}` fields to be replaced with themselves
         self.command = self.command.format(**interpreter_dict)
         # Take care of `__future__`
         if self.language.startswith('python'):
@@ -419,8 +423,13 @@ class CodeEngine(object):
             raise ValueError('Template for ' + self.name + ' is missing {body}')
         
         # Add beginning to script
+        if os.path.isabs(os.path.expanduser(os.path.normcase(workingdir))):
+            workingdir_full = workingdir
+        else:
+            workingdir_full = os.path.join(os.getcwd(), workingdir).replace('\\', '/')
         script_begin = script_begin.format(encoding=encoding, future=future, 
                                            utilspath=utilspath, workingdir=workingdir,
+                                           Workingdir=workingdir_full,
                                            extend=self.extend,
                                            family=code_list[0].family,
                                            session=code_list[0].session,
@@ -533,7 +542,7 @@ class CodeEngine(object):
             lines_total += wrapper_end_offset
         
         # Finish script
-        script.append(script_end)
+        script.append(script_end.format(dependencies_delim='=>PYTHONTEX:DEPENDENCIES#', created_delim='=>PYTHONTEX:CREATED#'))
         
         return script, code_index
 
@@ -970,3 +979,41 @@ CodeEngine('julia', 'julia', '.jl', '{julia} {file}.jl', julia_template,
 
 SubCodeEngine('julia', 'jl')
 
+
+octave_template = '''
+    cd '{Workingdir}'
+    
+    {extend}
+    
+    octavetex.id = '{family}_{session}_{restart}';
+    octavetex.family = '{family}';
+    octavetex.session = '{session}';
+    octavetex.restart = '{restart}';
+    
+    {body}
+
+    %Fake octavetex.cleanup()
+    %Fake ending delims; currently don't do anything
+    fprintf('\\n{dependencies_delim}\\n{created_delim}\\n');
+    '''
+
+octave_wrapper = '''
+    octavetex.command = '{command}';
+    octavetex._context_raw = '{context}';
+    octavetex.args = '{args}';
+    octavetex.instance = '{instance}';
+    octavetex.line = '{line}';
+    
+    fprintf('{stdoutdelim}\\n');
+    fprintf(stderr, '{stderrdelim}\\n');
+    %octavetex.before()   
+    
+    {code}
+    
+    %octavetex.after()
+    '''
+
+CodeEngine('octave', 'octave', '.m',
+           '{octave} -q "{File}.m"', 
+           octave_template, octave_wrapper, 'disp({code})',
+           'error', 'warning', 'line {number}')

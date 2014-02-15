@@ -66,7 +66,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{2947}
+% \CheckSum{2951}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -84,6 +84,16 @@
 %   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
 %
+%
+% \begin{changelog}{v0.13}{2014/02/??}
+% \textbf{New features}
+% \begin{itemize}
+% \item Added command-line option \texttt{-{}-jobs}, which allows the maximum number of concurrent processes to be specified (\#35).
+% \item When \texttt{pythontex2.py} and \texttt{pythontex3.py} are run directly, the Python interpreter is automatically set to a reasonable default (\texttt{py -2} or \texttt{py -3} under Windows, using the Python 3.3+ wrapper; \texttt{python2} or \texttt{python3} under other systems).
+% \item The installer now creates symlinks for the numbered scripts \texttt{pythontex*.py} and \texttt{depythontex*.py}.
+% \item Added Python version checking to all numbered scripts.
+% \end{itemize}
+% \end{changelog}
 %
 % \begin{changelog}{v0.13-beta}{2014/02/06}
 % \textbf{New features}
@@ -455,6 +465,8 @@
 %
 % There is an equivalent |rerun| package option.
 % \item |--hashdependencies=[{true,false}]| This determines whether dependencies (external files highlighted by Pygments, code dependencies specified via |pytex.add_dependencies()|, etc.) are checked for changes via their hashes or modification times.  By default, mtime is used, since it is faster.  The package option |hashdependencies| is equivalent.
+%
+% \item |--jobs| This sets the maximum number of concurrent processes.  By default, this will be Python's |multiprocessing.cpu_count()|, which is the number of CPUs in the system.  It may be useful to set a smaller value when some jobs are particularly resource intensive or themselves use subprocesses.
 %
 % \item |--verbose| This gives more verbose output, including a list of all processes that are launched.
 %
@@ -3632,6 +3644,8 @@
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
     \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
+    \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
+    \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}

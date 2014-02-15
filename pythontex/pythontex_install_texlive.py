@@ -242,8 +242,8 @@ if platform.system() == 'Windows':
     # The directory bin/ should be at the same level as texmf
     bin_path = path.join(path.split(texmf_path)[0], 'bin', 'win32') 
     if path.exists(path.join(bin_path, 'runscript.exe')):
-        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'pythontex.exe'))
-        copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, 'depythontex.exe'))
+        for f in ('pythontex.py', 'depythontex.py'):
+            copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, '{0}.exe'.format(f.rsplit('.')[0])))
         print('\nCreated binary wrapper...')
     else:
         message = '''
@@ -277,20 +277,15 @@ else:
     for pltfrm in texlive_platforms:
         bin_path = path.join(root_path, 'bin', pltfrm)
         if path.exists(bin_path):
-            # Create symlink for pythontex*.py
-            link = path.join(bin_path, 'pythontex.py')
             # Unlink any old symlinks if they exist, and create new ones
             # Not doing this gave permissions errors under Ubuntu
-            if path.exists(link):
-                unlink(link)
-            symlink(path.join(scripts_path, 'pythontex.py'), link)
-            chmod(link, 0o775)
-            # Now repeat for depythontex*.py
-            link = path.join(bin_path, 'depythontex.py')
-            if path.exists(link):
-                unlink(link)
-            symlink(path.join(scripts_path, 'depythontex.py'), link)
-            chmod(link, 0o775)
+            for f in ('pythontex.py', 'pythontex2.py', 'pythontex3.py',
+                      'depythontex.py', 'depythontex2.py', 'depythontex3.py'):
+                link = path.join(bin_path, f)
+                if path.exists(link):
+                    unlink(link)
+                symlink(path.join(scripts_path, f), link)
+                chmod(link, 0o775)
             symlink_created = True
     
     # If the standard TeX Live bin/ locations didn't work, try the typical 
@@ -307,16 +302,13 @@ else:
                 # seeing if pdftex exists
                 check_output([path.join(bin_path, 'pdftex'), '--version'])
                 # Create symlinks
-                link = path.join(bin_path, 'pythontex.py')
-                if path.exists(link):
-                    unlink(link)
-                symlink(path.join(scripts_path, 'pythontex.py'), link)
-                chmod(link, 0o775)
-                link = path.join(bin_path, 'depythontex.py')
-                if path.exists(link):
-                    unlink(link)
-                symlink(path.join(scripts_path, 'depythontex.py'), link)
-                chmod(link, 0o775)
+                for f in ('pythontex.py', 'pythontex2.py', 'pythontex3.py',
+                          'depythontex.py', 'depythontex2.py', 'depythontex3.py'):
+                    link = path.join(bin_path, f)
+                    if path.exists(link):
+                        unlink(link)
+                    symlink(path.join(scripts_path, f), link)
+                    chmod(link, 0o775)
                 symlink_created = True
             except:
                 pass
