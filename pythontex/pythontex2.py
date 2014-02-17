@@ -177,7 +177,14 @@ def process_argv(data, temp_data):
         temp_data['hashdependencies'] = True
     else:
         temp_data['hashdependencies'] = False
-    temp_data['jobs'] = args.jobs
+    if args.jobs is None:
+        try:
+            jobs = multiprocessing.cpu_count()
+        except NotImplementedError:
+            jobs = 1
+        temp_data['jobs'] = jobs
+    else:
+        temp_data['jobs'] = args.jobs
     temp_data['verbose'] = args.verbose
     # Update interpreter_dict based on interpreter
     set_python_interpreter = False
@@ -1035,7 +1042,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     # If verbose, print a list of processes
     if verbose:
         print('\n* PythonTeX will run the following processes')
-        print('  (maximum concurrent processes = {0})'.format(jobs if jobs else multiprocessing.cpu_count()))
+        print('  (maximum concurrent processes = {0})'.format(jobs))
     
     # Add code processes.  Note that everything placed in the codedict 
     # needs to be executed, based on previous testing, except for custom code.
@@ -1174,7 +1181,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     # beginning of the run.  If so, reset them so they will run next time and
     # issue a warning
     unresolved_dependencies = False
-    unresolved_sessions= []
+    unresolved_sessions = []
     for key in dependencies:
         for dep, val in dependencies[key].items():
             if val[0] > start_time:
@@ -1336,7 +1343,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
         if valid_stdout:
             # Add created files to created list
             for c in created.splitlines():
-                files.append(c)
+                if os.path.isabs(os.path.expanduser(os.path.normcase(c))):
+                    files.append(c)
+                else:
+                    files.append(os.path.join(workingdir, c))
             
             # Create a set of dependencies, to eliminate duplicates in the event
             # that there are any.  This is mainly useful when dependencies are

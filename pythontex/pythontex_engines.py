@@ -981,9 +981,90 @@ SubCodeEngine('julia', 'jl')
 
 
 octave_template = '''
-    cd '{Workingdir}'
+    cd '{Workingdir}';
     
     {extend}
+    
+    global octavetex = struct();
+    octavetex.dependencies = {{}};
+    octavetex.created = {{}};
+    octavetex._context_raw = '';
+    
+    function octavetex_formatter(argin)
+        disp(argin);
+    end
+    
+    function octavetex_before()
+    end
+    
+    function octavetex_after()
+    end
+    
+    function octavetex_add_dependencies(varargin)
+        global octavetex;
+        for i = 1:length(varargin)
+            octavetex.dependencies{{end+1}} = varargin{{i}};
+        end
+    end
+    
+    function octavetex_add_created(varargin)
+        global octavetex;
+        for i = 1:length(varargin)
+            octavetex.created{{end+1}} = varargin{{i}};
+        end
+    end
+    
+    function octavetex_set_context(argin)
+        global octavetex;
+        if ~strcmp(argin, octavetex._context_raw)
+            octavetex._context_raw = argin;
+            hash = struct;
+            argin_kv = strsplit(argin, ',');
+            for i = 1:length(argin_kv)
+                kv = strsplit(argin_kv{{i}}, '=');
+                k = strtrim(kv{{1}});
+                v = strtrim(kv{{2}});
+                hash = setfield(hash, k, v);
+            end
+            octavetex.context = hash;
+        end
+    end
+    
+    function out = octavetex_pt_to_in(argin)
+        if ischar(argin)
+            if length(argin) > 2 && argin(end-1:end) == 'pt'
+                out = str2num(argin(1:end-2))/72.27;
+            else
+                out = str2num(argin)/72.27;
+            end
+        else
+            out = argin/72.27;
+        end
+    end
+    
+    function out = octavetex_pt_to_cm(argin)
+        out = octavetex_pt_to_in(argin)*2.54;
+    end
+    
+    function out = octavetex_pt_to_mm(argin)
+        out = octavetex_pt_to_in(argin)*25.4;
+    end
+    
+    function out = octavetex_pt_to_bp(argin)
+        out = octavetex_pt_to_in(argin)*72;
+    end
+    
+    function octavetex_cleanup()
+        global octavetex;
+        fprintf(strcat('{dependencies_delim}', "\\n"));
+        for i = 1:length(octavetex.dependencies)
+            fprintf(strcat(octavetex.dependencies{{i}}, "\\n"));
+        end
+        fprintf(strcat('{created_delim}', "\\n"));
+        for i = 1:length(octavetex.created)
+            fprintf(strcat(octavetex.created{{i}}, "\\n"));
+        end        
+    end
     
     octavetex.id = '{family}_{session}_{restart}';
     octavetex.family = '{family}';
@@ -992,25 +1073,23 @@ octave_template = '''
     
     {body}
 
-    %Fake octavetex.cleanup()
-    %Fake ending delims; currently don't do anything
-    fprintf('\\n{dependencies_delim}\\n{created_delim}\\n');
+    octavetex_cleanup()    
     '''
 
 octave_wrapper = '''
     octavetex.command = '{command}';
-    octavetex._context_raw = '{context}';
+    octavetex_set_context('{context}');
     octavetex.args = '{args}';
     octavetex.instance = '{instance}';
     octavetex.line = '{line}';
     
-    fprintf('{stdoutdelim}\\n');
-    fprintf(stderr, '{stderrdelim}\\n');
-    %octavetex.before()   
+    octavetex_before()   
     
+    fprintf(strcat('{stdoutdelim}', "\\n"));
+    fprintf(stderr, strcat('{stderrdelim}', "\\n"));
     {code}
     
-    %octavetex.after()
+    octavetex_after()
     '''
 
 CodeEngine('octave', 'octave', '.m',
