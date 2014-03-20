@@ -246,6 +246,8 @@
     \expandafter\gdef\pytx@tmp{#1}%
 }
 \fi
+\DefineVerbatimEnvironment{pytx@Verbatim}{Verbatim}{}
+\DefineVerbatimEnvironment{pytx@SaveVerbatim}{SaveVerbatim}{}
 \newcommand{\setpythontexcontext}[1]{%
     \Depythontex{cmd:setpythontexcontext:m:n}%
     \def\pytx@SetContext{%
@@ -359,7 +361,7 @@
             {\let\pytx@currfile\@empty}{\let\pytx@currfile\currfilename}%
     \immediate\write\pytx@codefile{\pytx@delim\pytx@type\pytx@delimchar%
         \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
-        0\pytx@delimchar\pytx@cmd\pytx@delimchar%
+        \arabic{\pytx@counter}\pytx@delimchar\pytx@cmd\pytx@delimchar%
         \pytx@context\pytx@delimchar\pytx@argsrun\pytx@delimchar%
         \pytx@argspprint\pytx@delimchar%
         \pytx@currfile\pytx@delimchar%
@@ -386,6 +388,7 @@
 \newcounter{pytx@FancyVerbLineTemp}
 \def\pytx@FVB@SaveVerbatim#1{%
     \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \global\FV@CodeLineNo\z@
     \@bsphack
     \begingroup
     \FV@UseKeyValues
@@ -1358,6 +1361,8 @@
 }
 \def\pytx@BEPygmentsPyg[#1]{%
     \def\pytx@fvopttmp{#1}%
+    \let\pytx@argspprint\@empty
+    \def\pytx@argspprint{#1}%
     \begingroup
     \obeylines
     \pytx@BEPygmentsPyg@i
@@ -1388,6 +1393,8 @@
         \pytx@SetGroupVerb
         \edef\pytx@session{EXT:##3}%
         \pytx@CheckPygmentsInit{##2}%
+        \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+        \pytx@CheckCounter{\pytx@counter}%
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \begingroup
         \DepyListing %Always must be in a group
@@ -1398,6 +1405,7 @@
             {\PackageWarning{\pytx@packagename}{Input file <##3> doesn't exist}}%
         \endgroup
         \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \stepcounter{\pytx@counter}%
     }%
 }
 \def\pytx@MakePygmentsInputPyg{
@@ -1406,24 +1414,32 @@
         \edef\pytx@cmd{verbatim}%
         \pytx@SetContext
         \pytx@SetGroupVerb
+        \let\pytx@argspprint\@empty
+        \def\pytx@argspprint{##1}%
         \edef\pytx@session{EXT:##3}%
         \pytx@CheckPygmentsInit{##2}%
+        \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+        \pytx@CheckCounter{\pytx@counter}%
         \pytx@WriteCodefileInfoExt
         \IfFileExists{##3}{}{\PackageWarning{\pytx@packagename}%
-            {Input file <##3> does not exist}}
+            {Input file <##3> does not exist}}%
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \begingroup
         \pytx@FVSet
         \fvset{firstnumber=auto}%
-        \ifcsname FV@SV@pytx@\pytx@type @\pytx@session @\pytx@group @0\endcsname
-            \UseVerbatim[##1]{pytx@\pytx@type @\pytx@session @\pytx@group @0}%
+        \ifcsname FV@SV@pytx@\pytx@type @\pytx@session @\pytx@group
+                    @\arabic{\pytx@counter}\endcsname
+            \UseVerbatim[##1]{pytx@\pytx@type @\pytx@session @\pytx@group
+                    @\arabic{\pytx@counter}}%
         \else
-            \InputIfFileExists{\pytx@outputdir/##3_##2.pygtex}{}%
+            \InputIfFileExists{\pytx@outputdir/\pytx@type_##3_\pytx@group
+                    _\arabic{\pytx@counter}.pygtex}{}%
                 {\textbf{??~\pytx@packagename~??}%
                     \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
         \fi
         \endgroup
         \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \stepcounter{\pytx@counter}%
     }%
 }
 \newcommand{\setpygmentsfv}[2][]{%

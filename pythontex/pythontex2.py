@@ -102,6 +102,7 @@ class Pytxcode(object):
         self.is_extfile = True if self.session.startswith('EXT:') else False
         if self.is_extfile:
             self.extfile = os.path.expanduser(os.path.normcase(self.session.replace('EXT:', '', 1)))
+            self.key_typeset = self.key_typeset.replace('EXT:', '')
         self.is_cc = True if self.family.startswith('CC:') else False
         self.is_pyg = True if self.family.startswith('PYG') else False
         self.is_verb = True if self.restart.endswith('verb') else False
@@ -693,6 +694,7 @@ def hash_all(data, temp_data, old_data, engine_dict):
             if c.is_typeset:
                 typeset_hasher[c.key_typeset].update(c.hashable_delims_typeset.encode(encoding))
                 typeset_hasher[c.key_typeset].update(code_encoded)
+                typeset_hasher[c.key_typeset].update(c.args_prettyprint.encode(encoding))
         elif c.is_cons:
             cons_hasher[c.key_run].update(c.hashable_delims_run.encode(encoding))
             code_encoded = c.code.encode(encoding)
@@ -700,12 +702,14 @@ def hash_all(data, temp_data, old_data, engine_dict):
             if c.is_typeset:
                 typeset_hasher[c.key_typeset].update(c.hashable_delims_typeset.encode(encoding))
                 typeset_hasher[c.key_typeset].update(code_encoded)
+                typeset_hasher[c.key_typeset].update(c.args_prettyprint.encode(encoding))
         elif c.is_cc:
             cc_hasher[c.cc_type].update(c.hashable_delims_run.encode(encoding))
             cc_hasher[c.cc_type].update(c.code.encode(encoding))
         elif c.is_typeset:
             typeset_hasher[c.key_typeset].update(c.hashable_delims_typeset.encode(encoding))
             typeset_hasher[c.key_typeset].update(c.code.encode(encoding))
+            typeset_hasher[c.key_typeset].update(c.args_prettyprint.encode(encoding))
         
 
     # Store hashes
@@ -2031,11 +2035,22 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
         processed = highlight(content, lexer[c.family], formatter[c.family])
         if c.is_inline or content.count('\n') < fvextfile:
             # Highlighted code brought in via macros needs SaveVerbatim
-            processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
-                            r'\\begin{{SaveVerbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance), processed, count=1)
-            processed = processed.rsplit('\\', 1)[0] + '\\end{SaveVerbatim}\n\n'                    
+            if c.args_prettyprint:
+                processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                                r'\\begin{{pytx@SaveVerbatim}}[\1, {4}]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance, c.args_prettyprint), processed, count=1)
+            else:
+                processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                                r'\\begin{{pytx@SaveVerbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance), processed, count=1)
+            processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@SaveVerbatim}\n\n'
             pygments_macros[c.key_typeset].append(processed)
         else:
+            if c.args_prettyprint:
+                processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                                r'\\begin{{pytx@Verbatim}}[\1, {4}]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance, c.args_prettyprint), processed, count=1)
+            else:
+                processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                                r'\\begin{{pytx@Verbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance), processed, count=1)
+            processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@Verbatim}\n\n'
             fname = os.path.join(outputdir, c.key_typeset.replace('#', '_') + '.pygtex')
             f = open(fname, 'w', encoding=encoding)
             f.write(processed)
@@ -2182,8 +2197,12 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
         cons_index[c.instance] = c.line    
     
     # Consolize the code
+    # If the working directory is changed as part of the console code,
+    # then we need to get back to where we were.
     con = Console(banner, filename)
+    cwd = os.getcwd()
     con.consolize(startup, cons_list)
+    os.chdir(cwd)
     
     # Set up Pygments, if applicable
     if pygments_settings is not None:
@@ -2282,11 +2301,15 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                     processed = highlight(console_content, lexer, formatter)
                     if console_content.count('\n') < fvextfile:                            
                         processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
-                                        r'\\begin{{SaveVerbatim}}[\1]{{pytx@{0}}}'.format(key_typeset.replace('#', '@')),
+                                        r'\\begin{{pytx@SaveVerbatim}}[\1]{{pytx@{0}}}'.format(key_typeset.replace('#', '@')),
                                         processed, count=1)
-                        processed = processed.rsplit('\\', 1)[0] + '\\end{SaveVerbatim}\n\n'
+                        processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@SaveVerbatim}\n\n'
                         pygments_macros[key_typeset].append(processed)
                     else:
+                        processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                                        r'\\begin{{pytx@Verbatim}}[\1]{{pytx@{0}}}'.format(key_typeset.replace('#', '@')),
+                                        processed, count=1)
+                        processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@Verbatim}\n\n'
                         fname = os.path.join(outputdir, key_typeset.replace('#', '_') + '.pygtex')
                         f = open(fname, 'w', encoding=encoding)
                         f.write(processed)
@@ -2294,12 +2317,12 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                         pygments_files[key_typeset].append(fname)  
                 else:
                     if console_content.count('\n') < fvextfile:
-                        processed = ('\\begin{{SaveVerbatim}}{{pytx@{0}}}\n'.format(key_typeset.replace('#', '@')) + 
-                                     console_content + '\\end{SaveVerbatim}\n\n')
+                        processed = ('\\begin{{pytx@SaveVerbatim}}{{pytx@{0}}}\n'.format(key_typeset.replace('#', '@')) + 
+                                     console_content + '\\end{pytx@SaveVerbatim}\n\n')
                         macros.append(processed)
                     else:
-                        processed = ('\\begin{Verbatim}\n' + console_content +
-                                     '\\end{Verbatim}\n\n')
+                        processed = ('\\begin{pytx@Verbatim}\n' + console_content +
+                                     '\\end{pytx@Verbatim}\n\n')
                         fname = os.path.join(outputdir, key_typeset.replace('#', '_') + '.tex')
                         f = open(fname, 'w', encoding=encoding)
                         f.write(processed)

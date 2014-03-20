@@ -973,7 +973,7 @@ julia_wrapper = '''
     jltex.after()
     '''
 
-CodeEngine('julia', 'julia', '.jl', '{julia} {file}.jl', julia_template, 
+CodeEngine('julia', 'julia', '.jl', '{julia} "{file}.jl"', julia_template, 
               julia_wrapper, 'println(jltex.formatter({code}))', 
               'ERROR:', 'WARNING:', ':{number}', True)
 

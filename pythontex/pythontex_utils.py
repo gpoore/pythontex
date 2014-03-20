@@ -78,12 +78,12 @@ class PythonTeXUtils(object):
             self.context = self._DictWithAttr()
             k_and_v = [map(lambda x: x.strip(), kv.split('=')) for kv in expr.split(',')]
             for k, v in k_and_v:
-                if v.startswith('int::'):
-                    v = int(float(v[5:]))
-                elif v.startswith('float::'):
-                    v = float(v[7:])
-                elif v.startswith('str::'):
-                    v = v[5:]
+                if v.startswith('!!int '):
+                    v = int(float(v[6:]))
+                elif v.startswith('!!float '):
+                    v = float(v[8:])
+                elif v.startswith('!!str '):
+                    v = v[6:]
                 self.context[k] = v
                 setattr(self.context, k, v)
     

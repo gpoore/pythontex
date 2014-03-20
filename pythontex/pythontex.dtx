@@ -85,13 +85,21 @@
 %   Right brace   \}     Tilde         \~}
 %
 %
-% \begin{changelog}{v0.13}{2014/02/??}
+% \begin{changelog}{v0.13}{2014/03/??}
 % \textbf{New features}
 % \begin{itemize}
 % \item Added command-line option \texttt{-{}-jobs}, which allows the maximum number of concurrent processes to be specified (\#35).
 % \item When \texttt{pythontex2.py} and \texttt{pythontex3.py} are run directly, the Python interpreter is automatically set to a reasonable default (\texttt{py -2} or \texttt{py -3} under Windows, using the Python 3.3+ wrapper; \texttt{python2} or \texttt{python3} under other systems).
 % \item The installer now creates symlinks for the numbered scripts \texttt{pythontex*.py} and \texttt{depythontex*.py}.
 % \item Added Python version checking to all numbered scripts.
+% \item Under Python, the type of data passed via \texttt{\string\setpythontexcontext} may now be set using YAML-style tags (\texttt{!!str}, \texttt{!!int}, \texttt{!!float}).  For example, \texttt{\string\setpythontexcontext\{myint=!!int 123\}}.  This system is still under development and is subject to change in the future.
+% \item The \texttt{fancyvrb} options \texttt{firstline} and \texttt{lastline} now work with the \texttt{pygments} environment and \texttt{\string\inputpygments} command.  This required some additional patching of \texttt{fancyvrb}.
+% \item The \texttt{pytx@Verbatim} and \texttt{pytx@SaveVerbatim} environments are now used for verbatim code.  These are copies of the |fancyvrb| environments.  This prevents conflicts when literal \texttt{Verbatim} and \texttt{SaveVerbatim} environments need to be typeset.
+% \end{itemize}
+% \textbf{Bugfixes}
+% \begin{itemize}
+% \item Fixed a bug that prevented created files from being cleaned up when the working directory was not the document root directory and the full path to the files was not provided.
+% \item Fixed a bug that prevented the \texttt{fvextfile} option from working when external files were highlighted.
 % \end{itemize}
 % \end{changelog}
 %
@@ -1098,11 +1106,11 @@
 %
 % All contextual data is available as strings on the Python/other language side.  For convenience, the utilities class provides unit conversion methods for converting from \TeX\ points to inches, centimeters, millimeters, and big (DTP or PostScript) points.  These methods take integers, floats, or strings that consist of digits (optionally ending in ``pt''), and return floats.  For example, |pytex.pt_to_in()|, |pytex.pt_to_cm()|, |pytex.pt_to_mm()|, |pytex.pt_to_bp()|.  Keep in mind that the units of \TeX\ points are \href{http://tex.stackexchange.com/questions/41370/what-are-the-possible-dimensions-sizes-units-latex-understands}{$1/72.27$} of an inch, \emph{not} $1/72$ of an inch (which is a bp).
 %
-% There is also a type system for Python that allows the types of \meta{values} to be specified.  Any \meta{value} beginning with |int::| will become an integer; with |float::|, a float; with |str::|, a string.  For example, 
+% There is also a type system for Python that allows the types of \meta{values} to be specified.  Any \meta{value} beginning with |!!int| will become an integer; with |!!float|, a float; with |!!str|, a string.  This notation is borrowed from \href{http://yaml.org/}{YAML}.  For example, 
 %\begin{verbatim}
-%\setpythontexcontext{a=int::42, b=float::42, c=str::42}
+%\setpythontexcontext{a=!!int 42, b=!!float 42, c=!!str 42}
 %\end{verbatim}
-% \textbf{This type system is still under development and is subject to change in the future.}  Once the system stabilizes, it will be extended to non-Python languages.  Comments on the type system are welcome.  The current reasoning is as follows.  The type system should not be too Python-specific, since \pytex\ is supporting additional languages; only a few types should be supported.  A prefix is preferable to something like |int(42)|, since that requires checking for the closing parenthesis and also means that a closing parenthesis is required after an argument that may contain a complex-looking jumble of \TeX\ code, where it might be less visible.  The type declaration should go with the \meta{value} rather than the \meta{key}, because if more complex types are added later (or added by the user), a hierarchy of type declarations might be needed (for example, elements in a list), and that is impossible if the \meta{key} is assigned a type.  The use of double colons |::| is somewhat arbitrary; it is reminiscent of type declarations in some languages, should be rare in strings that the user would want to pass to the Python/other language side, and is less prone to misinterpretation that a space (|int 42|) or a single colon (|int:42|).
+% \textbf{This type system is still under development and is subject to change in the future.}  Once the system stabilizes, it will be extended to non-Python languages.  Comments on the type system are welcome.
 %
 % The context may only be set in the preamble.
 %
@@ -1981,6 +1989,15 @@
 \fi
 %    \end{macrocode}\end{macro}
 %
+% \begin{macro}{pytx@Verbatim}
+% \begin{macro}{pytx@SaveVerbatim}
+% We need custom versions of |fancyvrb|'s |Verbatim| and |SaveVerbatim| environments, because we don't want to have to worry about the possibility of these environments containing literal |Verbatim| and |SaveVerbatim| environments.
+%    \begin{macrocode}
+\DefineVerbatimEnvironment{pytx@Verbatim}{Verbatim}{}
+\DefineVerbatimEnvironment{pytx@SaveVerbatim}{SaveVerbatim}{}
+%    \end{macrocode}
+% \end{macro}\end{macro}
+%
 %
 % \subsubsection{Code context}
 % \begin{macro}{\pytx@context}\begin{macro}{\pytx@SetContext}\begin{macro}{\setpythontexcontext}
@@ -2185,7 +2202,7 @@
 %    \end{macrocode}
 %
 % \begin{macro}{\pytx@WriteCodefileInfo}\begin{macro}{\pytx@WriteCodefileInfoExt}
-% Later, we will frequently need to write \pytex\ information to the code file in  standardized form.  We create a macro to simplify that process.  We also create an alternate form, for use with external files that must be inputted or read in by \pytex\ and processed.  While the standard form employs a counter that is incremented elsewhere, the version for external files substitutes a zero (0) for the counter, because each external file must be unique in name and thus numbering via a counter is redundant.\footnote{The external-file form also takes an optional argument.  This corresponds to a command-line argument that is passed to an external file during the file's execution.  Currently, executing external files, with or without arguments, is not implemented.  But this feature is under consideration, and the macro retains the optional argument for the potential future compatibility.}
+% Later, we will frequently need to write \pytex\ information to the code file in  standardized form.  We create a macro to simplify that process.  We also create an alternate form, for use with external files that must be inputted or read in by \pytex\ and processed.\footnote{The external-file form also takes an optional argument.  This corresponds to a command-line argument that is passed to an external file during the file's execution.  Currently, executing external files, with or without arguments, is not implemented.  But this feature is under consideration, and the macro retains the optional argument for the potential future compatibility.  Originally, the external version used a fixed instance, but that conflicted with the \texttt{fancyvrb} options \texttt{firstline} and \texttt{lastline}, so instances had to be added.}
 %    \begin{macrocode}
 \def\pytx@argsrun{}
 \def\pytx@argspprint{}
@@ -2205,7 +2222,7 @@
             {\let\pytx@currfile\@empty}{\let\pytx@currfile\currfilename}%
     \immediate\write\pytx@codefile{\pytx@delim\pytx@type\pytx@delimchar%
         \pytx@session\pytx@delimchar\pytx@group\pytx@delimchar%
-        0\pytx@delimchar\pytx@cmd\pytx@delimchar%
+        \arabic{\pytx@counter}\pytx@delimchar\pytx@cmd\pytx@delimchar%
         \pytx@context\pytx@delimchar\pytx@argsrun\pytx@delimchar%
         \pytx@argspprint\pytx@delimchar%
         \pytx@currfile\pytx@delimchar%
@@ -2259,6 +2276,8 @@
 % \begin{macro}{pytx@FancyVerbLineTemp}
 % |fancyvrb|'s |SaveVerbatim| environment will be used extensively to include code highlighted by Pygments and other processed content.  Unfortunately, when the saved content is included in a document with the corresponding |UseVerbatim|, line numbering does not work correctly.  Based on a web search, this appears to be a known bug in |fancyvrb|.  We begin by fixing this, which requires patching |fancyvrb|'s |\FVB@SaveVerbatim| and |\FVE@SaveVerbatim|.  We create a patched |\pytx@FVB@SaveVerbatim| by inserting |\FV@StepLineNo| and |\FV@CodeLineNo=1| at appropriate locations.  We also delete an unnecessary |\gdef\SaveVerbatim@Name{#1}|.  Then we create a |\pytx@FVE@SaveVerbatim|, and add code so that the two macros work together to prevent |FancyVerbLine| from incorrectly being incremented within the |SaveVerbatim| environment.  This involves using the counter |pytx@FancyVerbLineTemp| to temporarily store the value of |FancyVerbLine|, so that it may be restored to its original value after verbatim content has been saved.
 %
+% There is an additional line-numbering issue when the |firstline| option is used with |SaveVerbatim|.  This is fixed by globally reseting |\FV@CodeLineNo| to zero.  That was originally done in |fancyvrb|, via |\FV@FormattingPrep|, but this macro is commented out in the current version of |fancyvrb|, which throws off line numbering.
+%
 % Typically, we |\let| our own custom macros to the corresponding macros within |fancyvrb|, but only within a command or environment.  In this case, however, we are fixing behavior that should be considered a bug even for normal |fancyvrb| usage.  So we let the buggy macros to the patched macros immediately after defining the patched versions.
 %    \begin{macrocode}
 \newcounter{pytx@FancyVerbLineTemp}
@@ -2266,6 +2285,7 @@
 %    \begin{macrocode}
 \def\pytx@FVB@SaveVerbatim#1{%
     \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
+    \global\FV@CodeLineNo\z@
     \@bsphack
     \begingroup
     \FV@UseKeyValues
@@ -3856,6 +3876,8 @@
 %    \begin{macrocode}
 \def\pytx@BEPygmentsPyg[#1]{%
     \def\pytx@fvopttmp{#1}%
+    \let\pytx@argspprint\@empty
+    \def\pytx@argspprint{#1}%
     \begingroup
     \obeylines
     \pytx@BEPygmentsPyg@i
@@ -3892,7 +3914,7 @@
 %
 % \begin{macro}{\pytx@MakePygmentsInputFV}
 % \begin{macro}{\pytx@MakePygmentsInputPyg}
-% For completeness, we need to be able to read in a file and highlight it.  This is done through some trickery with the current system.  We define the type as |PYG|\meta{lexer}, and the command as |verb|.  We set the context for consistency.  We set the session as |EXT:|\meta{file~name}.\footnote{There is no possibility of this session being confused with a user-defined session, because colons are substituted for hyphens in all user-defined sessions, before they are written to the code file.}  Next we define a |fancyvrb| settings macro for the type if it does not already exist.  We write info to the code file using |\pytx@WriteCodefileInfoExt|, which writes the standard info to the code file but uses zero for the instance, since external files that are not executed can only have one instance.
+% For completeness, we need to be able to read in a file and highlight it.  This is done through some trickery with the current system.  We define the type as |PYG|\meta{lexer}, and the command as |verb|.  We set the context for consistency.  We set the session as |EXT:|\meta{file~name}.\footnote{There is no possibility of this session being confused with a user-defined session, because colons are substituted for hyphens in all user-defined sessions, before they are written to the code file.}  Next we define a |fancyvrb| settings macro for the type if it does not already exist.  We write info to the code file using |\pytx@WriteCodefileInfoExt|.
 %
 % Then we check to see if the file actually exists, and issue a warning if not.  This saves the user from running |pythontex.py| to get the same error.  We perform our typical |FancyVerbLine| trickery.  Next we make use of the saved content in the same way as the |pygments| environment.  Note that we do not create a counter for the line numbers.  This is because under typical usage an external file should have its lines numbered beginning with 1.  We also encourage this by setting |firstnumber=auto| before bringing in the content.
 %
@@ -3909,6 +3931,8 @@
         \pytx@SetGroupVerb
         \edef\pytx@session{EXT:##3}%
         \pytx@CheckPygmentsInit{##2}%
+        \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+        \pytx@CheckCounter{\pytx@counter}%
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \begingroup
         \DepyListing %Always must be in a group
@@ -3919,6 +3943,7 @@
             {\PackageWarning{\pytx@packagename}{Input file <##3> doesn't exist}}%
         \endgroup
         \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \stepcounter{\pytx@counter}%
     }%
 }
 \def\pytx@MakePygmentsInputPyg{
@@ -3927,24 +3952,32 @@
         \edef\pytx@cmd{verbatim}%
         \pytx@SetContext
         \pytx@SetGroupVerb
+        \let\pytx@argspprint\@empty
+        \def\pytx@argspprint{##1}%
         \edef\pytx@session{EXT:##3}%
         \pytx@CheckPygmentsInit{##2}%
+        \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
+        \pytx@CheckCounter{\pytx@counter}%
         \pytx@WriteCodefileInfoExt
         \IfFileExists{##3}{}{\PackageWarning{\pytx@packagename}%
-            {Input file <##3> does not exist}}
+            {Input file <##3> does not exist}}%
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \begingroup
         \pytx@FVSet
         \fvset{firstnumber=auto}%
-        \ifcsname FV@SV@pytx@\pytx@type @\pytx@session @\pytx@group @0\endcsname
-            \UseVerbatim[##1]{pytx@\pytx@type @\pytx@session @\pytx@group @0}%
+        \ifcsname FV@SV@pytx@\pytx@type @\pytx@session @\pytx@group 
+                    @\arabic{\pytx@counter}\endcsname
+            \UseVerbatim[##1]{pytx@\pytx@type @\pytx@session @\pytx@group 
+                    @\arabic{\pytx@counter}}%
         \else
-            \InputIfFileExists{\pytx@outputdir/##3_##2.pygtex}{}%
+            \InputIfFileExists{\pytx@outputdir/\pytx@type_##3_\pytx@group
+                    _\arabic{\pytx@counter}.pygtex}{}%
                 {\textbf{??~\pytx@packagename~??}%
                     \PackageWarning{\pytx@packagename}{Non-existent Pygments content}}%
         \fi
         \endgroup
         \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \stepcounter{\pytx@counter}%
     }%
 }
 %    \end{macrocode}
