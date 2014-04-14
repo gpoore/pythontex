@@ -2141,7 +2141,9 @@
 %    \begin{macrocode}
 \AtBeginDocument{%
     \makeatletter
-    \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}{}%
+    \IfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{%
+        \input{\pytx@outputdir/\pytx@jobname.pytxmcr}{}{}}{%
+        \typeout{No file \pytx@outputdir/\pytx@jobname.pytxmcr.}}%
     \makeatother
 }
 %    \end{macrocode}
