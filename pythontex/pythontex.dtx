@@ -3225,6 +3225,7 @@
 %    \begin{macrocode}
 \def\pytx@BeginEnvPyg@i[#1]{%
     \def\pytx@fvopttmp{#1}%
+    \def\pytx@argspprint{#1}%
     \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
     \let\FVB@VerbatimOut\pytx@FVB@VerbatimOut
     \let\FVE@VerbatimOut\pytx@FVE@VerbatimOut
@@ -3449,6 +3450,7 @@
 %    \begin{macrocode}
 \def\pytx@BeginConsEnvFV@i[#1]{%
     \def\pytx@fvopttmp{#1}%
+    \def\pytx@argspprint{#1}%
     \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
     \let\FVB@VerbatimOut\pytx@FVB@VerbatimOut
     \let\FVE@VerbatimOut\pytx@FVE@VerbatimOut
@@ -3806,6 +3808,7 @@
 %    \begin{macrocode}
 \def\pytx@BEPygmentsFV[#1]{%
     \def\pytx@fvopttmp{#1}%
+    \def\pytx@argspprint{#1}%
     \begingroup
     \obeylines
     \pytx@BEPygmentsFV@i
@@ -3876,7 +3879,6 @@
 %    \begin{macrocode}
 \def\pytx@BEPygmentsPyg[#1]{%
     \def\pytx@fvopttmp{#1}%
-    \let\pytx@argspprint\@empty
     \def\pytx@argspprint{#1}%
     \begingroup
     \obeylines
@@ -3948,11 +3950,11 @@
 }
 \def\pytx@MakePygmentsInputPyg{
     \newcommand{\inputpygments}[3][]{%
+        \begingroup
         \edef\pytx@type{PYG##2}%
         \edef\pytx@cmd{verbatim}%
         \pytx@SetContext
         \pytx@SetGroupVerb
-        \let\pytx@argspprint\@empty
         \def\pytx@argspprint{##1}%
         \edef\pytx@session{EXT:##3}%
         \pytx@CheckPygmentsInit{##2}%
@@ -3978,6 +3980,7 @@
         \endgroup
         \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
         \stepcounter{\pytx@counter}%
+        \endgroup
     }%
 }
 %    \end{macrocode}
