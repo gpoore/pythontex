@@ -315,7 +315,14 @@
 }
 \AtBeginDocument{%
     \makeatletter
-    \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}{}%
+    \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}%
+        {\ifstrempty{\pytx@outputdir}%
+            {\typeout{No file \pytx@jobname.pytxmcr.}}%
+            {}%
+         \IfStrEq{\pytx@outputdir}{.}%
+            {\typeout{No file \pytx@jobname.pytxmcr.}}%
+            {\typeout{No file \pytx@outputdir/\pytx@jobname.pytxmcr.}}%
+         \typeout{Run \pytx@packagename\space to create it.}}%
     \makeatother
 }
 \newwrite\pytx@codefile

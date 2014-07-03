@@ -34,6 +34,7 @@
 \makeatletter
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{lmodern}
 \usepackage{textcomp}
 \usepackage[svgnames]{xcolor}
 \usepackage{environ}
@@ -66,7 +67,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{2951}
+% \CheckSum{3010}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -1147,6 +1148,28 @@
 % It is also possible to change the working directory from within Python code, via |os.chdir()|.
 %
 %
+% \subsection{Working with other programs}
+%
+% \subsubsection{\texttt{latexmk}}
+%
+% \pytex\ is compatible with |latexmk|.  If you are compiling in the same location as the document source (if you are \emph{not} using |-auxdir|, |-outdir|, or |$out_dir|, or alternatively |TEXINPUTS|), then adding a simple rule such as the following to your |.latexmkrc| should usually be sufficient.
+%\begin{verbatim}
+%add_cus_dep('pytxcode', 'tex', 0, 'pythontex');
+%sub pythontex { return system("pythontex \"$_[0]\""); }
+%\end{verbatim}
+% This tells |latexmk| that the document (|tex|) depends on the file of code extracted from the document (|pytxcode|).\footnote{This is a slightly atypical use, if not a ``misuse,'' of \texttt{add\_cus\_dep()}.  In the standard usage, the first argument is the extension of a file that is used to create another file with the extension given in the second argument, via the rule named in the fourth argument.  In this case, we just want to run the rule whenever files with the first extension are modified.  The extension given in the second argument is irrelevant, so long as a file with the document name and that extension exists.  Since the \texttt{tex} file itself will exist, its extension is a logical choice for the second argument.}  Whenever the document is compiled, the file of code is updated.  If |latexmk| detects that the code changed, then it will run \pytex.  When \pytex\ runs, it will modify at least one file that is brought into the document.  |latexmk| will detect this modification, and automatically recompile the document.
+%
+% If you are compiling to a different directory (using |-auxdir|, |-outdir|, or |$out_dir|, or alternatively |TEXINPUTS|), then this rule may fail due to the different directory configuration.  In that case, you should use |\setpythontexoutputdir{.}| so that \pytex\ will store its output in the current default location, rather than in a subdirectory.  Since the |tex| source is no longer in the location of the compiled output, you also need a different dependency specification.  It is probably simplest to use the |pytxmcr| file that \pytex\ always generates.
+%\begin{verbatim}
+%add_cus_dep('pytxcode','pytxmcr',0,'pythontex');
+%sub pythontex { return system("pythontex.py \"$_[0]\""); }
+%\end{verbatim}
+% Note that this configuration should \emph{always} work, but has the disadvantage of requiring that \pytex\ not use a subdirectory to isolate the files it automatically generates.
+%
+% If you are using the |rerun=always| setting, the above rules will fail to run \pytex\ on each and every compile; in that situation, you should configure your |.latexmkrc| so that \pytex\ always runs after the first \LaTeX\ run.
+%
+%
+%
 % \section{\texttt{depythontex}}
 % \label{sec:depythontex}
 %
@@ -2141,7 +2164,14 @@
 %    \begin{macrocode}
 \AtBeginDocument{%
     \makeatletter
-    \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}{}%
+    \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}%
+        {\ifstrempty{\pytx@outputdir}%
+            {\typeout{No file \pytx@jobname.pytxmcr.}}%
+            {}%
+         \IfStrEq{\pytx@outputdir}{.}%
+            {\typeout{No file \pytx@jobname.pytxmcr.}}%
+            {\typeout{No file \pytx@outputdir/\pytx@jobname.pytxmcr.}}%
+         \typeout{Run \pytx@packagename\space to create it.}}%
     \makeatother
 }
 %    \end{macrocode}
