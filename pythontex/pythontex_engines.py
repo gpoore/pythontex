@@ -930,12 +930,8 @@ julia_template = '''
     jltex = JuliaTeXUtils()
     
     jltex.docdir = pwd()
-    println(jltex.docdir)
     try
         cd("{workingdir}")
-        if !(in(pwd(), LOAD_PATH))
-            push!(LOAD_PATH, pwd())
-        end
     catch
         if !(length(ARGS) > 0 && ARGS[1] == "--manual")
             error("Could not find directory {workingdir}")
@@ -981,11 +977,27 @@ SubCodeEngine('julia', 'jl')
 
 
 octave_template = '''
-    cd '{Workingdir}';
+    # Octave only supports @CLASS, not classdef
+    # So use a struct plus functions as a substitute for a utilities class
+    
+    global octavetex = struct();
+    octavetex.docdir = pwd();
+    try
+        cd '{Workingdir}';
+    catch
+        arg_list = argv()
+        if size(arg_list, 1) == 1 && arg_list{{1}} == '--manual'
+        else
+            error("Could not find directory {workingdir}");
+        end
+    end
+    if find_dir_in_path(octavetex.docdir)
+    else
+        addpath(octavetex.docdir);
+    end
     
     {extend}
     
-    global octavetex = struct();
     octavetex.dependencies = {{}};
     octavetex.created = {{}};
     octavetex._context_raw = '';
