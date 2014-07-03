@@ -1046,6 +1046,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     # If verbose, print a list of processes
     if verbose:
         print('\n* PythonTeX will run the following processes')
+        print('  with working directory {0}'.format(workingdir))
         print('  (maximum concurrent processes = {0})'.format(jobs))
     
     # Add code processes.  Note that everything placed in the codedict 
