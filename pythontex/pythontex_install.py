@@ -4,23 +4,27 @@
 '''
 Install PythonTeX
 
-This installation script should work with most TeX distributions.  It is 
-primarily written for TeX Live.  It should work with other TeX distributions 
-that use the Kpathsea library (such as MiKTeX), though with reduced 
-functionality in some cases.  It will require manual input when used with a 
-distribution that does not include Kpathsea.
+This installation script is written to work with TeX Live and MiKTeX.  Note
+that PythonTeX is included in TeX Live 2013 and later, and may be installed 
+via the package manager.  Thus, this installation script is only needed with 
+TeX Live when you wish to install the latest version.  PythonTeX is not 
+currently available via the MiKTeX package manager.
 
-The script will overwrite (and thus update) all previously installed PythonTeX 
-files.  When Kpathsea is available, files may be installed in TEXMFDIST,
+The script will automatically overwrite (and thus update) all previously 
+installed PythonTeX files in the designated installation location.  When 
+Kpathsea is available, files may be installed in TEXMFDIST, TEXMFLOCAL, 
 TEXMFHOME, or a manually specified location.  Otherwise, the installation 
-location must be specified manually.  Installing in TEXMFDIST is useful if
-you want to install PythonTeX and then update it in the future from CTAN.
-The mktexlsr command is executed at the end of the script, to make the system 
-aware of any new files.
+location must be specified manually.  Installing in TEXMFDIST is useful 
+under TeX Live if you want to install PythonTeX and then update it in the 
+future via the package manager.
 
-The script attempts to create a binary wrapper (Windows) or symlink 
-(Linux and OS X) for launching the main PythonTeX scripts, pythontex*.py and
-depythontex*.py.
+The `mktexlsr` (TeX Live) or `initexmf --update-fndb` (MiKTeX) command is 
+executed at the end of the script, to make the system aware of any new files.
+
+Under TeX Live, the script attempts to create a binary wrapper (Windows) or 
+symlink (Linux and OS X) for launching the main PythonTeX scripts, 
+`pythontex*.py` and `depythontex*.py`.  Under MiKTeX, it attempts to create
+a batch file in `miktex/bin`.
 
 
 Copyright (c) 2012-2014, Geoffrey M. Poore
@@ -51,7 +55,7 @@ except:
     pass
 
 
-# Print startup messages and warnings
+# Print startup messages and notices
 print('Preparing to install PythonTeX')
 if platform.system() != 'Windows':
     message = '''
@@ -66,13 +70,37 @@ if platform.system() != 'Windows':
     print(textwrap.dedent(message))
 
 
+# Attempt to detect the TeX distribution
+try:
+    if sys.version_info.major == 2:
+        texout = check_output(['latex', '--version'])
+    else:
+        texout = check_output(['latex', '--version']).decode('utf-8')
+except:
+    sys.exit('Could not retrieve latex info when running "latex --version"')
+if 'TeX Live' in texout:
+    detected_texdist = True
+    texlive = True
+    miktex = False
+elif platform.system() == 'Windows' and 'MiKTeX' in texout:
+    detected_texdist = True
+    texlive = False
+    miktex = True
+else:
+    detected_texdist = False
+    texlive = False
+    miktex = False
+
+
 # Make sure all necessary files are present
-# The pythontex_gallery and pythontex_quickstart are optional; we check for them when installing doc
+# The pythontex_gallery and pythontex_quickstart are optional; we 
+# check for them when installing doc, and install if available
 needed_files = ['pythontex.py', 'pythontex2.py', 'pythontex3.py',
                 'pythontex_engines.py', 'pythontex_utils.py',
                 'depythontex.py', 'depythontex2.py', 'depythontex3.py',
                 'pythontex.sty', 'pythontex.ins', 'pythontex.dtx', 
-                'pythontex.pdf', 'README']
+                'pythontex.pdf', 'README',
+                'spdb.py']
 missing_files = False
 # Print a list of all files that are missing, and exit if any are
 for eachfile in needed_files:
@@ -80,68 +108,93 @@ for eachfile in needed_files:
         print('Could not find file ' + eachfile)
         missing_files = True
 if missing_files:
-    print('Exiting.')
-    sys.exit(1)
+    sys.exit('Exiting due to missing files.')
 
 
 # Retrieve the location of valid TeX trees
-# Attempt to use kpsewhich; otherwise, resort to manual input 
-should_exit = False  # Can't use sys.exit() in try; will trigger except
-try:
-    if sys.version_info[0] == 2:
+if sys.version_info[0] == 2:
+    try:
         texmf_dist = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).rstrip('\r\n')
+    except:
+        texmf_dist = None
+    try:
         texmf_local = check_output(['kpsewhich', '-var-value', 'TEXMFLOCAL']).rstrip('\r\n')
+    except:
+        texmf_local = None
+    try:
         texmf_home = check_output(['kpsewhich', '-var-value', 'TEXMFHOME']).rstrip('\r\n')
-    else:
+    except:
+        texmf_home = None
+else:
+    try:
         texmf_dist = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).decode('utf-8').rstrip('\r\n')
+    except:
+        texmf_dist = None
+    try:
         texmf_local = check_output(['kpsewhich', '-var-value', 'TEXMFLOCAL']).decode('utf-8').rstrip('\r\n')
+    except:
+        texmf_local = None
+    try:
         texmf_home = check_output(['kpsewhich', '-var-value', 'TEXMFHOME']).decode('utf-8').rstrip('\r\n')
-    message = '''
-              Choose an installation location.
-              
-              TEXMFDIST is a good choice if you want to update PythonTeX 
-              in the future using your TeX distribution's package manager.
-              
-                1. TEXMFDIST
-                     {0}
-                2. TEXMFLOCAL
-                     {1}
-                3. TEXMFHOME
-                     {2}
-                4. Manual location
-              '''.format(texmf_dist, texmf_local, texmf_home)
-    print(textwrap.dedent(message))
-    path_choice = input('Installation location (number):  ')
-    if path_choice not in ('1', '2', '3', '4'):
-        should_exit = True
+    except:
+        texmf_home = None
+
+
+# Get installation location from user
+texmf_vars = [texmf_dist, texmf_local, texmf_home]
+message = '''
+          Choose an installation location.
+          
+          TEXMFDIST is a good choice if you want to update PythonTeX 
+          in the future using your TeX distribution's package manager
+          (assuming that is supported).
+          
+            1. TEXMFDIST
+                 {0}
+            2. TEXMFLOCAL
+                 {1}
+            3. TEXMFHOME
+                 {2}
+            4. Manual location
+            
+            5. Exit without installing
+          '''.format(*[x if x else '<INVALID>' for x in texmf_vars])
+
+if any(texmf_vars):
+    path_choice = ''
+    while (path_choice not in ('1', '2', '3', '4', '5') or 
+            (int(path_choice) <= 3 and not texmf_vars[int(path_choice)-1])):
+        print(textwrap.dedent(message))
+        path_choice = input('Installation location (number):  ')
+        if path_choice == '':
+            sys.exit()
+    if path_choice == '1':
+        texmf_path = texmf_dist
+    elif path_choice == '2':
+        texmf_path = texmf_local
+    elif path_choice == '3':
+        texmf_path = texmf_home
+    elif path_choice == '4':
+        texmf_path = input('Enter a path:\n')
+        if texmf_path == '':
+            sys.exit()
     else:
-        if path_choice == '1':
-            texmf_path = texmf_dist
-        elif path_choice == '2':
-            texmf_path = texmf_local
-        elif path_choice == '3':
-            texmf_path = texmf_home
-        else:
-            texmf_path = input('Enter a path:\n')
-except:
-    print('Cannot automatically find TEXMF paths.')
-    print('kpsewhich does not exist or could not be used.')
-    # Need to create the variable that tracks the type of installation
-    path_choice = '4'
-    texmf_path = input('Please enter a valid installation path:\n')
-if should_exit:
-    sys.exit()
+        sys.exit()
+else:
+    print('Failed to detect possible installation locations automatically.')
+    print('TEXMF paths could not be located with kpsewhich.')
+    texmf_path = input('Plese enter an installation path, or press "Enter" to exit:\n')
+    if texmf_path == '':
+        sys.exit()
+
 # Make sure path slashes are compatible with the operating system
 # Kpathsea returns forward slashes, but Windows needs back slashes
 texmf_path = path.expandvars(path.expanduser(path.normcase(texmf_path)))
 
 # Check to make sure the path is valid 
-# This is only really needed for manual input 
-# The '' check is for empty manual input
-if texmf_path == '' or not path.exists(texmf_path):
-    print('Invalid installation path.  Exiting.')
-    sys.exit(1)
-    
+# This should only be needed for manual input, but it's a good check
+if not path.isdir(texmf_path):
+    sys.exit('Invalid installation path.  Exiting.')
 
 # Now check that all other needed paths are present
 if path_choice != '2':
@@ -154,6 +207,7 @@ else:
     package_path = path.join(texmf_path, 'tex', 'latex', 'local')
     scripts_path = path.join(texmf_path, 'scripts', 'local')
     source_path = path.join(texmf_path, 'source', 'latex', 'local')
+# May need to create some local directories
 make_paths = False
 for eachpath in [doc_path, package_path, scripts_path, source_path]:
     if not path.exists(eachpath):
@@ -161,13 +215,37 @@ for eachpath in [doc_path, package_path, scripts_path, source_path]:
             makedirs(eachpath)
             print('  * Created ' + eachpath)
         else:
-            choice = input('Some directories do not exist.  Create them? [y/n]\n')
-            if choice not in ('y', 'n'):
-                sys.exit('Invalid choice')
-            elif choice == 'y':
+            choice = ''
+            while choice not in ('y', 'n'):
+                choice = input('Some directories do not exist.  Create them? [y/n]  ')
+                if choice == '':
+                    sys.exit()
+            if choice == 'y':
                 make_paths = True
-                makedirs(eachpath)
-                print('  * Created ' + eachpath)
+                try:
+                    makedirs(eachpath)
+                    print('  * Created ' + eachpath)
+                except (OSError, IOError) as e:
+                    if e.errno == 13:
+                        print('\nInsufficient permission to install PythonTeX')
+                        if platform.system() == 'Windows':
+                            message = '''
+                                      You may need to run the installer as "administrator".
+                                      This may be done under Vista and later by right-clicking on
+                                      pythontex_install.bat, then selecting "Run as administrator".
+                                      Or you can open a command prompt as administrator 
+                                      (Start, Programs, Accessories, right-click Command Prompt,
+                                      Run as administrator), change to the directory in which
+                                      pythontex_install.py is located, and run 
+                                      "python pythontex_install.py".
+                                      '''
+                            print(textwrap.dedent(message))
+                            call(['pause'], shell=True)
+                        else:
+                            print('(For example, you may need "sudo", or possibly "sudo env PATH=$PATH")\n')
+                        sys.exit(1)
+                    else:
+                        raise
             else:
                 message = '''
                           Paths were not created.  The following will be needed.
@@ -180,6 +258,7 @@ for eachpath in [doc_path, package_path, scripts_path, source_path]:
                           '''.format(doc_path, package_path, scripts_path, source_path)
                 print(textwrap.dedent(message))
                 sys.exit()
+
 # Modify the paths by adding the pythontex directory, which will be created
 doc_path = path.join(doc_path, 'pythontex')
 package_path = path.join(package_path, 'pythontex')
@@ -215,6 +294,7 @@ try:
     copy('depythontex.py', scripts_path)
     copy('pythontex_utils.py', scripts_path)
     copy('pythontex_engines.py', scripts_path)
+    copy('spdb.py', scripts_path)
     for ver in [2, 3]:
         copy('pythontex{0}.py'.format(ver), scripts_path)
         copy('depythontex{0}.py'.format(ver), scripts_path)
@@ -223,10 +303,24 @@ try:
         mkdir(source_path)
     copy('pythontex.ins', source_path)
     copy('pythontex.dtx', source_path)
-except OSError as e:
+except (OSError, IOError) as e:
     if e.errno == 13:
-        print('Insufficient permission to install PythonTeX')
-        print('(For example, you may need "sudo", or possibly "sudo env PATH=$PATH")\n')
+        print('\nInsufficient permission to install PythonTeX')
+        if platform.system() == 'Windows':
+            message = '''
+                      You may need to run the installer as "administrator".
+                      This may be done under Vista and later by right-clicking on
+                      pythontex_install.bat, then selecting "Run as administrator".
+                      Or you can open a command prompt as administrator 
+                      (Start, Programs, Accessories, right-click Command Prompt,
+                      Run as administrator), change to the directory in which
+                      pythontex_install.py is located, and run 
+                      "python pythontex_install.py".
+                      '''
+            print(textwrap.dedent(message))
+            call(['pause'], shell=True)
+        else:
+            print('(For example, you may need "sudo", or possibly "sudo env PATH=$PATH")\n')
         sys.exit(1)
     else:
         raise        
@@ -235,34 +329,62 @@ except OSError as e:
 # Install binary wrappers, create symlinks, or suggest the creation of 
 # wrappers/batch files/symlinks.  This part is operating system dependent.
 if platform.system() == 'Windows':
-    # If under Windows, we create a binary wrapper if under TeX Live and 
-    # otherwise alert the user regarding the need for a wrapper or batch file.
-    
-    # Assemble the binary path, assuming TeX Live
-    # The directory bin/ should be at the same level as texmf
-    bin_path = path.join(path.split(texmf_path)[0], 'bin', 'win32') 
-    if path.exists(path.join(bin_path, 'runscript.exe')):
-        for f in ('pythontex.py', 'depythontex.py'):
-            copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, '{0}.exe'.format(f.rsplit('.')[0])))
-        print('\nCreated binary wrapper...')
+    # If under Windows, we create a binary wrapper if under TeX Live 
+    # or a batch file if under MiKTeX.  Otherwise, alert the user 
+    # regarding the need for a wrapper or batch file.    
+    if miktex:
+        try:
+            if sys.version_info.major == 2:
+                bin_path = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).rstrip('\r\n')
+            else:
+                bin_path = check_output(['kpsewhich', '-var-value', 'TEXMFDIST']).decode('utf-8').rstrip('\r\n')
+            bin_path = path.join(bin_path, 'miktex', 'bin')
+            
+            for s in ('pythontex.py', 'depythontex.py'):
+                batch = '@echo off\n"{0}" %*\n'.format(path.join(scripts_path, s))
+                f = open(path.join(bin_path, s.replace('.py', '.bat')), 'w')
+                f.write(batch)
+                f.close()
+        except:
+            message = '''
+                      Could not create a batch file for launching pythontex.py and 
+                      depythontex.py.  You will need to create a batch file manually.
+                      Sample batch files are included with the main PythonTeX files.
+                      The batch files should be in a location on the Windows PATH.
+                      The bin/ directory in your TeX distribution may be a good 
+                      location.
+                      
+                      The scripts pythontex.py and depythontex.py are located in 
+                      the following directory:
+                        {0}
+                      '''.format(scripts_path)
+            print(textwrap.dedent(message))
     else:
-        message = '''
-                  Could not create a wrapper for launching pythontex.py and 
-                  depythontex.py; did not find runscript.exe.  You will need 
-                  to create a wrapper manually, or use a batch file.  Sample 
-                  batch files are included with the main PythonTeX files.  
-                  The wrapper or batch file should be in a location on the 
-                  Windows PATH.  The bin/ directory in your TeX distribution 
-                  may be a good location.
-                  
-                  The scripts pythontex.py and depythontex.py are located in 
-                  the following directory:
-                    {0}
-                  '''.format(scripts_path)
-        print(textwrap.dedent(message))
+        # Assemble the binary path, assuming TeX Live
+        # The directory bin/ should be at the same level as texmf
+        bin_path = path.join(path.split(texmf_path)[0], 'bin', 'win32') 
+        if path.exists(path.join(bin_path, 'runscript.exe')):
+            for f in ('pythontex.py', 'depythontex.py'):
+                copy(path.join(bin_path, 'runscript.exe'), path.join(bin_path, '{0}.exe'.format(f.rsplit('.')[0])))
+            print('\nCreated binary wrapper...')
+        else:
+            message = '''
+                      Could not create a wrapper for launching pythontex.py and 
+                      depythontex.py; did not find runscript.exe.  You will need 
+                      to create a wrapper manually, or use a batch file.  Sample 
+                      batch files are included with the main PythonTeX files.  
+                      The wrapper or batch file should be in a location on the 
+                      Windows PATH.  The bin/ directory in your TeX distribution 
+                      may be a good location.
+                      
+                      The scripts pythontex.py and depythontex.py are located in 
+                      the following directory:
+                        {0}
+                      '''.format(scripts_path)
+            print(textwrap.dedent(message))
 else:
-    # Optimistically proceed as if every system other than Windows can share
-    # one set of code.
+    # Optimistically proceed as if every system other than Windows can 
+    # share one set of code.
     root_path = path.split(texmf_path)[0]
     # Create a list of all possible subdirectories of bin/ for TeX Live
     # Source:  http://www.tug.org/texlive/doc/texlive-en/texlive-en.html#x1-250003.2.1
@@ -322,14 +444,34 @@ else:
 
 
 # Alert TeX to the existence of the package via mktexlsr
-try:
-    print('\nRunning mktexlsr to make TeX aware of new files...')
-    check_call(['mktexlsr'])
-except: 
-    print('Could not run mktexlsr.')
-    print('Your system may not be aware of newly installed files.')
+if not miktex:
+    try:
+        check_call(['mktexlsr'])
+        print('\nRunning "mktexlsr" to make TeX aware of new files...')
+    except:
+        print('Could not run "mktexlsr".')
+        print('Your system may not be aware of newly installed files.')
+else:
+    success = False
+    try:
+        check_call(['initexmf', '--admin', '--update-fndb'])
+        print('\nRunning "initexmf --admin --update-fndb" to make TeX aware of new files...')
+        check_call(['initexmf', '--update-fndb'])
+        print('\nRunning "initexmf --update-fndb" to make TeX aware of new files...')
+        success = True
+    except:
+        pass
+    if not success:
+        try:
+            check_call(['initexmf', '--update-fndb'])
+            print('\nRunning "initexmf --update-fndb" to make TeX aware of new files...')
+            print('Depending on your installation settings, you may also need to run')
+            print('"initexmf --admin --update-fndb"')
+        except:
+            print('Could not run "initexmf --update-fndb" or "initexmf --admin --update-fndb"')
+            print('Your system may not be aware of newly installed files.')
 
-
+            
 if platform.system() == 'Windows':
     # Pause so that the user can see any errors or other messages
     # input('\n[Press ENTER to exit]')
