@@ -612,17 +612,19 @@ python_template = '''
     # -*- coding: {encoding} -*-
     
     {future}
-    
+
     import os
     import sys
     import codecs
     
-    if sys.version_info[0] == 2:
-        sys.stdout = codecs.getwriter('{encoding}')(sys.stdout, 'strict')
-        sys.stderr = codecs.getwriter('{encoding}')(sys.stderr, 'strict')
-    else:
-        sys.stdout = codecs.getwriter('{encoding}')(sys.stdout.buffer, 'strict')
-        sys.stderr = codecs.getwriter('{encoding}')(sys.stderr.buffer, 'strict')
+    if not (len(sys.argv) > 1 and 
+            ('--debug' in sys.argv[1:] or '--interactive' in sys.argv[1:])):
+        if sys.version_info[0] == 2:
+            sys.stdout = codecs.getwriter('{encoding}')(sys.stdout, 'strict')
+            sys.stderr = codecs.getwriter('{encoding}')(sys.stderr, 'strict')
+        else:
+            sys.stdout = codecs.getwriter('{encoding}')(sys.stdout.buffer, 'strict')
+            sys.stderr = codecs.getwriter('{encoding}')(sys.stderr.buffer, 'strict')
     
     if '{utilspath}' and '{utilspath}' not in sys.path:
         sys.path.append('{utilspath}')    
@@ -699,8 +701,10 @@ PythonConsoleEngine('sympycon', startup='from sympy import *')
 ruby_template = '''
     # -*- coding: {encoding} -*-
     
-    $stdout.set_encoding('{encoding}')
-    $stderr.set_encoding('{encoding}')
+    if ARGV[0] != '--debug' and ARGV[0] != '--interactive'
+        $stdout.set_encoding('{encoding}')
+        $stderr.set_encoding('{encoding}')
+    end
     
     class RubyTeXUtils
         attr_accessor :id, :family, :session, :restart, 
@@ -802,8 +806,8 @@ ruby_wrapper = '''
     '''
 
 CodeEngine('ruby', 'ruby', '.rb', '{ruby} {file}.rb', ruby_template, 
-              ruby_wrapper, 'puts rbtex.formatter({code})', 
-              ['Error)', '(Errno', 'error'], 'warning:', ':{number}:')
+           ruby_wrapper, 'puts rbtex.formatter({code})', 
+           ['Error)', '(Errno', 'error'], 'warning:', ':{number}:')
 
 SubCodeEngine('ruby', 'rb')
 

@@ -144,13 +144,13 @@ def process_argv(data, temp_data):
     parser.add_argument('--error-exit-code', default='true', 
                         choices=('true', 'false'),                          
                         help='return exit code of 1 if there are errors (not desirable with some TeX editors and workflows)')
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--runall', nargs='?', default='false',
-                       const='true', choices=('true', 'false'),
-                       help='run ALL code; equivalent to package option')
-    group.add_argument('--rerun', default='errors', 
-                       choices=('never', 'modified', 'errors', 'warnings', 'always'),
-                       help='set conditions for rerunning code; equivalent to package option')
+    group_run = parser.add_mutually_exclusive_group()
+    group_run.add_argument('--runall', nargs='?', default='false',
+                           const='true', choices=('true', 'false'),
+                           help='run ALL code; equivalent to package option')
+    group_run.add_argument('--rerun', default='errors', 
+                           choices=('never', 'modified', 'errors', 'warnings', 'always'),
+                           help='set conditions for rerunning code; equivalent to package option')
     parser.add_argument('--hashdependencies', nargs='?', default='false', 
                         const='true', choices=('true', 'false'),                          
                         help='hash dependencies (such as external data) to check for modification, rather than using mtime; equivalent to package option')
@@ -159,6 +159,15 @@ def process_argv(data, temp_data):
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
                         help='verbose output')
     parser.add_argument('--interpreter', default=None, help='set a custom interpreter; argument should be in the form "<interpreter>:<command>, <interp>:<cmd>, ..." where <interpreter> is "python", "ruby", etc., and <command> is the command for invoking the interpreter; argument may also be in the form of a Python dictionary')
+    group_debug = parser.add_mutually_exclusive_group()
+    group_debug.add_argument('--debug', nargs='?', default=None, 
+                             const='default',
+                             metavar='<family>:<session>:<restart>',
+                             help='Run the specified session (or default session) with the default debugger, if available.  If there is only one session, it need not be specified.  If the session name is unambiguous, it is sufficient.  The full <family>:<session>:<restart> (for example, py:default:default) is only needed when the session name alone would be ambiguous.')
+    group_debug.add_argument('--interactive', nargs='?', default=None, 
+                             const='default',
+                             metavar='<family>:<session>:<restart>',
+                             help='Run the specified session (or default session) in interactive mode.  If there is only one session, it need not be specified.  If the session name is unambiguous, it is sufficient.  The full <family>:<session>:<restart> (for example, py:default:default) is only needed when the session name alone would be ambiguous.')
     args = parser.parse_args()
     
     # Store the parsed argv in data and temp_data          
@@ -187,6 +196,8 @@ def process_argv(data, temp_data):
     else:
         temp_data['jobs'] = args.jobs
     temp_data['verbose'] = args.verbose
+    temp_data['debug'] = args.debug
+    temp_data['interactive'] = args.interactive
     # Update interpreter_dict based on interpreter
     set_python_interpreter = False
     if args.interpreter is not None:
@@ -938,6 +949,57 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
     cons_update = temp_data['cons_update']
     pygments_update = temp_data['pygments_update']
     files = data['files']
+    debug = temp_data['debug']
+    interactive = temp_data['interactive']
+    
+    # Tweak the update dicts to work with debug command-line option.
+    # #### This should probably be refactored later, once the debug interface
+    # stabilizes
+    if debug is not None or interactive is not None:
+        if debug is not None:
+            arg = debug
+        else:
+            arg = interactive
+        for k in cons_update:
+            cons_update[k] = False
+        if ':' in arg:
+            # May need to refine in light of substitution of `:` -> `_`
+            # in session names?
+            arg_key = arg.replace(':', '#')
+            if arg_key not in code_update:
+                return sys.exit('Session {0} does not exist'.format(arg))
+            else:
+                for k in code_update:
+                    code_update[k] = False
+                code_update[arg_key] = True
+            if debug is not None:
+                temp_data['debug_key'] = arg_key
+            else:
+                temp_data['interactive_key'] = arg_key
+        else:
+            session_count_dict = defaultdict(list)
+            for k in code_update:
+                s = k.split('#')[1]
+                session_count_dict[s].append(k)
+            if arg not in session_count_dict:
+                if arg in cons_update:
+                    return sys.exit('Console sessions are not currently supported for interactive mode.')
+                else:
+                    return sys.exit('Session "{0}" does not exist.'.format(arg))
+            elif len(session_count_dict[arg]) > 1:
+                return sys.exit('Ambiguous session name "{0}"; please specify <family>:<session>:<restart>'.format(arg))
+            else:
+                for k in code_update:
+                    code_update[k] = False
+                arg_key = session_count_dict[arg][0]
+                code_update[arg_key] = True
+                if debug is not None:
+                    temp_data['debug_key'] = arg_key
+                else:
+                    temp_data['interactive_key'] = arg_key
+        
+    
+    
     # We need to keep track of the last instance for each session, so 
     # that duplicates can be eliminated.  Some LaTeX environments process 
     # their content multiple times and thus will create duplicates.  We 
@@ -995,6 +1057,42 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
         sessionfile.close()
         code_index_dict[key] = code_index
     temp_data['code_index_dict'] = code_index_dict
+    
+    # Write synchronization file if in debug mode
+    if debug is not None:
+        # Might improve tracking/cleanup of syncdb files
+        key = temp_data['debug_key']
+        family, session, restart = key.split('#')
+        basename = key.replace('#', '_')
+        syncdb_fname = os.path.join(outputdir, basename + '.' + engine_dict[family].extension + '.syncdb')
+        files[key].append(syncdb_fname)
+        # #### In future version, try to use currfile to get this information
+        # automatically via the .pytxcode
+        main_doc_fname = None
+        for ext in ('.tex', '.ltx', '.dtx'):
+            if os.path.isfile(data['raw_jobname'] + ext):
+                main_doc_fname = data['raw_jobname'] + ext
+                break
+        if not main_doc_fname:
+            return sys.exit('Could not determine extension for main file "{0}"'.format(data['raw_jobname']))
+        main_code_fname = basename + '.' + engine_dict[family].extension
+        f = open(syncdb_fname, 'w', encoding='utf8')
+        f.write('{0},,{1},,\n'.format(main_code_fname, main_doc_fname))
+        # All paths are relative to the main code file.  So if there is ever
+        # an option for creating other code files, in other locations, then
+        # the relative paths to those files will need to be specified.
+        for e in code_index_dict[key].values():
+            # #### Probably redo approach so this conversion isn't needed
+            if not e.input_file:
+                input_file = main_doc_fname
+            else:
+                input_file = e.input_file
+            if ',' in input_file or ',' in main_code_fname:
+                line = '"{0}",{1},"{2}",{3},{4}\n'.format(main_code_fname, e.lines_total+1, input_file, e.line_int, e.lines_input)
+            else:
+                line = '{0},{1},{2},{3},{4}\n'.format(main_code_fname, e.lines_total+1, input_file, e.line_int, e.lines_input)
+            f.write(line)
+        f.close()
 
 
 
@@ -1034,6 +1132,78 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     dependencies = data['dependencies']
     exit_status = data['exit_status']
     start_time = data['start_time']
+    debug = temp_data['debug']
+    interactive = temp_data['interactive']
+    
+    # If in debug or interactive mode, short-circuit the whole process
+    # #### This should probably be refactored later, once debugging is more
+    # mature
+    if debug is not None or interactive is not None:
+        import shlex
+        if debug is not None:
+            print('Entering debug mode for "{0}"\n'.format(debug) + '-'*20 + '\n')
+            key = temp_data['debug_key']            
+        else:
+            print('Entering interactive mode for "{0}"\n'.format(interactive) + '-'*20 + '\n')
+            key = temp_data['interactive_key']            
+        basename = key.replace('#', '_')
+        family, session, restart = key.split('#')
+        # #### Revise as debugging is expanded
+        if debug is not None and engine_dict[family].language != 'python':
+            return sys.exit('Currently, debug only supports Python')
+        if debug is not None:
+            # #### Eventually, should move to pythontex_engines.py and 
+            # provide means for customization
+            command = '{python} {debug} {file}.py --debug'
+            command = command.replace('{python}', interpreter_dict['python'])
+            command = command.replace('{debug}', '"{0}"'.format(os.path.join(sys.path[0], 'spdb.py')))
+        else:
+            command = engine_dict[family].command + ' --interactive'
+        # Note that command is a string, which must be converted to list
+        # Must double-escape any backslashes so that they survive `shlex.split()`
+        script = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename)))
+        if os.path.isabs(script):
+            script_full = script
+        else:
+            script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
+        # `shlex.split()` only works with Unicode after 2.7.2
+        if (sys.version_info.major == 2 and sys.version_info.micro < 3):
+            exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'))))
+            exec_cmd = [unicode(elem) for elem in exec_cmd]
+        else:
+            exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\')))
+        try:
+            proc = subprocess.Popen(exec_cmd)
+        except WindowsError as e:
+            if e.errno == 2:
+                # Batch files won't be found when called without extension. They
+                # would be found if `shell=True`, but then getting the right
+                # exit code is tricky.  So we perform some `cmd` trickery that
+                # is essentially equivalent to `shell=True`, but gives correct 
+                # exit codes.  Note that `subprocess.Popen()` works with strings
+                # under Windows; a list is not required.
+                exec_cmd_string = ' '.join(exec_cmd)
+                exec_cmd_string = 'cmd /C "@echo off & call {0} & if errorlevel 1 exit 1"'.format(exec_cmd_string)
+                proc = subprocess.Popen(exec_cmd_string)
+            else:
+                raise          
+        proc.wait()
+        # Do a basic update of pickled data
+        # This is only really needed for tracking the code file and the 
+        # synchronization file (if it was created)
+        if temp_data['loaded_old_data'] and key in old_data['exit_status']:
+            exit_status[key] = old_data['exit_status'][key]
+        else:
+            exit_status[key] = (None, None)
+        if temp_data['loaded_old_data']:
+            data['last_new_file_time'] = old_data['last_new_file_time']
+        else:
+            data['last_new_file_time'] = start_time
+        pythontex_data_file = os.path.join(outputdir, 'pythontex_data.pkl')
+        f = open(pythontex_data_file, 'wb')
+        pickle.dump(data, f, -1)
+        f.close()
+        return
     
     
     # Create a pool for multiprocessing.  Set the maximum number of 
@@ -2423,6 +2593,10 @@ def main(python=None):
     # Execute the code and perform Pygments highlighting via multiprocessing.
     do_multiprocessing(data, temp_data, old_data, engine_dict)
 
+    # Skip exit message if in debug more
+    # #### May want to refactor
+    if temp_data['debug'] is not None or temp_data['interactive'] is not None:
+        sys.exit()
         
     # Print exit message
     print('\n--------------------------------------------------')

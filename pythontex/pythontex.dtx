@@ -89,6 +89,8 @@
 % \begin{changelog}{v0.13}{2014/03/??}
 % \textbf{New features}
 % \begin{itemize}
+% \item Added \texttt{-{}-debug} command-line option.  This runs a single session with the default debugger.  Currently, only standard (non-console) Python sessions are supported.  The default Python debugger is the new \texttt{spdb}, which wraps \texttt{pdb} and synchronizes code line numbers with document line numbers.  All \texttt{pdb} commands that take a line number or filename:lineno as an argument will refer to document files and line numbers when the argument has a percent symbol (\texttt{\%}) as a prefix.  For example, \texttt{list \%50} lists code that came from around line 50 in the document.  The \texttt{-{}-debug} option will support other languages and provide for customization in the future.
+% \item Added \texttt{-{}-interactive} command-line option.  This runs a single session in interactive mode, allowing user input.  This is useful when working with debuggers.
 % \item Added command-line option \texttt{-{}-jobs}, which allows the maximum number of concurrent processes to be specified (\#35).
 % \item Added support for GNU Octave, via the \texttt{octave} family of commands and environments (\#36).
 % \item Installer now automatically works with MiKTeX, not just TeX Live.
@@ -493,6 +495,19 @@
 % where |<interpreter>| is |python|, |ruby|, etc., and |<command>| is the command for invoking the desired interpreter.  The argument to |--interpreter| may also be in the form of a Python dictionary.  The argument need not be enclosed in quotation marks if it contains no spaces.
 %
 % For example, by default Python code is executed with whatever interpreter the |python| command invokes.  But Python 3 could be specified using |--interpreter python:python3| (many Linux distributions) or |--interpreter "python:py -3"| (Windows, with Python 3.3 installed so that the |py| wrapper is available).
+%
+% \item |--interactive [<family>:<session>:<restart>]|  This is used to run a single session in interactive mode.  This allows user input.  This is particularly useful when working with debuggers.  Note that some debuggers, such as Python's |pdb|, will not function correctly unless the script is executed from its own directory.  In such cases, you will need to use |\setpythontexoutputdir{.}|.
+%
+% |[<family>:<session>:<restart>]| is optional; if it is not provided, the default session is executed.  For non-default sessions (or if there are multiple default sessions, due to the use of multiple families of commands), simply supplying the session name is usually sufficient (for example, |--interactive session|).  The full combination of |[<family>:<session>:<restart>]| (for example, |py:session:default|) is only necessary when the session name alone would be ambiguous.
+%
+% This option is currently not compatible with Python console commands and environments.
+%
+% \item |--debug [<family>:<session>:<restart>]|  This is used to run a single session with the default debugger.  Currently, only standard Python sessions are supported.  (Python console commands and environments are not supported.)  Support for other languages and support for customization will be added in the future.
+%
+% |[<family>:<session>:<restart>]| is optional; if it is not provided, the default session is executed.  For non-default sessions (or if there are multiple default sessions, due to the use of multiple families of commands), simply supplying the session name is usually sufficient (for example, |--debug session|).  The full combination of |[<family>:<session>:<restart>]| (for example, |py:session:default|) is only necessary when the session name alone would be ambiguous.
+%
+% The default Python debugger is |spdb|, the Synchronized Python Debugger.  It provides wrapper around |pdb| that is aware of the connection between the code and the \LaTeX\ document from which it was extracted.  All |pdb| commands function normally.  In addition, commands that take a line number or filename:lineno as an argument will also take these same values with a percent symbol |%| prefix.  If the percent symbol is present, then |spdb| interprets the filename and line number as referring to the document, rather than to the code that is executed.  It will translate the filename and line number to the corresponding code equivalents, and then pass these to the standard |pdb| internals.  For example, the |pdb| command |list 50| would list the code that is being executed, centered around line 50.  |spdb| allows the command |list %10|, which would list the code that is being executed, centered around the code that came from line 10 in the main \LaTeX\ document.  (If no file name is given, then the main \LaTeX\ document is assumed.)  If the code instead came from an inputed file |input.tex|, then |list %input.tex:10| could be used.  Further details are provided at \href{https://github.com/gpoore/spdb}{github.com/gpoore/spdb}.
+%
 % \end{itemize}
 %
 % \pytex\ attempts to check for a wide range of errors and return meaningful error messages.  But due to the interaction of \LaTeX\ and Python code, some strange errors are possible.  If you cannot make sense of errors when using \pytex, the simplest thing to try is deleting all files created by \pytex, then recompiling.  By default, these files are stored in a directory called |pythontex-files-|\meta{jobname}, in the same directory as your .tex document.  See Section \ref{sec:troubleshooting} for more details regarding troubleshooting.
