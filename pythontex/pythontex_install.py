@@ -178,6 +178,15 @@ if any(texmf_vars):
         texmf_path = input('Enter a path:\n')
         if texmf_path == '':
             sys.exit()
+        if platform.system() == 'Windows':
+            if 'texlive' in texmf_path.lower():
+                detected_texdist = True
+                texlive = True
+                miktex = False
+            elif 'miktex' in texmf_path.lower():
+                detected_texdist = True
+                texlive = False
+                miktex = True
     else:
         sys.exit()
 else:
@@ -446,7 +455,13 @@ else:
 # Alert TeX to the existence of the package via mktexlsr
 if not miktex:
     try:
-        check_call(['mktexlsr'])
+        # Need to adjust if under Windows with a user-specified TeX Live
+        # installation and a default MiKTeX installation; want to call
+        # mktexlsr for the user-specified TeX Live installation
+        if platform.system() == 'Windows' and 'MiKTeX' in texout:
+            check_call(path.join(bin_path, 'mktexlsr'))
+        else:
+            check_call(['mktexlsr'])
         print('\nRunning "mktexlsr" to make TeX aware of new files...')
     except:
         print('Could not run "mktexlsr".')
