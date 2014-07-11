@@ -89,7 +89,7 @@
 % \begin{changelog}{v0.13}{2014/03/??}
 % \textbf{New features}
 % \begin{itemize}
-% \item Added \texttt{-{}-debug} command-line option.  This runs a single session with the default debugger.  Currently, only standard (non-console) Python sessions are supported.  The default Python debugger is the new \texttt{spdb}, which wraps \texttt{pdb} and synchronizes code line numbers with document line numbers.  All \texttt{pdb} commands that take a line number or filename:lineno as an argument will refer to document files and line numbers when the argument has a percent symbol (\texttt{\%}) as a prefix.  For example, \texttt{list \%50} lists code that came from around line 50 in the document.  The \texttt{-{}-debug} option will support other languages and provide for customization in the future.
+% \item Added \texttt{-{}-debug} command-line option.  This runs a single session with the default debugger.  Currently, only standard (non-console) Python sessions are supported.  The default Python debugger is the new \texttt{syncpdb}, which wraps \texttt{pdb} and synchronizes code line numbers with document line numbers.  All \texttt{pdb} commands that take a line number or filename:lineno as an argument will refer to document files and line numbers when the argument has a percent symbol (\texttt{\%}) as a prefix.  For example, \texttt{list \%50} lists code that came from around line 50 in the document.  The \texttt{-{}-debug} option will support other languages and provide for customization in the future.
 % \item Added \texttt{-{}-interactive} command-line option.  This runs a single session in interactive mode, allowing user input.  This is useful when working with debuggers.
 % \item Added command-line option \texttt{-{}-jobs}, which allows the maximum number of concurrent processes to be specified (\#35).
 % \item Added support for GNU Octave, via the \texttt{octave} family of commands and environments (\#36).
@@ -101,6 +101,7 @@
 % \item The \texttt{fancyvrb} options \texttt{firstline} and \texttt{lastline} now work with the \texttt{pygments} environment and \texttt{\string\inputpygments} command.  This required some additional patching of \texttt{fancyvrb}.
 % \item The \texttt{pytx@Verbatim} and \texttt{pytx@SaveVerbatim} environments are now used for verbatim code.  These are copies of the |fancyvrb| environments.  This prevents conflicts when literal \texttt{Verbatim} and \texttt{SaveVerbatim} environments need to be typeset.
 % \item Improved \texttt{latexmk} compatibility (\#40).  Added discussion of \texttt{latexmk} usage to documentation.
+% \item Tildes \texttt{\string~} may now be used in \texttt{outputdir} and \texttt{workingdir} to refer to the user's home directory, even under Windows.
 % \end{itemize}
 % \textbf{Bugfixes}
 % \begin{itemize}
@@ -455,6 +456,7 @@
 %
 %
 % \subsection{Compiling documents using \pytex}
+% \label{sec:installing-and-running:compiling}
 %
 % Compiling a document with \pytex\ involves three steps:  running a \LaTeX-compatible \TeX\ engine (binary executable), running |pythontex.py| (preferably via a symlink, wrapper, or batch file, as described above), and finally running the \TeX\ engine again.  The first \TeX\ run saves code into an external file where \pytex\ can access it.  The second \TeX\ run pulls the \pytex\ output back into the document.
 %
@@ -496,17 +498,31 @@
 %
 % For example, by default Python code is executed with whatever interpreter the |python| command invokes.  But Python 3 could be specified using |--interpreter python:python3| (many Linux distributions) or |--interpreter "python:py -3"| (Windows, with Python 3.3 installed so that the |py| wrapper is available).
 %
-% \item |--interactive [<family>:<session>:<restart>]|  This is used to run a single session in interactive mode.  This allows user input.  This is particularly useful when working with debuggers.  Note that some debuggers, such as Python's |pdb|, will not function correctly unless the script is executed from its own directory.  In such cases, you will need to use |\setpythontexoutputdir{.}|.
-%
-% |[<family>:<session>:<restart>]| is optional; if it is not provided, the default session is executed.  For non-default sessions (or if there are multiple default sessions, due to the use of multiple families of commands), simply supplying the session name is usually sufficient (for example, |--interactive session|).  The full combination of |[<family>:<session>:<restart>]| (for example, |py:session:default|) is only necessary when the session name alone would be ambiguous.
-%
-% This option is currently not compatible with Python console commands and environments.
-%
-% \item |--debug [<family>:<session>:<restart>]|  This is used to run a single session with the default debugger.  Currently, only standard Python sessions are supported.  (Python console commands and environments are not supported.)  Support for other languages and support for customization will be added in the future.
+% \item |--interactive [<family>:<session>:<restart>]|  This is used to run a single session in interactive mode.  This allows user input.  Code output is written to stdout.  Interactive mode is particularly useful when working with debuggers (but also see the |--debug| option).
 %
 % |[<family>:<session>:<restart>]| is optional; if it is not provided, the default session is executed.  For non-default sessions (or if there are multiple default sessions, due to the use of multiple families of commands), simply supplying the session name is usually sufficient (for example, |--debug session|).  The full combination of |[<family>:<session>:<restart>]| (for example, |py:session:default|) is only necessary when the session name alone would be ambiguous.
 %
-% The default Python debugger is |spdb|, the Synchronized Python Debugger.  It provides wrapper around |pdb| that is aware of the connection between the code and the \LaTeX\ document from which it was extracted.  All |pdb| commands function normally.  In addition, commands that take a line number or filename:lineno as an argument will also take these same values with a percent symbol |%| prefix.  If the percent symbol is present, then |spdb| interprets the filename and line number as referring to the document, rather than to the code that is executed.  It will translate the filename and line number to the corresponding code equivalents, and then pass these to the standard |pdb| internals.  For example, the |pdb| command |list 50| would list the code that is being executed, centered around line 50.  |spdb| allows the command |list %10|, which would list the code that is being executed, centered around the code that came from line 10 in the main \LaTeX\ document.  (If no file name is given, then the main \LaTeX\ document is assumed.)  If the code instead came from an inputed file |input.tex|, then |list %input.tex:10| could be used.  Further details are provided at \href{https://github.com/gpoore/spdb}{github.com/gpoore/spdb}.
+% Note that when a session is run in interactive mode, it will \emph{not} save printed content in a form that may be brought back into the document.  You will have to run the session again in normal mode to complete document compilation.
+%
+% Code that requires user input will cause \pytex\ to ``hang'' when \pytex\ is not running in interactive mode.  This is because the code will request user input, but no input is possible given the way that the code is being executed, so the code will wait for input forever.  It is inefficient constantly to add and then delete interactive code as you switch between normal and interactive modes.  To avoid this, you can conditionally invoke code that requires input.  In interactive mode, the temporary script that is executed is given the command-line argument |--interactive|.  You can check for the presence of this argument, and only invoke interactive code if it is present.  For example, under Python you could start the |pdb| debugger, only when the code is being executed in interactive mode, using commands such as the following.
+%\begin{verbatim}
+%import pdb
+%import sys
+%if '--interactive' in sys.argv[1:]:
+%    pdb.set_trace()
+%\end{verbatim}
+%
+% This option is currently not compatible with Python console commands and environments.
+%
+% \item |--debug [<family>:<session>:<restart>]|  This is used to run a single session with the default debugger in interactive mode.  Currently, only standard Python sessions are supported.  (Python console commands and environments are not supported.)  Support for other languages and support for customization will be added in the future.
+%
+% |[<family>:<session>:<restart>]| is optional; if it is not provided, the default session is executed.  For non-default sessions (or if there are multiple default sessions, due to the use of multiple families of commands), simply supplying the session name is usually sufficient (for example, |--debug session|).  The full combination of |[<family>:<session>:<restart>]| (for example, |py:session:default|) is only necessary when the session name alone would be ambiguous.
+%
+% Note that when a session is run in debug mode, it will \emph{not} save printed content in a form that may be brought back into the document.  You will have to run the session again in normal mode to complete document compilation.
+%
+% The default Python debugger is |syncpdb|, the Synchronized Python Debugger.  It provides a wrapper around |pdb| that is aware of the connection between the code and the \LaTeX\ document from which it was extracted.  All |pdb| commands function normally.  In addition, commands that take a line number or filename:lineno as an argument will also take these same values with a percent symbol |%| prefix.  If the percent symbol is present, then |syncpdb| interprets the filename and line number as referring to the document, rather than to the code that is executed.  It will translate the filename and line number to the corresponding code equivalents, and then pass these to the standard |pdb| internals.  For example, the |pdb| command |list 50| would list the code that is being executed, centered around line 50.  |syncpdb| allows the command |list %10|, which would list the code that is being executed, centered around the code that came from line 10 in the main \LaTeX\ document.  (If no file name is given, then the main \LaTeX\ document is assumed.)  If the code instead came from an inputed file |input.tex|, then |list %input.tex:10| could be used.  Further details are provided at \href{https://github.com/gpoore/syncpdb}{github.com/gpoore/syncpdb}.
+%
+% The temporary script that is executed is given the command-line argument |--interactive| when run in debug mode.  You can check for the presence of this argument if you wish to invoke code that requires user input conditionally.  See the |--interactive| command-line option for more details.
 %
 % \end{itemize}
 %
@@ -1155,13 +1171,13 @@
 %
 % By default, \pytex\ saves all temporary files and automatically generated content in a directory called |pythontex-files-|\meta{sanitized jobname}, where \meta{sanitized jobname} is just |\jobname| with any space characters or asterisks replaced with hyphens.  This directory will be created by |pythontex.py|.  If we wish to specify another directory (for example, if |\jobname| is long and complex, and there is no danger of two files trying to use the same directory), then we can use the |\setpythontexoutputdir| macro to redefine the output directory.\footnote{In the rare event that both |\string\setpythontexoutputdir| is used and |\string\printpythontex| is needed in the preamble, |\string\setpythontexoutputdir| must be used first, so that |\string\printpythontex| will know where to look for output.}
 %
-% Any slashes in \meta{output~directory} should be forward slashes ``|/|'' (even under Windows).
+% Any slashes in \meta{output~directory} should be forward slashes ``|/|'' (even under Windows).  Tildes |~| may be used to refer to the user's home directory, including under Windows.
 %
 % \DescribeMacro{\setpythontexworkingdir\marg{working~directory}}
 %
 % The \pytex\ working directory is the current working directory for \pytex\ scripts.  This is the directory in which any open or save operations will take place, unless a path is explicitly specified.  By default, the working directory is the same as the output directory.  For example, if you are writing |my_file.tex| and save a matplotlib figure with |savefig('my_figure.pdf')|, then |my_figure.pdf| will be created in the output directory |pythontex-files-my_file|.  But maybe you have a directory called |plots| in your document root directory.  In that case, you could leave the working directory unchanged, and simply specify the relative path to |plots| when saving.  Or you could set the working directory to |plots| using  |\setpythontexworkingdir{plots}|, so that all content would automatically be saved there.  If you want your working directory to be the document root directory, you should use a period (|.|) for \meta{working~directory}:  |\setpythontexworkingdir{.}|.
 %
-% Any slashes in \meta{working~directory} should be forward slashes ``|/|'' (even under Windows).
+% Any slashes in \meta{working~directory} should be forward slashes ``|/|'' (even under Windows).  Tildes |~| may be used to refer to the user's home directory, including under Windows.
 %
 % The working directory is automatically added to Python's |sys.path|, so that code in the working directory there may be imported without a path being specified.
 %
@@ -1478,7 +1494,9 @@
 % \label{sec:troubleshooting}
 %
 % \begin{itemize}
-% \item If a \pytex\ document will not compile, you may want to delete the directory in which \pytex\ content is stored and try compiling from scratch.  It is possible for \pytex\ to become stuck in an unrecoverable loop.  Suppose you tell Python to print some \LaTeX\ code back to your \LaTeX\ document, but make a fatal \LaTeX\ syntax error in the printed content.  This syntax error prevents \LaTeX\ from compiling.  Now suppose you realize what happened and correct the syntax error.  The problem is that the corrected code cannot be executed until \LaTeX\ correctly compiles and saves the code externally, but \LaTeX\ cannot compile until the corrected code has already been executed.  One solution in such cases is to correct the code, delete all files in the \pytex\ directory, compile the \LaTeX\ document, and then run \pytex\ from scratch.  You can also disable the inclusion of printed content using the |debug| package options.
+% \item If a \pytex\ document will not compile, you may want to delete the directory in which \pytex\ content is stored and try compiling from scratch.  It is possible for \pytex\ to become stuck in an unrecoverable loop.  Suppose you tell Python to print some \LaTeX\ code back to your \LaTeX\ document, but make a fatal \LaTeX\ syntax error in the printed content.  This syntax error prevents \LaTeX\ from compiling.  Now suppose you realize what happened and correct the syntax error.  The problem is that the corrected code cannot be executed until \LaTeX\ correctly compiles and saves the code externally, but \LaTeX\ cannot compile until the corrected code has already been executed.  One solution in such cases is to correct the code, delete all files in the \pytex\ directory, compile the \LaTeX\ document, and then run \pytex\ from scratch.  You can also disable the inclusion of printed content using the |debug| package option.
+%
+% You may also run \pytex\ with the |--debug| option to launch the default debugger, or use the debugger of your choice by adding code that launches a debugger and then running \pytex\ with the |--interactive| option.  See Section~\ref{sec:installing-and-running:compiling} for more details.
 %
 % \item Dollar signs \$ may appear as \textsterling\ in italic code comments typeset by Pygments.  This is a font-related issue.  One fix is to |\usepackage[T1]{fontenc}|.
 %

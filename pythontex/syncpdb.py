@@ -2,24 +2,24 @@
 # -*- coding: utf-8 -*-
 
 '''
-Synchronized Python Debugger (spdb)
+Synchronized Python Debugger (syncpdb)
 
 Provides a wrapper for pdb that synchronizes code line numbers with the line
 numbers of a document from which the code was extracted.  This allows pdb to
 be used more effectively with literate programming-type systems.  The wrapper
 was initially created to work with PythonTeX, which allows Python code 
-entered within a LaTeX document to be executed.  In that case, spdb makes 
+entered within a LaTeX document to be executed.  In that case, syncpdb makes 
 possible debugging in which both the code line numbers, and the corresponding
 line numbers in the LaTeX document, are displayed.
 
 All pdb commands function normally.  In addition, commands that take a line 
 number or filename:lineno as an argument will also take these same values 
 with a percent symbol (%) prefix.  If the percent symbol is present, then 
-spdb interprets the filename and line number as referring to the document, 
+syncpdb interprets the filename and line number as referring to the document, 
 rather than to the code that is executed.  It will translate the filename and 
 line number to the corresponding code equivalents, and then pass these to the 
 standard pdb internals.  For example, the pdb command `list 50` would list 
-the code that is being executed, centered around line 50.  spdb allows the 
+the code that is being executed, centered around line 50.  syncpdb allows the 
 command `list %10`, which would list the code that is being executed, 
 centered around the code that came from line 10 in the main document.  (If no 
 file name is given, then the main document is assumed.)  If the code instead 
@@ -114,7 +114,7 @@ from collections import defaultdict, namedtuple
 import traceback
 
 
-__all__ = ["run", "pm", "SPdb", "runeval", "runctx", "runcall", "set_trace",
+__all__ = ["run", "pm", "SyncPdb", "runeval", "runctx", "runcall", "set_trace",
            "post_mortem", "help"]
 
 
@@ -207,7 +207,7 @@ def defaultsync():
     return Sync(None, None)
 
 
-class SPdb(pdb.Pdb):
+class SyncPdb(pdb.Pdb):
     '''
     Methods that need to be redefined from Pdb for Python 2
      + do_list()
@@ -399,7 +399,6 @@ class SPdb(pdb.Pdb):
             # parse stuff before comma: [filename:]lineno | function
             colon = arg2.rfind(':')
             funcname = None
-            # SPdb
             if colon >= 0:
                 filename = arg2[:colon].rstrip()
                 arg2 = arg2[colon+1:].lstrip()
@@ -577,7 +576,7 @@ class SPdb(pdb.Pdb):
                 # SPdb
                 except ValueError as e:
                     print >>self.stdout, '*** Jump failed:', e
-                # SPdb
+                # /SPdb
         
         do_j = do_jump
         
@@ -636,7 +635,7 @@ class SPdb(pdb.Pdb):
             try:
                 # SPdb
                 self._last_doc_fname = None
-                # /Spdb
+                # /SPdb
                 for lineno in range(first, last+1):
                     line = linecache.getline(filename, lineno,
                                              self.curframe.f_globals)
@@ -1078,7 +1077,7 @@ class SPdb(pdb.Pdb):
             self._print_lines(lines, lineno)
         
         
-        # SPdb added filename, last args; renames start -> first  # /Spdb
+        # SPdb added filename, last args; renames start -> first  # /SPdb
         def _print_lines(self, filename, lines, first, last, breaks=(), frame=None):
             """Print a range of lines."""
             if frame:
@@ -1165,20 +1164,20 @@ if sys.version_info.major == 2:
     # Simplified interface
 
     def run(statement, globals=None, locals=None):
-        SPdb().run(statement, globals, locals)
+        SyncPdb().run(statement, globals, locals)
     
     def runeval(expression, globals=None, locals=None):
-        return SPdb().runeval(expression, globals, locals)
+        return SyncPdb().runeval(expression, globals, locals)
     
     def runctx(statement, globals, locals):
         # B/W compatibility
         run(statement, globals, locals)
     
     def runcall(*args, **kwds):
-        return SPdb().runcall(*args, **kwds)
+        return SyncPdb().runcall(*args, **kwds)
     
     def set_trace():
-        SPdb().set_trace(sys._getframe().f_back)
+        SyncPdb().set_trace(sys._getframe().f_back)
     
     # Post-Mortem interface
     
@@ -1192,7 +1191,7 @@ if sys.version_info.major == 2:
                 raise ValueError("A valid traceback must be passed if no "
                                                    "exception is being handled")
     
-        p = SPdb()
+        p = SyncPdb()
         p.reset()
         p.interaction(None, t)
     
@@ -1237,8 +1236,8 @@ else:
         ]
     
         for _command in _help_order:
-            __doc__ += getattr(SPdb, 'do_' + _command).__doc__.strip() + '\n\n'
-        __doc__ += SPdb.help_exec.__doc__
+            __doc__ += getattr(SyncPdb, 'do_' + _command).__doc__.strip() + '\n\n'
+        __doc__ += SyncPdb.help_exec.__doc__
     
         del _help_order, _command
     
@@ -1246,20 +1245,20 @@ else:
     # Simplified interface
     
     def run(statement, globals=None, locals=None):
-        SPdb().run(statement, globals, locals)
+        SyncPdb().run(statement, globals, locals)
     
     def runeval(expression, globals=None, locals=None):
-        return SPdb().runeval(expression, globals, locals)
+        return SyncPdb().runeval(expression, globals, locals)
     
     def runctx(statement, globals, locals):
         # B/W compatibility
         run(statement, globals, locals)
     
     def runcall(*args, **kwds):
-        return SPdb().runcall(*args, **kwds)
+        return SyncPdb().runcall(*args, **kwds)
     
     def set_trace():
-        SPdb().set_trace(sys._getframe().f_back)
+        SyncPdb().set_trace(sys._getframe().f_back)
     
     # Post-Mortem interface
     
@@ -1273,7 +1272,7 @@ else:
             raise ValueError("A valid traceback must be passed if no "
                              "exception is being handled")
     
-        p = SPdb()
+        p = SyncPdb()
         p.reset()
         p.interaction(None, t)
     
@@ -1294,7 +1293,7 @@ else:
         pydoc.pager(__doc__)
     
     _usage = """\
-    usage: spdb.py [-c command] ... pyfile [arg] ...
+    usage: syncpdb.py [-c command] ... pyfile [arg] ...
     
     Debug the Python program given by pyfile.
     
@@ -1313,7 +1312,7 @@ if sys.version_info == 2:
     def main():
         if not sys.argv[1:] or sys.argv[1] in ("--help", "-h"):
             # SPdb
-            print("usage: spdb.py scriptfile [arg] ...")
+            print("usage: syncpdb.py scriptfile [arg] ...")
             # /SPdb
             sys.exit(2)
     
@@ -1333,11 +1332,11 @@ if sys.version_info == 2:
         # modified by the script being debugged. It's a bad idea when it was
         # changed by the user from the command line. There is a "restart" command
         # which allows explicit specification of command line arguments.
-        spdb = SPdb()
+        syncpdb = SyncPdb()
         while True:
             try:
-                spdb._runscript(mainpyfile)
-                if spdb._user_requested_quit:
+                syncpdb._runscript(mainpyfile)
+                if syncpdb._user_requested_quit:
                     break
                 # SPdb
                 print("The program finished and will be restarted")
@@ -1359,7 +1358,7 @@ if sys.version_info == 2:
                 print("Running 'cont' or 'step' will restart the program")
                 # /SPdb
                 t = sys.exc_info()[2]
-                spdb.interaction(None, t)
+                syncpdb.interaction(None, t)
                 # SPdb
                 print("Post mortem debugger finished. The {0} will be restarted".format(mainpyfile))
                 # /SPdb
@@ -1395,12 +1394,12 @@ else:
         # modified by the script being debugged. It's a bad idea when it was
         # changed by the user from the command line. There is a "restart" command
         # which allows explicit specification of command line arguments.
-        spdb = SPdb()
-        spdb.rcLines.extend(commands)
+        syncpdb = SyncPdb()
+        syncpdb.rcLines.extend(commands)
         while True:
             try:
-                spdb._runscript(mainpyfile)
-                if spdb._user_requested_quit:
+                syncpdb._runscript(mainpyfile)
+                if syncpdb._user_requested_quit:
                     break
                 print("The program finished and will be restarted")
             except Restart:
@@ -1416,12 +1415,12 @@ else:
                 print("Uncaught exception. Entering post mortem debugging")
                 print("Running 'cont' or 'step' will restart the program")
                 t = sys.exc_info()[2]
-                spdb.interaction(None, t)
+                syncpdb.interaction(None, t)
                 print("Post mortem debugger finished. The " + mainpyfile +
                       " will be restarted")
 
 
 # When invoked as main program, invoke the debugger on a script
 if __name__ == '__main__':
-    import spdb
-    spdb.main()
+    import syncpdb
+    syncpdb.main()

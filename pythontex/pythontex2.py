@@ -547,7 +547,7 @@ def get_old_data(data, old_data, temp_data):
     '''
 
     # Create a string containing the name of the data file
-    pythontex_data_file = os.path.join(data['settings']['outputdir'], 'pythontex_data.pkl')
+    pythontex_data_file = os.path.expanduser(os.path.normcase(os.path.join(data['settings']['outputdir'], 'pythontex_data.pkl')))
     
     # Load the old data if it exists (read as binary pickle)
     if os.path.isfile(pythontex_data_file):
@@ -605,7 +605,7 @@ def modified_dependencies(key, data, old_data, temp_data):
             # initial ~ (tilde) standing for the home directory.
             dep_file = os.path.expanduser(os.path.normcase(dep))
             if not os.path.isabs(dep_file):
-                dep_file = os.path.join(workingdir, dep_file)
+                dep_file = os.path.expanduser(os.path.normcase(os.path.join(workingdir, dep_file)))
             if not os.path.isfile(dep_file):
                 print('* PythonTeX error')
                 print('    Cannot find dependency "' + dep + '"')
@@ -624,9 +624,9 @@ def modified_dependencies(key, data, old_data, temp_data):
                 # would require an unnecessary decoding and encoding cycle.
                 f = open(dep_file, 'rb')
                 hasher = sha1()
-                hash = hasher(f.read()).hexdigest()
+                h = hasher(f.read()).hexdigest()
                 f.close()
-                if hash != old_dep_hash_dict[dep][1]:
+                if h != old_dep_hash_dict[dep][1]:
                     return True
             else:
                 mtime = os.path.getmtime(dep_file)
@@ -1044,14 +1044,19 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
     for key in code_dict:
         family, session, restart = key.split('#')
         fname = os.path.join(outputdir, family + '_' + session + '_' + restart + '.' + engine_dict[family].extension)
+        # Want to keep track of files without expanding user, but need to
+        # expand user when actually writing files
         files[key].append(fname)
-        sessionfile = open(fname, 'w', encoding=encoding)
+        sessionfile = open(os.path.expanduser(os.path.normcase(fname)), 'w', encoding=encoding)
         script, code_index = engine_dict[family].get_script(encoding,
-                                                              utilspath,
-                                                              workingdir,
-                                                              cc_dict_begin[family],
-                                                              code_dict[key],
-                                                              cc_dict_end[family])
+                                                            utilspath,
+                                                            outputdir,
+                                                            workingdir,
+                                                            cc_dict_begin[family],
+                                                            code_dict[key],
+                                                            cc_dict_end[family],
+                                                            debug,
+                                                            interactive)
         for lines in script:
             sessionfile.write(lines)
         sessionfile.close()
@@ -1076,7 +1081,7 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
         if not main_doc_fname:
             return sys.exit('Could not determine extension for main file "{0}"'.format(data['raw_jobname']))
         main_code_fname = basename + '.' + engine_dict[family].extension
-        f = open(syncdb_fname, 'w', encoding='utf8')
+        f = open(os.path.expanduser(os.path.normcase(syncdb_fname)), 'w', encoding='utf8')
         f.write('{0},,{1},,\n'.format(main_code_fname, main_doc_fname))
         # All paths are relative to the main code file.  So if there is ever
         # an option for creating other code files, in other locations, then
@@ -1154,18 +1159,23 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         if debug is not None:
             # #### Eventually, should move to pythontex_engines.py and 
             # provide means for customization
-            command = '{python} {debug} {file}.py --debug'
+            command = '{python} {debug} {file}.py --interactive'
             command = command.replace('{python}', interpreter_dict['python'])
-            command = command.replace('{debug}', '"{0}"'.format(os.path.join(sys.path[0], 'spdb.py')))
+            command = command.replace('{debug}', '"{0}"'.format(os.path.join(sys.path[0], 'syncpdb.py')))
         else:
             command = engine_dict[family].command + ' --interactive'
+        # Need to be in script directory so that pdb and any other tools that
+        # expect this will function correctly.
+        orig_cwd = os.getcwd()
+        if outputdir:
+            os.chdir(os.path.expanduser(os.path.normcase(outputdir)))
         # Note that command is a string, which must be converted to list
         # Must double-escape any backslashes so that they survive `shlex.split()`
-        script = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename)))
-        if os.path.isabs(script):
-            script_full = script
+        script = basename
+        if os.path.isabs(os.path.expanduser(os.path.normcase(outputdir))):
+            script_full = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename)))
         else:
-            script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
+            script_full = os.path.expanduser(os.path.normcase(os.path.join(orig_cwd, outputdir, basename)))
         # `shlex.split()` only works with Unicode after 2.7.2
         if (sys.version_info.major == 2 and sys.version_info.micro < 3):
             exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'))))
@@ -1188,6 +1198,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
             else:
                 raise          
         proc.wait()
+        os.chdir(orig_cwd)
         # Do a basic update of pickled data
         # This is only really needed for tracking the code file and the 
         # synchronization file (if it was created)
@@ -1199,7 +1210,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
             data['last_new_file_time'] = old_data['last_new_file_time']
         else:
             data['last_new_file_time'] = start_time
-        pythontex_data_file = os.path.join(outputdir, 'pythontex_data.pkl')
+        pythontex_data_file = os.path.expanduser(os.path.normcase(os.path.join(outputdir, 'pythontex_data.pkl')))
         f = open(pythontex_data_file, 'wb')
         pickle.dump(data, f, -1)
         f.close()
@@ -1383,13 +1394,13 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
             last_new_file_time = old_data['last_new_file_time']
         data['last_new_file_time'] = last_new_file_time
         
-        macro_file = open(os.path.join(outputdir, jobname + '.pytxmcr'), 'w', encoding=encoding)
+        macro_file = open(os.path.expanduser(os.path.normcase(os.path.join(outputdir, jobname + '.pytxmcr'))), 'w', encoding=encoding)
         macro_file.write('%Last time of file creation:  ' + str(last_new_file_time) + '\n\n')
         for key in macros:
             macro_file.write(''.join(macros[key]))
         macro_file.close()
         
-        pygments_macro_file = open(os.path.join(outputdir, jobname + '.pytxpyg'), 'w', encoding=encoding)
+        pygments_macro_file = open(os.path.expanduser(os.path.normcase(os.path.join(outputdir, jobname + '.pytxpyg'))), 'w', encoding=encoding)
         # Only save Pygments styles that are used
         style_set = set([pygments_settings[k]['formatter_options']['style'] for k in pygments_settings if k != ':GLOBAL'])
         for key in pygments_style_defs:
@@ -1399,7 +1410,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
             pygments_macro_file.write(''.join(pygments_macros[key]))
         pygments_macro_file.close()
         
-        pythontex_data_file = os.path.join(outputdir, 'pythontex_data.pkl')
+        pythontex_data_file = os.path.expanduser(os.path.normcase(os.path.join(outputdir, 'pythontex_data.pkl')))
         f = open(pythontex_data_file, 'wb')
         pickle.dump(data, f, -1)
         f.close()
@@ -1450,8 +1461,8 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
     
     # Open files for stdout and stderr, run the code, then close the files
     basename = key_run.replace('#', '_')
-    out_file_name = os.path.join(outputdir, basename + '.out')
-    err_file_name = os.path.join(outputdir, basename + '.err')
+    out_file_name = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename + '.out')))
+    err_file_name = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename + '.err')))
     out_file = open(out_file_name, 'w', encoding=encoding)
     err_file = open(err_file_name, 'w', encoding=encoding)
     # Note that command is a string, which must be converted to list
@@ -1533,7 +1544,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
             for dep in deps:
                 dep_file = os.path.expanduser(os.path.normcase(dep))
                 if not os.path.isabs(dep_file):
-                    dep_file = os.path.join(workingdir, dep_file)
+                    dep_file = os.path.expanduser(os.path.normcase(os.path.join(workingdir, dep_file)))
                 if not os.path.isfile(dep_file):
                     # If we can't find the file, we return a null hash and issue 
                     # an error.  We don't need to change the exit status.  If the 
@@ -1577,7 +1588,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             macros.append(content)
                         else:
                             fname = os.path.join(outputdir, basename + '_' + instance + '.stdout')
-                            f = open(fname, 'w', encoding=encoding)
+                            f = open(os.path.expanduser(os.path.normcase(fname)), 'w', encoding=encoding)
                             f.write(content)
                             f.close()
                             files.append(fname)
@@ -1611,7 +1622,9 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
         # doesn't obey the OS's slash convention in paths given in stderr.  
         # For example, Windows uses backslashes, but Ruby under Windows uses 
         # forward in paths given in stderr.
-        fullbasename_correct = os.path.join(outputdir, basename)
+        # #### Consider os.path.normcase(), making search case-insensitive
+        outputdir_exp = os.path.expanduser(outputdir)
+        fullbasename_correct = os.path.join(outputdir_exp, basename)
         if '\\' in fullbasename_correct:
             fullbasename_reslashed = fullbasename_correct.replace('\\', '/')
         else:
@@ -1719,7 +1732,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                             err_messages_ud.append('* PythonTeX stderr - {0} on line {1} in "{2}":'.format(alert_type, doclinenum, input_file))
                         else:
                             err_messages_ud.append('* PythonTeX stderr - {0} on line {1}:'.format(alert_type, doclinenum))
-                    err_messages_ud.append('  ' + line.replace(outputdir, '<outputdir>').rstrip('\n'))
+                    err_messages_ud.append('  ' + line.replace(outputdir_exp, '<outputdir>').rstrip('\n'))
                 else:
                     err_messages_ud.append('  ' + line.rstrip('\n'))
             
@@ -1954,7 +1967,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
                         else:
                             msg.append('* PythonTeX stderr - {0} on line {1}:'.format(alert_type, doclinenum))
                     # Clean up the stderr format a little, to keep it compact
-                    line = line.replace(outputdir, '<outputdir>').rstrip('\n')
+                    line = line.replace(outputdir_exp, '<outputdir>').rstrip('\n')
                     if '/<outputdir>' in line or '\\<outputdir>' in line:
                         line = sub(r'(?:(?:[A-Za-z]:\\)|(?:~?/)).*<outputdir>', '<outputdir>', line)
                     msg.append('  ' + line)
@@ -2083,7 +2096,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
         if err_dict:
             for err_key in err_dict:
                 stderr_file_name = os.path.join(outputdir, err_key + '.stderr')
-                f = open(stderr_file_name, 'w', encoding=encoding)
+                f = open(os.path.expanduser(os.path.normcase(stderr_file_name)), 'w', encoding=encoding)
                 f.write(''.join(err_dict[err_key]))
                 f.close()
                 files.append(stderr_file_name)
@@ -2091,12 +2104,12 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
     # Clean up temp files, and update the list of existing files
     if keeptemps == 'none':
         for ext in [extension, 'pytxmcr', 'out', 'err']:
-            fname = os.path.join(outputdir, basename + '.' + ext)
+            fname = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename + '.' + ext)))
             if os.path.isfile(fname):
                 os.remove(fname)
     elif keeptemps == 'code':
         for ext in ['pytxmcr', 'out', 'err']:
-            fname = os.path.join(outputdir, basename + '.' + ext)
+            fname = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename + '.' + ext)))
             if os.path.isfile(fname):
                 os.remove(fname)
         files.append(os.path.join(outputdir, basename + '.' + extension))
@@ -2223,7 +2236,7 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
                                 r'\\begin{{pytx@Verbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance), processed, count=1)
             processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@Verbatim}\n\n'
             fname = os.path.join(outputdir, c.key_typeset.replace('#', '_') + '.pygtex')
-            f = open(fname, 'w', encoding=encoding)
+            f = open(os.path.expanduser(os.path.normcase(fname)), 'w', encoding=encoding)
             f.write(processed)
             f.close()
             pygments_files[c.key_typeset].append(fname)
@@ -2313,14 +2326,14 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                         if os.getcwd() not in sys.path:
                             sys.path.append(os.getcwd())
                     else:
-                        sys.exit('Cannot find directory {workingdir}')
+                        sys.exit('Cannot find directory "{workingdir}"')
                     
                     if docdir not in sys.path:
                         sys.path.append(docdir)
                     
                     del docdir
                     '''
-            cons_config = cons_config.format(workingdir=workingdir)[1:]
+            cons_config = cons_config.format(workingdir=os.path.expanduser(os.path.normcase(workingdir)))[1:]
             self.console_code.extend(textwrap.dedent(cons_config).splitlines())
             # Code is processed and doesn't need newlines
             self.console_code.extend(startup.splitlines())
@@ -2482,7 +2495,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                                         processed, count=1)
                         processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@Verbatim}\n\n'
                         fname = os.path.join(outputdir, key_typeset.replace('#', '_') + '.pygtex')
-                        f = open(fname, 'w', encoding=encoding)
+                        f = open(os.path.expanduser(os.path.normcase(fname)), 'w', encoding=encoding)
                         f.write(processed)
                         f.close()
                         pygments_files[key_typeset].append(fname)  
@@ -2495,7 +2508,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                         processed = ('\\begin{pytx@Verbatim}\n' + console_content +
                                      '\\end{pytx@Verbatim}\n\n')
                         fname = os.path.join(outputdir, key_typeset.replace('#', '_') + '.tex')
-                        f = open(fname, 'w', encoding=encoding)
+                        f = open(os.path.expanduser(os.path.normcase(fname)), 'w', encoding=encoding)
                         f.write(processed)
                         f.close()
                         files.append(fname)
@@ -2571,8 +2584,8 @@ def main(python=None):
     load_code_get_settings(data, temp_data)
     # Now that the settings are loaded, check if outputdir exits.
     # If not, create it.
-    if not os.path.isdir(data['settings']['outputdir']):
-        os.mkdir(data['settings']['outputdir'])
+    if not os.path.isdir(os.path.expanduser(os.path.normcase(data['settings']['outputdir']))):
+        os.mkdir(os.path.expanduser(os.path.normcase(data['settings']['outputdir'])))
 
 
     # Load/create old_data

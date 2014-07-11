@@ -818,8 +818,8 @@ if os.path.split(texfile_name)[0] != '':
   
 # Open and process the file of macros
 # Read in the macros
-if os.path.isfile(settings['macrofile']):
-    f = open(settings['macrofile'], 'r', encoding=encoding)
+if os.path.isfile(os.path.expanduser(os.path.normcase(settings['macrofile']))):
+    f = open(os.path.expanduser(os.path.normcase(settings['macrofile'])), 'r', encoding=encoding)
     macros = f.readlines()
     f.close()
 else:
@@ -995,7 +995,7 @@ for n, depytxline in enumerate(depytx):
                     f_name, mode = f_name.split(':mode=')
                 else:
                     mode = None
-                f = open(f_name, 'r', encoding=encoding)
+                f = open(os.path.expanduser(os.path.normcase(f_name)), 'r', encoding=encoding)
                 replacement = f.read()
                 f.close()
                 if typeset == 'c':

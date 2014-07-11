@@ -398,8 +398,8 @@ class CodeEngine(object):
         else:
             return cc_future + code_future
     
-    def get_script(self, encoding, utilspath, workingdir, 
-                   cc_list_begin, code_list, cc_list_end):
+    def get_script(self, encoding, utilspath, outputdir, workingdir, 
+                   cc_list_begin, code_list, cc_list_end, debug, interactive):
         '''
         Assemble the script that will be executed.  In the process, assemble
         an index of line numbers that may be used to correlate script line
@@ -427,8 +427,16 @@ class CodeEngine(object):
             workingdir_full = workingdir
         else:
             workingdir_full = os.path.join(os.getcwd(), workingdir).replace('\\', '/')
+        # Correct workingdir if in debug or interactive mode, so that it's
+        # relative to the script path
+        # #### May refactor this once debugging functionality is more 
+        # fully implemented
+        if debug is not None or interactive is not None:
+            if not os.path.isabs(os.path.expanduser(os.path.normcase(workingdir))):
+                workingdir = os.path.relpath(workingdir, outputdir)
         script_begin = script_begin.format(encoding=encoding, future=future, 
-                                           utilspath=utilspath, workingdir=workingdir,
+                                           utilspath=utilspath,
+                                           workingdir=os.path.expanduser(os.path.normcase(workingdir)),
                                            Workingdir=workingdir_full,
                                            extend=self.extend,
                                            family=code_list[0].family,
@@ -617,8 +625,7 @@ python_template = '''
     import sys
     import codecs
     
-    if not (len(sys.argv) > 1 and 
-            ('--debug' in sys.argv[1:] or '--interactive' in sys.argv[1:])):
+    if '--interactive' not in sys.argv[1:]:
         if sys.version_info[0] == 2:
             sys.stdout = codecs.getwriter('{encoding}')(sys.stdout, 'strict')
             sys.stderr = codecs.getwriter('{encoding}')(sys.stderr, 'strict')
@@ -701,7 +708,7 @@ PythonConsoleEngine('sympycon', startup='from sympy import *')
 ruby_template = '''
     # -*- coding: {encoding} -*-
     
-    if ARGV[0] != '--debug' and ARGV[0] != '--interactive'
+    unless ARGV.include?('--interactive')
         $stdout.set_encoding('{encoding}')
         $stderr.set_encoding('{encoding}')
     end

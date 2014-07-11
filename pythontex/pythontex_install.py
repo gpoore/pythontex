@@ -100,7 +100,7 @@ needed_files = ['pythontex.py', 'pythontex2.py', 'pythontex3.py',
                 'depythontex.py', 'depythontex2.py', 'depythontex3.py',
                 'pythontex.sty', 'pythontex.ins', 'pythontex.dtx', 
                 'pythontex.pdf', 'README',
-                'spdb.py']
+                'syncpdb.py']
 missing_files = False
 # Print a list of all files that are missing, and exit if any are
 for eachfile in needed_files:
@@ -294,7 +294,7 @@ try:
     copy('depythontex.py', scripts_path)
     copy('pythontex_utils.py', scripts_path)
     copy('pythontex_engines.py', scripts_path)
-    copy('spdb.py', scripts_path)
+    copy('syncpdb.py', scripts_path)
     for ver in [2, 3]:
         copy('pythontex{0}.py'.format(ver), scripts_path)
         copy('depythontex{0}.py'.format(ver), scripts_path)
