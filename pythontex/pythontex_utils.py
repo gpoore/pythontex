@@ -17,6 +17,8 @@ Licensed under the BSD 3-Clause License:
 # Imports
 import sys
 import warnings
+if sys.version_info.major == 2:
+    import io
 
 # Most imports are only needed for SymPy; these are brought in via 
 # "lazy import."  Importing unicode_literals here shouldn't ever be necessary 
@@ -422,6 +424,21 @@ class PythonTeXUtils(object):
         if self._created:
             for creation in self._created:
                 print(creation)
+    
+    # A custom version of `open()` is useful for automatically tracking files
+    # opened for reading as dependencies and tracking files opened for 
+    # writing as created files.
+    def open(self, name, mode='r', *args, **kwargs):
+        if mode in ('r', 'rt', 'rb'):
+            self.add_dependencies(name)
+        elif mode in ('w', 'wt', 'wb'):
+            self.add_created(name)
+        else:
+            warnings.warn('Unsupported mode {0} for file tracking'.format(mode))
+        if sys.version_info.major == 2 and (len(args) > 1 or 'encoding' in kwargs):
+            return io.open(name, mode, *args, **kwargs)
+        else:
+            return open(name, mode, *args, **kwargs)
     
     def cleanup(self):
         self._save_dependencies()
