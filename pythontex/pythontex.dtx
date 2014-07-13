@@ -92,8 +92,9 @@
 % \item Added \texttt{-{}-debug} command-line option.  This runs a single session with the default debugger.  Currently, only standard (non-console) Python sessions are supported.  The default Python debugger is the new \texttt{syncpdb}, which wraps \texttt{pdb} and synchronizes code line numbers with document line numbers.  All \texttt{pdb} commands that take a line number or filename:lineno as an argument will refer to document files and line numbers when the argument has a percent symbol (\texttt{\%}) as a prefix.  For example, \texttt{list \%50} lists code that came from around line 50 in the document.  The \texttt{-{}-debug} option will support other languages and provide for customization in the future.
 % \item Added \texttt{-{}-interactive} command-line option.  This runs a single session in interactive mode, allowing user input.  This is useful when working with debuggers.
 % \item Added command-line option \texttt{-{}-jobs}, which allows the maximum number of concurrent processes to be specified (\#35).
-% \item Added support for GNU Octave, via the \texttt{octave} family of commands and environments (\#36).
+% \item Added support for GNU Octave, via the \texttt{octave} family of commands and environments (\#36).  Parsing of Octave stderr is not ideal, though synchronization works in most cases; this will be addressed by a future rewrite of the stderr parser.
 % \item Installer now automatically works with MiKTeX, not just TeX Live.
+% \item The \pytex\ utilities class has a new \texttt{open()} method that opens files and automatically tracks dependencies/created files.
 % \item When \texttt{pythontex2.py} and \texttt{pythontex3.py} are run directly, the Python interpreter is automatically set to a reasonable default (\texttt{py -2} or \texttt{py -3} under Windows, using the Python 3.3+ wrapper; \texttt{python2} or \texttt{python3} under other systems).
 % \item The installer now creates symlinks for the numbered scripts \texttt{pythontex*.py} and \texttt{depythontex*.py}.
 % \item Added Python version checking to all numbered scripts.
@@ -406,6 +407,7 @@
 % \item Language definitions |pythontex_engines.py|
 % \item Utilities class |pythontex_utils.py|
 % \item |depythontex.py|, which imports from |depythontex2.py| or |depythontex3.py|, based on the Python version; used to remove \pytex\ dependence
+% \item Synchronized Python Debugger |syncpdb.py|
 % \item |README| (in rst style)
 % \item |pythontex_gallery.tex| and |pythontex_gallery.pdf|
 % \item |pythontex_quickstart.tex| and |pythontex_quickstart.pdf|
@@ -441,6 +443,7 @@
 %     \item |pythontex_engines.py|
 %     \item |pythontex_utils.py|
 %     \item |depythontex.py|, |depythontex2.py| and |depythontex3.py|
+%     \item |syncpdb.py|
 %     \end{itemize}
 % \item \meta{\TeX\ tree root}|/source/latex/pythontex/|
 %     \begin{itemize}
@@ -868,7 +871,7 @@
 %
 %  All non-|console| families import |pythontex_utils.py|, and create an instance of the \pytex\ utilities class called |pytex|.  This provides various utilities for interfacing with \LaTeX\ and \pytex.
 %
-% The utilities class has an attribute |context|.  This is a dictionary that contains contextual information, such as page dimensions, from the \TeX\ side.  Values may also be accessed as attributes rather than as dictionary keys.  To determine what contextual information is available, and for additional details, see |\setpythontexcontext| under Section~\ref{sec:usage:advanced-usage}.  For working with contextual data, the utilities class provides |pt_to_in()|, |pt_to_cm()|, |pt_to_mm()|, and |pt_to_bp()| methods for converting from \TeX\ points to other units.
+% The utilities class has an attribute |context|.  This is a dictionary that can contain contextual information, such as page dimensions, from the \TeX\ side.  Values may also be accessed as attributes rather than as dictionary keys.  To determine what contextual information is available, and for additional details, see |\setpythontexcontext| under Section~\ref{sec:usage:advanced-usage}.  For working with contextual data, the utilities class provides |pt_to_in()|, |pt_to_cm()|, |pt_to_mm()|, and |pt_to_bp()| methods for converting from \TeX\ points to other units.
 %
 % The utilities class provides an interface for determining how Python objects are converted into strings in commands such as |\py|.  The |pytex.set_formatter(|\meta{formatter}|)| method is used to set the conversion.  Two formatters are provided:
 % \begin{itemize}
@@ -880,7 +883,7 @@
 % The context-sensitive interface to SymPy's |LatexPrinter| is always available via |pytex.sympy_latex()|.
 % \end{itemize}
 %
-% The \pytex\ utilities formatter may be set to a custom function that returns strings, simply by reassigning the |pytex.formatter()| method.  For example, define a formatter function |my_func()|, and then |pytex.formatter=my_func|.
+% The \pytex\ utilities formatter may be set to a custom function that returns strings, simply by reassigning the |pytex.formatter()| method.  For example, define a formatter function |my_func()|, and then |pytex.formatter=my_func| within a |pycode| or |pythontexcustomcode| environment.  Any subsequent uses of |\py| will then use |my_func()| to perform formatting.
 %
 % The utilities class also provides methods for tracking dependencies and created files.
 % \begin{itemize}
@@ -888,7 +891,7 @@
 % 
 % \meta{dependencies} should be one or more strings, separated by commas, that are the file names of dependencies.  Dependencies should be given with relative paths from the current working directory, with absolute paths, or with paths based on the user's home directory (that is, starting with a tilde |~|).  Paths can use a forward slash ``|/|'' even under Windows.  Remember that by default, the working directory is the |pythontex-files-|\meta{jobname} directory where all \pytex\ temporary files are stored.  This can be adjusted with |\setpythontexworkingdir|.
 %
-% It is possible that a dependency of one session might be modified by another session while \pytex\ runs.  The first session might not be executed during the \pytex\ run because its dependency was unmodified at the beginning.  A more serious case occurs when the first session does run, but we don't know whether it accessed the dependency before or after the dependency was updated (remember, sessions run in parallel).  \pytex\ keeps track of the time at which it started.  Any sessions with dependencies that were modified after that time are set to re-execute on the next run.  A warning is also issued to indicated that this is the case.
+% It is possible that a dependency of one session might be modified by another session while \pytex\ runs.  The first session might not be executed during the \pytex\ run because its dependency was unmodified at the beginning.  A more serious case occurs when the first session does run, but we don't know whether it accessed the dependency before or after the dependency was updated (remember, sessions run in parallel).  \pytex\ keeps track of the time at which it started.  Any sessions with dependencies that were modified after that time are set to re-execute on the next run.  A warning is also issued to indicate that this is the case.
 %
 % \item |pytex.add_created(|\meta{created~files}|)|  This adds \meta{created~files} to a list of files created by the current session.  Any time the code for the current session is executed, \textbf{all of these files will be deleted}.  Since this method deletes files, it should be used with care.  It is intended for automating cleanup when code is modified.  For example, if a figure's name is changed, the old figure would be deleted if its name had been added to the list.  By default, \pytex\ can only clean up the temporary files it creates; it knows nothing about user-created files.  This method allows user-created files to be specified, and thus added to \pytex's automatic cleanup.
 %
@@ -897,19 +900,27 @@
 % Depending on how you use \pytex, this method may not be very beneficial.  If all of the output is contained in the default output directory, or a similar directory of your choosing, then manual cleanup may be simple enough that this method is not needed.
 % \end{itemize}
 %
-% These two methods for tracking files may be used manually.  However, that is prone to errors, since you will have to modify both a \pytex\ utilities command and an open or save command every time you change a file name or add or remove a dependency or created file.  It may be better to redefine your open and save commands, or define new ones, so that a single command opens (or saves) and adds a dependency (or adds a created file).  For example, the following would create a version of the standard |open()| that automatically tracks dependencies and created files.
+% These two methods for tracking files may be used manually.  However, that is prone to errors, since you will have to modify both a \pytex\ utilities command and an open or save command every time you change a file name or add or remove a dependency or created file.  It may be better to redefine your open and save commands, or define new ones, so that a single command opens (or saves) and adds a dependency (or adds a created file).  For this reason, the \pytex\ utilities class provides an |open()| method that automatically tracks dependencies and created files.
+% \begin{itemize}
+% \item |pytex.open(|\meta{file}|, |\meta{mode}|, |\meta{args}|, | \meta{kwargs}|)|  This method automatically tracks all files opened for reading (text or binary mode) as dependencies.  It automatically tracks all files opened for writing (text or binary mode) as created files.  Files opened for updating and appending will raise a warning, since it is not necessarily obvious how these files should be treated.  The general form of the custom |open()| function is shown below.
 % \begin{verbatim}
-%def track_open(file, mode='r', *args, **kwargs):
-%    if mode in ('r', 'rb'):
-%        pytex.add_dependencies(file)
-%    elif mode in ('w', 'wb'):
-%        pytex.add_created(file)
-%    return open(file, mode, *args, **kwargs)
-%pytex.open = track_open
+%def track_open(name, mode='r', *args, **kwargs):
+%    if mode in ('r', 'rt', 'rb'):
+%        pytex.add_dependencies(name)
+%    elif mode in ('w', 'wt', 'wb'):
+%        pytex.add_created(name)
+%    else:
+%        warnings.warn('Unsupported mode {0} for file tracking'.format(mode))
+%    return open(name, mode, *args, **kwargs)
 % \end{verbatim}
-% Notice that this approach does not deal with files opened for appending or updating; such cases require more complex logic.
+% \textbf{Unicode note for Python 2:}  By default, |pytex.open()| call the standard Python 2 |open()|.  If more than 3 positional arguments are used, or if the |encoding| keyword is used, then \href{https://docs.python.org/2/library/io.html}{\texttt{io.open()}} will be called instead.  So if you are working with Unicode, make sure to specify an encoding in |pytex.open()| so that |io.open()| will be used, or manually encode/decode everything.
+% \end{itemize}
 %
 % The utilities class provides a pair of methods, |before()| and |after()|, that are called immediately before and after each chunk of user code.  These may be redefined to customize the output of user code.  For example, \LaTeX\ commands could be printed at the beginning and end of each command or environment, wrapping any content printed by the user.  Or any matplotlib figures that were created in the chunk of code could be detected and saved, and \LaTeX\ commands to include them in the document could be printed.  Or stdout could be redirected to a StringIO stream in |before()|, then processed in |after()| before being sent to the original stdout.
+%
+% The |before()| and |after()| methods may be redefined in any code or block command or environment, using the techniques described below.  Once they have been redefined, the new methods will be called for all subsequent commands and environments.  When redefining these methods, it is important to realize that the order of redefinition may be important.  For example, if the new |before()| and |after()| depend upon one another, then you should call the old |after()| (if it does anything), then redefine the methods, and finally call the new |before()|.  This is necessary because |after()| will be called after the end of the command or environment in which redefinition takes place.  If |after()| has been redefined so that it depends on the new |before()|, and the new |before()| has not yet been called, errors will likely result.  Other methods of dealing with this scenario, involving disabling |before()| and |after()| for a given command or environment, are being considered as potential features for a future release.
+%
+% When redefining |before()| and |after()|, you may wish to have behavior that is command- or environment-specific.  Information about the current command or environment is available in |pytex.command|.  The string |i| corresponds to an inline command such as |\py|; |b|, to an inline block such as |\pyb|; |c|, to inline code such as |\pyc|.  Similarly, |code| corresponds to a code environment and |block| to a block environment.
 %
 % You may redefine |before()| and |after()| at the class level.  For example,
 % \begin{verbatim}
@@ -1369,7 +1380,7 @@
 %
 % Support for Ruby was added in v0.12.  Ruby support should be almost at the same level as that for Python.
 %
-% The utilities class is called |RubyTeXUtils|, and the class instance is |rbtex|.  The variables and methods are the same as those for Python (Section~\ref{sec:usage:commands:utilities-class}), except that there is not currently a |set_formatter()| method.  (The Python utilities class has the special SymPy formatter, but there aren't yet any specialized formatters for Ruby.)
+% The utilities class is called |RubyTeXUtils|, and the class instance is |rbtex|.  The variables and methods are the same as those for Python (Section~\ref{sec:usage:commands:utilities-class}), except that there is not currently a |set_formatter()| or an |open()| method.  (The Python utilities class has the special SymPy formatter, but there aren't yet any specialized formatters for Ruby.)
 %
 % A family of commands and environments for Ruby is not created by default.  Two base names are provided for families:  |ruby| and |rb|.  Preconfigured families for these names may be created via the |usefamily| package option.  Keep in mind that a |ruby| command is defined as part of the Ruby package in the  \href{http://www.ctan.org/pkg/cjk}{CJK package}.  I am unaware of a package that provides an |\rb| command.
 %
@@ -1380,7 +1391,7 @@
 %
 % Support for Julia was added in v0.12.  Julia support should be at almost the same level as that for Python.  The format of Julia stderr is somethat different from that of Python and Ruby.  This required a modified parsing and synchronization algorithm.  The current system is functional but will likely change somewhat in the future.
 %
-% The utilities class is called |JuliaTeXUtils|, and the class instance is |jltex|.  The variables and methods are the same as those for Python (Section~\ref{sec:usage:commands:utilities-class}), except that there is not currently a |set_formatter()| method.  (The Python utilities class has the special SymPy formatter, but there aren't yet any specialized formatters for Julia.)
+% The utilities ``class'' is called |JuliaTeXUtils| (it is actually a composite type, very similar to a struct), and the ``class'' instance is |jltex|.  The variables and methods are the same as those for Python (Section~\ref{sec:usage:commands:utilities-class}), except that there is not currently a |set_formatter()| method or an |open()| method.  (The Python utilities class has the special SymPy formatter, but there aren't yet any specialized formatters for Julia.)
 %
 % A family of commands and environments for Julia is not created by default.  Two base names are provided for families:  |julia| and |jl|.  Preconfigured families for these names may be created via the |usefamily| package option.  Keep in mind that Pygments only added Julia support in version 1.6, so you may need to update your Pygments installation, or just change the default lexer.
 %
@@ -1389,9 +1400,13 @@
 %
 % \subsection{Octave}
 %
-% Support for Octave was added in v0.13.  Octave support should be at almost the same level as that for Python.
+% Support for Octave was added in v0.13.  Octave support should be at almost the same level as that for Python.  Parsing of stderr for synchronization is successful in most cases but not ideal; this will be improved in a future release by a rewrite of the stderr parser.
 %
-% Octave does not have a utilities class, since it only supports |@CLASS| classes and does not yet support newer MATLAB-style |classdef|.  As a result of this limited support for classes, everything that would have been a method of the form |octavetex.name()| is instead a function |octavetex_name()|.  There is a struct |octavetex| whose fields are the variables that would have been stored in a utilities class.
+% Octave does not have a genuine utilities class, since it only supports |@CLASS| classes and does not yet support newer MATLAB-style |classdef|.  As a result of this limited support for classes, there is a struct |octavetex| rather than a utilities class instance |octavetex|.  What would have been attributes of a utilities class instance are instead fields of the struct.  What would have been methods of a class are instead anonymous functions.  This allows |octavetex| to be used in most respects as if it were a class instance, especially insofar as syntax is concerned.
+%
+% There are no |set_formatter()| or |open()| methods.
+%
+% If any ``methods'' need to be overwritten, the simplest approach is probably to define a function and then set the appropriate struct field to an anonymous function that will call that function.  For example, to replace the default |octavetex.before()|, we might define a function |before()|, and then use the command |octavetex.before = @() before();|.  Of course, if the function is sufficiently short, it will be simpler just to put everything in the anonymous function:  |octavetex.before = @() <expression>;|
 %
 % A family of commands and environments for Octave is not created by default; the base name |octave| is provided.
 %
