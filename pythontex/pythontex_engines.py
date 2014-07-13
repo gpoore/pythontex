@@ -1016,12 +1016,15 @@ octave_template = '''
     function octavetex_formatter(argin)
         disp(argin);
     end
+    octavetex.formatter = @(argin) octavetex_formatter(argin);
     
     function octavetex_before()
     end
+    octavetex.before = @() octavetex_before();
     
     function octavetex_after()
     end
+    octavetex.after = @() octavetex_after();
     
     function octavetex_add_dependencies(varargin)
         global octavetex;
@@ -1029,6 +1032,7 @@ octave_template = '''
             octavetex.dependencies{{end+1}} = varargin{{i}};
         end
     end
+    octavetex.add_dependencies = @(varargin) octavetex_add_dependencies(varargin{{:}});
     
     function octavetex_add_created(varargin)
         global octavetex;
@@ -1036,6 +1040,7 @@ octave_template = '''
             octavetex.created{{end+1}} = varargin{{i}};
         end
     end
+    octavetex.add_created = @(varargin) octavetex_add_created(varargin{{:}});
     
     function octavetex_set_context(argin)
         global octavetex;
@@ -1052,6 +1057,7 @@ octave_template = '''
             octavetex.context = hash;
         end
     end
+    octavetex.set_context = @(argin) octavetex_set_context(argin);
     
     function out = octavetex_pt_to_in(argin)
         if ischar(argin)
@@ -1064,18 +1070,22 @@ octave_template = '''
             out = argin/72.27;
         end
     end
+    octavetex.pt_to_in = @(argin) octavetex_pt_to_in(argin);
     
     function out = octavetex_pt_to_cm(argin)
         out = octavetex_pt_to_in(argin)*2.54;
     end
+    octavetex.pt_to_cm = @(argin) octavetex_pt_to_cm(argin);
     
     function out = octavetex_pt_to_mm(argin)
         out = octavetex_pt_to_in(argin)*25.4;
     end
+    octavetex.pt_to_mm = @(argin) octavetex_pt_to_mm(argin);
     
     function out = octavetex_pt_to_bp(argin)
         out = octavetex_pt_to_in(argin)*72;
     end
+    octavetex.pt_to_bp = @(argin) octavetex_pt_to_bp(argin);
     
     function octavetex_cleanup()
         global octavetex;
@@ -1088,6 +1098,7 @@ octave_template = '''
             fprintf(strcat(octavetex.created{{i}}, "\\n"));
         end        
     end
+    octavetex.cleanup = @() octavetex_cleanup();
     
     octavetex.id = '{family}_{session}_{restart}';
     octavetex.family = '{family}';
@@ -1096,23 +1107,23 @@ octave_template = '''
     
     {body}
 
-    octavetex_cleanup()    
+    octavetex.cleanup()    
     '''
 
 octave_wrapper = '''
     octavetex.command = '{command}';
-    octavetex_set_context('{context}');
+    octavetex.set_context('{context}');
     octavetex.args = '{args}';
     octavetex.instance = '{instance}';
     octavetex.line = '{line}';
     
-    octavetex_before()   
+    octavetex.before()   
     
     fprintf(strcat('{stdoutdelim}', "\\n"));
     fprintf(stderr, strcat('{stderrdelim}', "\\n"));
     {code}
     
-    octavetex_after()
+    octavetex.after()
     '''
 
 CodeEngine('octave', 'octave', '.m',
