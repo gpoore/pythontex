@@ -77,7 +77,7 @@ else:
 
 # Script parameters
 # Version
-version = 'v0.13-beta'
+version = 'v0.13'
 
 
 

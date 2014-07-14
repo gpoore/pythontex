@@ -86,7 +86,7 @@ import codecs
 
 # Script parameters
 # Version
-version = 'v0.13-beta'
+version = 'v0.13'
 
 
 # Functions and parameters for customizing the script output

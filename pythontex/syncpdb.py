@@ -114,6 +114,9 @@ from collections import defaultdict, namedtuple
 import traceback
 
 
+__version__ = '0.1'
+
+
 __all__ = ["run", "pm", "SyncPdb", "runeval", "runctx", "runcall", "set_trace",
            "post_mortem", "help"]
 

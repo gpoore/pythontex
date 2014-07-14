@@ -7,6 +7,82 @@ Version History
 ===============
 
 
+v0.13 (2014/07/14)
+------------------
+
+New features
+~~~~~~~~~~~~
+
+*  Added ``--interactive`` command-line option. This runs a single
+   session in interactive mode, allowing user input. Among other things,
+   this is useful when working with debuggers.
+
+*  Added ``--debug`` command-line option. This runs a single session
+   with the default debugger in interactive mode. Currently, only
+   standard (non-console) Python sessions are supported. The default
+   Python debugger is the new ``syncpdb``, which wraps ``pdb`` and
+   synchronizes code line numbers with document line numbers. All
+   ``pdb`` commands that take a line number or filename:lineno as an
+   argument will refer to document files and line numbers when the
+   argument has a percent symbol (``%``) as a prefix. For example,
+   ``list %50`` lists code that came from around line 50 in the
+   document. The ``--debug`` option will support other languages and
+   provide for customization in the future.
+
+*  Added command-line option ``--jobs``, which allows the maximum number
+   of concurrent processes to be specified (#35).
+
+*  Added support for GNU Octave, via the ``octave`` family of commands
+   and environments (#36). Parsing of Octave stderr is not ideal, though
+   synchronization works in most cases; this will be addressed by a
+   future rewrite of the stderr parser.
+
+*  Installer now automatically works with MiKTeX, not just TeX Live.
+
+*  The PythonTeX utilities class has a new ``open()`` method that opens
+   files and automatically tracks dependencies/created files.
+
+*  When ``pythontex2.py`` and ``pythontex3.py`` are run directly, the
+   Python interpreter is automatically set to a reasonable default
+   (``py -2`` or ``py -3`` under Windows, using the Python 3.3+ wrapper;
+   ``python2`` or ``python3`` under other systems).
+
+*  The installer now creates symlinks for the numbered scripts
+   ``pythontex*.py`` and ``depythontex*.py``.
+
+*  Added Python version checking to all numbered scripts.
+
+*  Under Python, the type of data passed via ``\setpythontexcontext`` may 
+   now be set using YAML-style tags (``!!str``, ``!!int``, ``!!float``). For 
+   example, ``{myint=!!int 123}``.
+
+*  The ``fancyvrb`` options ``firstline`` and ``lastline`` now work with
+   the ``pygments`` environment and ``\inputpygments`` command. This required 
+   some additional patching of ``fancyvrb``.
+
+*  The ``pytx@Verbatim`` and ``pytx@SaveVerbatim`` environments are now
+   used for typesetting verbatim code. These are copies of the
+   ``fancyvrb`` environments. This prevents conflicts when literal
+   ``Verbatim`` and ``SaveVerbatim`` environments need to be typeset.
+
+*  Improved ``latexmk`` compatibility (#40). Added discussion of
+   ``latexmk`` usage to documentation.
+
+*  Tildes ``~`` may now be used in ``outputdir`` and ``workingdir`` to
+   refer to the user’s home directory, even under Windows.
+
+Bugfixes
+~~~~~~~~
+
+*  Fixed a bug that prevented created files from being cleaned up when
+   the working directory was not the document root directory and the
+   full path to the files was not provided.
+
+*  Fixed a bug that prevented the ``fvextfile`` option from working when
+   external files were highlighted.
+
+
+
 v0.13-beta (2014/02/06)
 -----------------------
 
@@ -14,29 +90,80 @@ New features
 ~~~~~~~~~~~~
 
 *  Switching to GitHub's Releases for downloads.
-*  TeX information such as page dimensions may now be easily passed to the programming-language side, using the new ``\setpythontexcontext`` command.  Contextual information is stored in the ``context`` attribute of the utilities class, which is a dictionary (and also has attributes in Python).
-*  The utilities class now has ``pt_to_in()``, ``pt_to_cm()``, and ``pt_to_mm()`` methods for converting units of TeX points into inches, centimeters, and millimeters.  These work with integers and floats, as well as strings that consist of numbers and optionally end in "pt".  There is also a ``pt_to_bp()`` for converting TeX points (1/72.27 inch) into big (DTP or PostScript) points (1/72 inch).
-*  Expanded Quickstart.  Quickstart is now compatible with all LaTeX engines.  Quickstart now avoids ``microtype`` issues on some systems (\#32).
-*  Added information on citing PythonTeX (\#28).
-*  Utilities class has a new attribute ``id``, which is a string that joins the command family name, session name, and session restart parameters with underscores.  This may be used in creating files that need a name that contains a unique, session-based identifier (for example, names for figures that are saved automatically).
+
+*  TeX information such as page dimensions may now be easily passed to the 
+   programming-language side, using the new ``\setpythontexcontext`` command.  
+   Contextual information is stored in the ``context`` attribute of the 
+   utilities class, which is a dictionary (and also has attributes in Python).
+
+*  The utilities class now has ``pt_to_in()``, ``pt_to_cm()``, and 
+   ``pt_to_mm()`` methods for converting units of TeX points into inches, 
+   centimeters, and millimeters.  These work with integers and floats, as 
+   well as strings that consist of numbers and optionally end in "pt".  There 
+   is also a ``pt_to_bp()`` for converting TeX points (1/72.27 inch) into big 
+   (DTP or PostScript) points (1/72 inch).
+   
+*  Expanded Quickstart.  Quickstart is now compatible with all LaTeX engines.  
+   Quickstart now avoids ``microtype`` issues on some systems (#32).
+   
+*  Added information on citing PythonTeX (#28).
+
+*  Utilities class has a new attribute ``id``, which is a string that joins 
+   the command family name, session name, and session restart parameters with 
+   underscores.  This may be used in creating files that need a name that 
+   contains a unique, session-based identifier (for example, names for 
+   figures that are saved automatically).
 
 Backward-incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  All utilities-class attributes with names of the form ``input_*`` have been renamed with the "``input_``" removed.  Among other things, this makes it easier to access the ``context`` attribute (``pytex.context`` vs. ``pytex.input_context``).
-*  ``depythontex`` now has ``-o`` and ``--output`` command-line options for specifying the name of the output file.  If an output file is not specified, then output is written to ``stdout``.  This allows ``depythontex`` output to be piped to another program.
-*  All scripts ``*2.py`` now have shebangs with ``env python2``, and all scripts ``*3.py`` now have shebangs with ``env python3``.  This allows the wrapper scripts (``env python`` shebang) to be used with the default Python installation, and the numbered scripts to be used with specific versions.  Remember that except for console content, the ``--interpreter`` option is what determines the Python version that actually executes code.  The version of Python used to launch ``pythontex.py`` merely determines the version that manages code execution.  (``--interpreter`` support for console content is coming.)
-*  Changed the template style used in the ``CodeEngine`` class.  Replacement fields are now surrounded by single curly braces (as in Python's format string syntax), rather than double curly braces.  Literal curly braces are obtained by doubling braces.  This allows the use of literal adjacent double braces in templates, which was not possible previously.
-*  The Julia template now uses the new ``in()`` function, replacing ``contains()``.  This requires Julia v0.2.0+.
+*  All utilities-class attributes with names of the form ``input_*`` have 
+   been renamed with the "``input_``" removed.  Among other things, this 
+   makes it easier to access the ``context`` attribute (``pytex.context`` 
+   vs. ``pytex.input_context``).
+   
+*  ``depythontex`` now has ``-o`` and ``--output`` command-line options for 
+   specifying the name of the output file.  If an output file is not 
+   specified, then output is written to ``stdout``.  This allows 
+   ``depythontex`` output to be piped to another program.
+   
+*  All scripts ``*2.py`` now have shebangs with ``env python2``, and all 
+   scripts ``*3.py`` now have shebangs with ``env python3``.  This allows the 
+   wrapper scripts (``env python`` shebang) to be used with the default 
+   Python installation, and the numbered scripts to be used with specific 
+   versions.  Remember that except for console content, the ``--interpreter`` 
+   option is what determines the Python version that actually executes code.  
+   The version of Python used to launch ``pythontex.py`` merely determines 
+   the version that manages code execution.  (``--interpreter`` support for 
+   console content is coming.)
+   
+*  Changed the template style used in the ``CodeEngine`` class.  Replacement 
+   fields are now surrounded by single curly braces (as in Python's format 
+   string syntax), rather than double curly braces.  Literal curly braces are 
+   obtained by doubling braces.  This allows the use of literal adjacent 
+   double braces in templates, which was not possible previously.
+   
+*  The Julia template now uses the new ``in()`` function, replacing 
+   ``contains()``.  This requires Julia v0.2.0+.
 
 Bugfixes
 ~~~~~~~~
 
-*  Modified test for LuaTeX, so that ``\directlua`` is not ``\let`` to ``\relax`` if it does not exist.  This was causing incompatibility with ``babel`` under pdfTeX and XeTeX (\#33).
-*  Added missing shebangs to ``depythontex*.py``.  Handling of ``utilspath`` is now more forgiving, so that ``pythontex_utils.py`` can be installed in alternate locations (\#23).
-*  ``depythontex`` no longer leaves a blank line where ``\usepackage{pythontex}`` was removed.
-*  Console environments typeset with ``fancyvrb`` no longer end with an unnecessary empty line.
-*  Fixed bug in installer when ``kpsewhich`` was not found (\#21).
+*  Modified test for LuaTeX, so that ``\directlua`` is not ``\let`` to 
+   ``\relax`` if it does not exist.  This was causing incompatibility with 
+   ``babel`` under pdfTeX and XeTeX (#33).
+   
+*  Added missing shebangs to ``depythontex*.py``.  Handling of ``utilspath`` 
+   is now more forgiving, so that ``pythontex_utils.py`` can be installed in 
+   alternate locations (#23).
+   
+*  ``depythontex`` no longer leaves a blank line where 
+   ``\usepackage{pythontex}`` was removed.
+   
+*  Console environments typeset with ``fancyvrb`` no longer end with an 
+   unnecessary empty line.
+   
+*  Fixed bug in installer when ``kpsewhich`` was not found (#21).
 
 
 

@@ -3,7 +3,7 @@
 ===================================================================
 
 :Author:  Geoffrey Poore
-:Version:  0.12 (2013/08/26)
+:Version:  0.13 (2014/07/14)
 :License:  LPPL v1.3 or later (LaTeX code) and BSD 3-Clause (Python code)
 :Development:  https://github.com/gpoore/pythontex
 :Requirements:  Python 2.7 or 3.2+; Pygments
@@ -11,7 +11,7 @@
 
 The PythonTeX package allows you to enter Python code within a LaTeX 
 document, execute the code, and access its output in the original document.
-Since v0.12, it also supports the Ruby and Julia languages.
+It also supports the Ruby, Julia, and Octave languages.
 
 PythonTeX provides fast, user-friendly access to Python from within LaTeX.
 Python code is only executed when it has been modified, or when it meets 
@@ -37,8 +37,8 @@ Compiling a PythonTeX document involves three steps:
 3. Run latex again (Python output is inputted)
 
 See the main documentation in pythontex.pdf for detailed installation 
-instructions.  An installation script is provided for TeX Live.  Files 
-should be installed in the directories indicated below.  In summary, 
+instructions.  An installation script is provided for TeX Live and MiKTeX.
+Files should be installed in the directories indicated below.  In summary, 
 all files must be installed, and symlinks or launching wrappers should be 
 created for pythontex.py and depythontex.py.
 
@@ -57,6 +57,7 @@ created for pythontex.py and depythontex.py.
   - pythontex_engines.py
   - pythontex_utils.py
   - depythontex.py, depythontex2.py, and depythontex3.py
+  - syncpdb.py
 
 * /source/latex/pythontex/
 

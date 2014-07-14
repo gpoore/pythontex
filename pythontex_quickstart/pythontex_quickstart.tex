@@ -65,6 +65,7 @@ Compiling a document that uses \pytex\ involves three steps:  run \LaTeX, run \t
 
 The last two compile steps are \emph{only} necessary when code needs to be executed or highlighted.  Otherwise, the document may be compiled just like a normal \LaTeX\ document; all output is cached.
 
+\pytex\ is compatible with \texttt{latexmk}.  Details for configuring \texttt{latexmk} are provided in the main documentation.
 
 
 
@@ -131,7 +132,7 @@ Console variable values may be accessed inline via the \pygment{latex}{\pycon} c
 
 \section*{Support for additional languages}
 
-\pytex\ also provides support for additional languages.  Currently, Ruby and Julia support is included.  To enable commands and environments for these language, see the \texttt{usefamily} package option in the main documentation.
+\pytex\ also provides support for additional languages.  Currently, Ruby, Julia, and Octave support is included.  To enable commands and environments for these language, see the \texttt{usefamily} package option in the main documentation.
 
 Language support is provided via a template system; in most cases, a new language can be added with about 100 lines of template code.  If you would like support for a new language, please open an issue at \href{https://github.com/gpoore/pythontex}{GitHub}.  The main documentation also contains a summary of the process for adding languages.
 
@@ -145,6 +146,8 @@ Language support is provided via a template system; in most cases, a new languag
 \pytex\ provides many additional features.  The working and output directories can be specified via \pygment{latex}{\setpythontexworkingdir} and \pygment{latex}{\setpythontexoutputdir}.  The user can determine when code is executed with the package option \texttt{rerun}, selecting factors such as modification and exit status.  By default, all commands and environments with the same base name (\texttt{py}, \texttt{sympy}, \texttt{pylab}, etc.) run in a single session, providing continuity.  Commands and environments accept an optional argument that specifies the session in which the code is executed; sessions run in parallel.  \pytex\ provides a utilities class that is always imported into each session.  The utilities class provides methods for tracking dependencies and automatically cleaning up created files.  The utilities class also allows information such as page width to be passed from the \TeX\ side to Python/other languages.  See the main documentation for additional information.
 
 \pytex\ also provides the \texttt{depythontex} utility, which creates a copy of a document in which all \pytex\ commands and environments have been replaced by their output.  The resulting document is more suitable for journal submission, sharing, and conversion to other document formats.
+
+Code may be run in interactive mode via the \verb|--interactive| and \verb|--debug| command-line options.  This is primarily useful for working with interactive debuggers.
 
 
 \section*{Unicode support}
