@@ -77,7 +77,7 @@ else:
 
 # Script parameters
 # Version
-version = 'v0.13'
+__version__ = '0.14'
 
 
 
@@ -452,6 +452,7 @@ def load_code_get_settings(data, temp_data):
     settings_func['version'] = set_kv_data
     settings_func['outputdir'] = set_kv_data
     settings_func['workingdir'] = set_kv_data
+    settings_func['workingdirset'] = set_kv_data
     settings_func['gobble'] = set_kv_data
     settings_func['rerun'] = set_kv_temp_data_if_not_default
     settings_func['hashdependencies'] = set_kv_temp_data_if_not_default
@@ -481,11 +482,10 @@ def load_code_get_settings(data, temp_data):
 
     # Check for compatility between the .pytxcode and the script
     if 'version' not in settings or settings['version'] != data['version']:
-        print('* PythonTeX warning')
-        print('    The version of the PythonTeX scripts does not match')
-        print('    the last code saved by the document--run LaTeX to create')
-        print('    an updated version.  Attempting to proceed.')
-        sys.stdout.flush()
+        print('* PythonTeX error')
+        print('    The version of the PythonTeX scripts does not match the last code')
+        print('    saved by the document--run LaTeX to create an updated version.\n')
+        sys.exit(1)
     
     # Store all results that haven't already been stored.
     data['settings'] = settings
@@ -524,6 +524,41 @@ def load_code_get_settings(data, temp_data):
 
 
 
+def set_upgrade_compatibility(data, old, temp_data):
+    '''
+    When upgrading, modify settings to maintain backward compatibility when
+    possible and important
+    '''
+    if (old['version'].startswith('v') and 
+            not data['settings']['workingdirset'] and
+            data['settings']['outputdir'] != '.'):
+        old['compatibility'] = '0.13'
+        do_upgrade_compatibility(data, old, temp_data)
+    
+
+def do_upgrade_compatibility(data, old_data, temp_data):
+    if 'compatibility' in old_data:
+        c = old_data['compatibility']
+        if (c == '0.13' and not data['settings']['workingdirset'] and
+                data['settings']['outputdir'] != '.'):
+            data['compatibility'] = c
+            data['settings']['workingdir'] = data['settings']['outputdir']
+            msg = '''
+                  ****    PythonTeX upgrade message    ****
+                  Beginning with v0.14, the default working directory is the document
+                  directory rather than the output directory.  PythonTeX has detected
+                  that you have been using the output directory as the working directory.
+                  It will continue to use the output directory for now.  To keep your
+                  current settings long-term and avoid seeing this message in the future, 
+                  add the following command to the preamble of your document, right after 
+                  the "\\usepackage{pythontex}":  "\setpythontexworkingdir{<outputdir>}".
+                  If you wish to continue with the new settings instead, simply delete 
+                  the file with extension .pkl in the output directory, and run PythonTeX.
+                  ****  End PythonTeX upgrade message  ****
+                  '''
+            temp_data['upgrade_message'] = textwrap.dedent(msg)
+
+
 def get_old_data(data, old_data, temp_data):
     '''
     Load data from the last run, if it exists, into the dict old_data.  
@@ -558,7 +593,10 @@ def get_old_data(data, old_data, temp_data):
         if 'vitals' in old and data['vitals'] == old['vitals']:
             temp_data['loaded_old_data'] = True
             old_data.update(old)
+            do_upgrade_compatibility(data, old_data, temp_data)
         else:
+            if 'version' in old and old['version'] != data['version']:
+                set_upgrade_compatibility(data, old, temp_data)
             temp_data['loaded_old_data'] = False
             # Clean up all old files
             if 'files' in old:
@@ -2544,7 +2582,7 @@ def main(python=None):
     # from within functions, as long as the dicts are passed to the functions.
     # For simplicity, variables will often be created within functions to
     # refer to dictionary values.
-    data = {'version': version, 'start_time': time.time()}
+    data = {'version': __version__, 'start_time': time.time()}
     temp_data = {'errors': 0, 'warnings': 0, 'python': python}
     old_data = dict()
 
@@ -2558,7 +2596,7 @@ def main(python=None):
     # (rather than just exit due to --version or --help command-line options), 
     # print PythonTeX version.  Flush to make the message go out immediately,  
     # so that the user knows PythonTeX has started.
-    print('This is PythonTeX ' + version)
+    print('This is PythonTeX {0}'.format(__version__))
     sys.stdout.flush()
     # Once we have the encoding (from argv), we set stdout and stderr to use 
     # this encoding.  Later, we will parse the saved stderr of scripts 
@@ -2606,9 +2644,11 @@ def main(python=None):
     # Execute the code and perform Pygments highlighting via multiprocessing.
     do_multiprocessing(data, temp_data, old_data, engine_dict)
 
-    # Skip exit message if in debug more
+    # Skip exit message if in debug mode
     # #### May want to refactor
     if temp_data['debug'] is not None or temp_data['interactive'] is not None:
+        if 'upgrade_message' in temp_data:
+            print(temp_data['upgrade_message'])
         sys.exit()
         
     # Print exit message
@@ -2632,7 +2672,10 @@ def main(python=None):
         print('    - Current:  {0} error(s), {1} warnings(s)'.format(temp_data['errors'], temp_data['warnings']))        
     else:
         print('PythonTeX:  {0} - {1} error(s), {2} warning(s)\n'.format(data['raw_jobname'], temp_data['errors'], temp_data['warnings']))
-
+        
+    if 'upgrade_message' in temp_data:
+        print(temp_data['upgrade_message'])
+    
     # Exit with appropriate exit code based on user settings.
     if temp_data['error_exit_code'] and temp_data['errors'] > 0:
         sys.exit(1)

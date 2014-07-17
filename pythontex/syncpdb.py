@@ -114,7 +114,7 @@ from collections import defaultdict, namedtuple
 import traceback
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 
 __all__ = ["run", "pm", "SyncPdb", "runeval", "runctx", "runcall", "set_trace",
@@ -650,9 +650,11 @@ class SyncPdb(pdb.Pdb):
                         if len(s) < 4: s = s + ' '
                         if lineno in breaklist: s = s + 'B'
                         else: s = s + ' '
+                        # SPdb
                         if lineno == self.curframe.f_lineno:
                             s = s + '->'
-                        # SPdb
+                        else:
+                            s = s + '  '
                         f, l = self.code_to_doc(filename, lineno)
                         if f == self.main_doc_fname:
                             s = self._format_line_main_doc(s, l)
@@ -664,8 +666,8 @@ class SyncPdb(pdb.Pdb):
                             self._last_doc_fname = f
                             if f is not None:
                                 print(self._doc_switch_template.format(f))
+                        print >>self.stdout, s + ' ' + line,
                         # /SPdb
-                        print >>self.stdout, s + '\t' + line,
                         self.lineno = lineno
             except KeyboardInterrupt:
                 pass
@@ -1099,11 +1101,13 @@ class SyncPdb(pdb.Pdb):
                     s += 'B'
                 else:
                     s += ' '
+                # SPdb
                 if lineno == current_lineno:
                     s += '->'
                 elif lineno == exc_lineno:
                     s += '>>'
-                # SPdb
+                else:
+                    s += '  '
                 f, l = self.code_to_doc(filename, lineno)
                 if f == self.main_doc_fname:
                     s = self._format_line_main_doc(s, l)
@@ -1115,8 +1119,8 @@ class SyncPdb(pdb.Pdb):
                     self._last_doc_fname = f
                     if f is not None:
                         self.message(self._doc_switch_template.format(f))
+                self.message(s + ' ' + line.rstrip())
                 # /SPdb
-                self.message(s + '\t' + line.rstrip())
             # SPdb
             if len(lines) < last - first + 1:
                 self.message(self._eof_template)

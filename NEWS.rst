@@ -7,6 +7,37 @@ Version History
 ===============
 
 
+v0.14 (2014/07/17)
+------------------
+
+New features
+~~~~~~~~~~~~
+
+*  All commands for working with code inline are now robust, via 
+   ``etoolbox``'s ``\newrobustcmd``.  Among other things, this allows 
+   commands like ``\py`` to work in standard captions that have not been 
+   redefined to avoid protection issues.
+*  Upgraded ``syncpdb`` to v0.2, which provides better list formatting.
+
+Backward-incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  The default working directory is now the main document directory instead 
+   of the output directory.  Using the output directory was a common source 
+   of confusion for new users and was incompatible with plans for future 
+   development.  Old documents in which the working directory was not 
+   specified will continue to use the output directory, but PythonTeX will 
+   print an upgrade message; new documents will use the new setting.  The 
+   output directory may be selected as the working directory manually, or 
+   with the shorthand 
+   "``\setpythontexworkingdir{<outputdir>}``".
+
+*  Standardized version numbering by removing the "v" prefix from the stored 
+   version numbers in Python variables and LaTeX macros.  Standardized the 
+   PythonTeX scripts by renaming ``version`` to ``__version__``.
+
+
+
 v0.13 (2014/07/14)
 ------------------
 

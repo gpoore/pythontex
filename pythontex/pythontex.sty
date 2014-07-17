@@ -20,10 +20,10 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2014/07/14 Version~0.13 ]
+    [2014/07/17 Version~0.14 ]
 
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{v0.13}
+\newcommand{\pytx@packageversion}{0.14}
 \RequirePackage{fancyvrb}
 \RequirePackage{etex}
 \RequirePackage{etoolbox}
@@ -284,29 +284,31 @@
 \StrSubstitute{\jobname}{ }{-}[\pytx@jobname]
 \StrSubstitute{\pytx@jobname}{"}{}[\pytx@jobname]
 \StrSubstitute{\pytx@jobname}{*}{-}[\pytx@jobname]
+\def\pytx@outputdir{pythontex-files-\pytx@jobname}
 \newcommand{\setpythontexoutputdir}[1]{%
     \Depythontex{cmd:setpythontexoutputdir:m:n}%
     \def\pytx@outputdir{#1}}
-\setpythontexoutputdir{pythontex-files-\pytx@jobname}
-\AtBeginDocument{%
-    \@ifpackageloaded{graphicx}{%
-        \ifx\Ginput@path\@undefined
-            \graphicspath{{\pytx@outputdir/}}%
-        \else
-            \g@addto@macro\Ginput@path{{\pytx@outputdir/}}%
-        \fi
-    }{}%
-}
 \@onlypreamble\setpythontexoutputdir
+\def\pytx@workingdir{.}
+\def\pytx@workingdirset{false}
 \newcommand{\setpythontexworkingdir}[1]{%
     \Depythontex{cmd:setpythontexworkingdir:m:n}%
     \def\pytx@workingdir{#1}%
+    \def\pytx@workingdirset{true}%
 }
 \@onlypreamble\setpythontexworkingdir
 \AtBeginDocument{%
-    \ifcsname pytx@workingdir\endcsname\else
-        %\setpythontexworkingdir{\pytx@outputdir}\fi Depythontex
-        \let\pytx@workingdir\pytx@outputdir\fi
+    \ifdefstring{\pytx@workingdir}{<outputdir>}%
+        {\let\pytx@workingdir\pytx@outputdir}{}%
+    \ifdefstrequal{\pytx@workingdir}{\pytx@outputdir}{%
+        \@ifpackageloaded{graphicx}{%
+            \ifx\Ginput@path\@undefined
+                \graphicspath{{\pytx@outputdir/}}%
+            \else
+                \g@addto@macro\Ginput@path{{\pytx@outputdir/}}%
+            \fi
+        }{}%
+    }{}%
 }
 \newbool{pytx@usedpygments}
 \AfterEndPreamble{%
@@ -335,6 +337,7 @@
     \immediate\write\pytx@codefile{version=\pytx@packageversion}%
     \immediate\write\pytx@codefile{outputdir=\pytx@outputdir}%
     \immediate\write\pytx@codefile{workingdir=\pytx@workingdir}%
+    \immediate\write\pytx@codefile{workingdirset=\pytx@workingdirset}%
     \immediate\write\pytx@codefile{gobble=\pytx@opt@gobble}%
     \immediate\write\pytx@codefile{rerun=\pytx@opt@rerun}%
     \immediate\write\pytx@codefile{hashdependencies=\pytx@opt@hashdependencies}%
@@ -703,7 +706,7 @@
 }
 \ifbool{pytx@opt@stdout}{}{\let\pytx@InlineMacroprint\@empty}
 \newcommand{\pytx@MakeInlinebFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1b\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1b\endcsname}{%
         \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
         \Depythontex{cmd:#1b:ov:c}%
         \xdef\pytx@type{#1}%
@@ -717,7 +720,7 @@
     }%
 }%
 \newcommand{\pytx@MakeInlinebPyg}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1b\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1b\endcsname}{%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{b}%
         \pytx@SetContext
@@ -729,7 +732,7 @@
     }%
 }%
 \newcommand{\pytx@MakeInlinevFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1v\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1v\endcsname}{%
         \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
         \Depythontex{cmd:#1v:ov:c}%
         \xdef\pytx@type{#1}%
@@ -743,7 +746,7 @@
     }%
 }%
 \newcommand{\pytx@MakeInlinevPyg}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1v\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1v\endcsname}{%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{v}%
         \pytx@SetContext
@@ -755,7 +758,7 @@
     }%
 }%
 \newcommand{\pytx@MakeInlinecFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1c\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1c\endcsname}{%
         \Depythontex{cmd:#1c:ov:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{c}%
@@ -769,7 +772,7 @@
 }%
 \let\pytx@MakeInlinecPyg\pytx@MakeInlinecFV
 \newcommand{\pytx@MakeInlineFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1\endcsname}{%
         \Depythontex{cmd:#1:ov:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{i}%
@@ -783,7 +786,7 @@
 }%
 \let\pytx@MakeInlinePyg\pytx@MakeInlineFV
 \newcommand{\pytx@MakeInlineConsFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1\endcsname}{%
         \Depythontex{cmd:#1:ov:c}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{i}%
@@ -796,7 +799,7 @@
     }%
 }%
 \let\pytx@MakeInlineConsPyg\pytx@MakeInlineConsFV
-\newcommand{\pythontexcustomc}[2][begin]{%
+\newrobustcmd{\pythontexcustomc}[2][begin]{%
     \Depythontex{cmd:pythontexcustomc:omv:p}%
     \ifstrequal{#1}{begin}{}{%
         \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%

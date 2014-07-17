@@ -1,6 +1,6 @@
 % \iffalse meta-comment
 %
-% Copyright (C) 2012-2013 by Geoffrey M. Poore <gpoore@gmail.com>
+% Copyright (C) 2012-2014 by Geoffrey M. Poore <gpoore@gmail.com>
 % ---------------------------------------------------------------------------
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2014/07/14 Version~0.13 ]
+    [2014/07/17 Version~0.14 ]
 %</package>
 %
 %<*driver>
@@ -67,7 +67,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3010}
+% \CheckSum{3018}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -85,6 +85,19 @@
 %   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
 %
+%
+% \begin{changelog}{v0.14}{2014/07/17}
+% \textbf{New features}
+% \begin{itemize}
+% \item All commands for working with code inline are now robust, via \texttt{etoolbox}'s \texttt{\string\newrobustcmd}.  Among other things, this allows commands like \texttt{\string\py} to work in standard captions that have not been redefined to avoid protection issues.
+% \item Upgraded \texttt{syncpdb} to v0.2, which provides better list formatting.
+% \end{itemize}
+% \textbf{Backward-incompatible changes}
+% \begin{itemize}
+% \item The default working directory is now the main document directory instead of the output directory.  Using the output directory was a common source of confusion for new users and was incompatible with plans for future development.  Old documents in which the working directory was not specified will continue to use the output directory, but PythonTeX will print an upgrade message; new documents will use the new setting.  The output directory may be selected as the working directory manually, or with the shorthand ``\texttt{\string\setpythontexworkingdir\{<outputdir>\}}''.
+% \item Standardized version numbering by removing the ``v'' prefix from the stored version numbers in Python variables and LaTeX macros.  Standardized the PythonTeX scripts by renaming \texttt{version} to \texttt{\_\_version\_\_}.
+% \end{itemize}
+% \end{changelog}
 %
 % \begin{changelog}{v0.13}{2014/07/14}
 % \textbf{New features}
@@ -327,7 +340,7 @@
 %
 % Because documents that use \pytex\ mix \LaTeX\ and Python code, they are less suitable than plain \LaTeX\ documents for journal submission, sharing, and conversion to other formats.  \pytex\ includes a |depythontex| utility that creates a copy of a document in which all \pytex\ content is replaced by its output.
 %
-% While Python is the focus of \pytex, adding basic support for an additional language is usually as simple as creating a new class instance and a few templates, usually totaling less than 100 lines of code.  The following languages already have built-in support:  Ruby and Julia.
+% While Python is the focus of \pytex, adding basic support for an additional language is usually as simple as creating a new class instance and a few templates, usually totaling less than 100 lines of code.  The following languages already have built-in support:  Ruby, Julia, and Octave.
 % \end{abstract}
 %
 %
@@ -347,8 +360,8 @@
 %
 % \LaTeX\ can do a lot,\footnote{\TeX\ is a Turing-complete language.} but the programming required can sometimes be painful.\footnote{As I learned in creating this package.}  In spite of the many packages available for \LaTeX, the libraries and packages of a general-purpose programming language are lacking.  Furthermore, it can be convenient to include non-\LaTeX\ code in a document to make it more reproducible.  For these reasons, there have been multiple systems that allow other languages to be used within \LaTeX\ documents.\footnote{I am not including the various web and weave dialects in my discussion, since they typically involve a web or weave document from which the .tex source is generated, and thus weaker integration with \LaTeX.  Two sophisticated examples of this approach are \href{http://www.stat.uni-muenchen.de/~leisch/Sweave/}{Sweave} and \href{http://yihui.name/knitr/}{knitr}, both of which combine \LaTeX\ with the R language for tasks such as dynamic report generation.}
 % \begin{itemize}
-% \item \href{http://www.ctan.org/tex-archive/macros/latex/contrib/perltex/}{Perl\TeX} allows the bodies of \LaTeX\ macros to be written in Perl.
-% \item \href{http://www.ctan.org/tex-archive/macros/latex/contrib/sagetex/}{Sage\TeX} allows code for the Sage mathematics software to be executed from within a \LaTeX\ document.
+% \item \href{http://www.ctan.org/pkg/perltex}{Perl\TeX} allows the bodies of \LaTeX\ macros to be written in Perl.
+% \item \href{http://www.ctan.org/pkg/sagetex/}{Sage\TeX} allows code for the Sage mathematics software to be executed from within a \LaTeX\ document.
 % \item Martin R.\ Ehmsen's \href{http://www.ctan.org/pkg/python}{|python.sty|} provides a very basic method of executing Python code from within a \LaTeX\ document.
 % \item \href{http://elec.otago.ac.nz/w/index.php/SympyTeX}{Sympy\TeX} allows more sophisticated Python execution, and is largely based on a subset of Sage\TeX.
 % \item \href{http://www.luatex.org/}{Lua\TeX} extends the pdf\TeX\ engine to provide Lua as an embedded scripting language, and as a result yields tight, low-level Lua integration.
@@ -720,7 +733,7 @@
 %
 % All commands and environments take a session name as an optional argument.  The session name determines the session in which the code is executed.  This allows code to be executed in multiple independent sessions, increasing speed (sessions run in parallel) and preventing naming conflicts.  If a session is not specified, then the |default| session is used.  Session names should use the characters a-z, A-Z, 0-9, the hyphen, and the underscore.  All characters used \textbf{must} be valid in file names, since session names are used to create temporary files.  The colon is also allowed, but it is replaced with a hyphen internally, so the sessions |code:1| and |code-1| are identical.
 %
-% In addition, all environments take |fancyvrb| settings as a second, optional argument.  See the \href{http://www.ctan.org/tex-archive/macros/latex/contrib/fancyvrb}{|fancyvrb| documentation} for an explanation of accepted settings.  This second optional argument \textbf{must} be preceeded by the first optional argument (session name).  If a named session is not desired, the optional argument can be left empty (|default| session), but the square brackets |[]| must be present so that the second optional argument may be correctly identified:
+% In addition, all environments take |fancyvrb| settings as a second, optional argument.  See the \href{http://www.ctan.org/pkg/fancyvrb}{|fancyvrb| documentation} for an explanation of accepted settings.  This second optional argument \textbf{must} be preceeded by the first optional argument (session name).  If a named session is not desired, the optional argument can be left empty (|default| session), but the square brackets |[]| must be present so that the second optional argument may be correctly identified:
 % \begin{quote}
 % |\begin{|\meta{environment}|}[]|\oarg{fancyvrb~settings}
 % \end{quote}
@@ -889,7 +902,7 @@
 % \begin{itemize}
 % \item |pytex.add_dependencies(|\meta{dependencies}|)|  This adds \meta{dependencies} to a list.  If any dependencies in the list change, code is re-executed, even if the code itself has not changed (unless |rerun=never|).  Modified dependencies are determined via either modification time (default) or hash; see the package option |hashdependencies| for details.  This method is useful for tracking changes in external data and similar files.
 % 
-% \meta{dependencies} should be one or more strings, separated by commas, that are the file names of dependencies.  Dependencies should be given with relative paths from the current working directory, with absolute paths, or with paths based on the user's home directory (that is, starting with a tilde |~|).  Paths can use a forward slash ``|/|'' even under Windows.  Remember that by default, the working directory is the |pythontex-files-|\meta{jobname} directory where all \pytex\ temporary files are stored.  This can be adjusted with |\setpythontexworkingdir|.
+% \meta{dependencies} should be one or more strings, separated by commas, that are the file names of dependencies.  Dependencies should be given with relative paths from the current working directory, with absolute paths, or with paths based on the user's home directory (that is, starting with a tilde |~|).  Paths can use a forward slash ``|/|'' even under Windows.  Remember that by default, the working directory is the main document directory.  This can be adjusted with |\setpythontexworkingdir|.
 %
 % It is possible that a dependency of one session might be modified by another session while \pytex\ runs.  The first session might not be executed during the \pytex\ run because its dependency was unmodified at the beginning.  A more serious case occurs when the first session does run, but we don't know whether it accessed the dependency before or after the dependency was updated (remember, sessions run in parallel).  \pytex\ keeps track of the time at which it started.  Any sessions with dependencies that were modified after that time are set to re-execute on the next run.  A warning is also issued to indicate that this is the case.
 %
@@ -1186,13 +1199,16 @@
 %
 % \DescribeMacro{\setpythontexworkingdir\marg{working~directory}}
 %
-% The \pytex\ working directory is the current working directory for \pytex\ scripts.  This is the directory in which any open or save operations will take place, unless a path is explicitly specified.  By default, the working directory is the same as the output directory.  For example, if you are writing |my_file.tex| and save a matplotlib figure with |savefig('my_figure.pdf')|, then |my_figure.pdf| will be created in the output directory |pythontex-files-my_file|.  But maybe you have a directory called |plots| in your document root directory.  In that case, you could leave the working directory unchanged, and simply specify the relative path to |plots| when saving.  Or you could set the working directory to |plots| using  |\setpythontexworkingdir{plots}|, so that all content would automatically be saved there.  If you want your working directory to be the document root directory, you should use a period (|.|) for \meta{working~directory}:  |\setpythontexworkingdir{.}|.
+% The \pytex\ working directory is the current working directory for \pytex\ scripts.  This is the directory in which any open or save operations will take place, unless a path is explicitly specified.  By default, the working directory is the same as the main document directory.  For example, if you are writing |my_file.tex| and save a matplotlib figure with |savefig('my_figure.pdf')|, then |my_figure.pdf| will be created in the same directory as |my_file.tex|.  But maybe you have a directory called |plots| in your document root directory.  In that case, you could leave the working directory unchanged, and simply specify the relative path to |plots| when saving.  Or you could set the working directory to |plots| using  |\setpythontexworkingdir{plots}|, so that all content would automatically be saved there.
 %
 % Any slashes in \meta{working~directory} should be forward slashes ``|/|'' (even under Windows).  Tildes |~| may be used to refer to the user's home directory, including under Windows.
 %
 % The working directory is automatically added to Python's |sys.path|, so that code in the working directory there may be imported without a path being specified.
 %
-% Note that in typical use scenarios, you should be able to use the output directory as the working directory.  The |graphicx| package will automatically look for images and figures in the output directory, so long as you do not use the |\graphicspath| command outside the preamble.\footnote{\texttt{graphicx} looks for graphics in the document root directory and in the most recent graphics path defined by \texttt{\string\graphicspath}.  \texttt{\string\graphicspath} stores the graphics path in \texttt{\string\Ginput@path}, overwriting any previous value.  At the end of the preamble, \pytex\ appends the output directory to \texttt{\string\Ginput@path}.  Thus, that directory will always be checked for graphics, so long as \texttt{\string\Ginput@path} is not overwritten by a subsequent use of \texttt{\string\graphicspath}.  If you need to use \texttt{\string\graphicspath} within the document, you could consider creating a custom version that redefines \texttt{\string\Ginput@path} with the \pytex\ output directory automatically appended.}
+% Note that in many use cases, you may be able to use the output directory as the working directory.  The |graphicx| package will automatically look for images and figures in the output directory when it is used as the working directory, so long as you do not use the |\graphicspath| command outside the preamble.\footnote{\texttt{graphicx} looks for graphics in the document root directory and in the most recent graphics path defined by \texttt{\string\graphicspath}.  \texttt{\string\graphicspath} stores the graphics path in \texttt{\string\Ginput@path}, overwriting any previous value.  At the end of the preamble, \pytex\ appends the output directory to \texttt{\string\Ginput@path} if the output directory is being used as the working directory.  Thus, that directory will always be checked for graphics, so long as \texttt{\string\Ginput@path} is not overwritten by a subsequent use of \texttt{\string\graphicspath}.  If you need to use \texttt{\string\graphicspath} within the document, you could consider creating a custom version that redefines \texttt{\string\Ginput@path} with the \pytex\ output directory automatically appended.}  To use the output directory as the working directory, you may enter the full name of the output directory manually, or use the text ``|<outputdir>|'' as a shortcut:
+%\begin{verbatim}
+%\setpythontexworkingdir{<outputdir>} 
+%\end{verbatim}
 %
 % It is also possible to change the working directory from within Python code, via |os.chdir()|.
 %
@@ -1201,21 +1217,25 @@
 %
 % \subsubsection{\texttt{latexmk}}
 %
-% \pytex\ is compatible with |latexmk|.  If you are compiling in the same location as the document source (if you are \emph{not} using |-auxdir|, |-outdir|, or |$out_dir|, or alternatively |TEXINPUTS|), then adding a simple rule such as the following to your |.latexmkrc| should usually be sufficient.
+% \pytex\ is compatible with |latexmk|.  How you configure |latexmk| largely depends on how you are using \pytex.
+%
+% If you are compiling in the same location as the document source (if you are \emph{not} using |-auxdir|, |-outdir|, or |$out_dir|, or alternatively |TEXINPUTS|), and are not using \pytex's dependency tracking, then adding a simple rule such as the following to your |.latexmkrc| should usually be sufficient.
 %\begin{verbatim}
 %add_cus_dep('pytxcode', 'tex', 0, 'pythontex');
 %sub pythontex { return system("pythontex \"$_[0]\""); }
 %\end{verbatim}
 % This tells |latexmk| that the document (|tex|) depends on the file of code extracted from the document (|pytxcode|).\footnote{This is a slightly atypical use, if not a ``misuse,'' of \texttt{add\_cus\_dep()}.  In the standard usage, the first argument is the extension of a file that is used to create another file with the extension given in the second argument, via the rule named in the fourth argument.  In this case, we just want to run the rule whenever files with the first extension are modified.  The extension given in the second argument is irrelevant, so long as a file with the document name and that extension exists.  Since the \texttt{tex} file itself will exist, its extension is a logical choice for the second argument.}  Whenever the document is compiled, the file of code is updated.  If |latexmk| detects that the code changed, then it will run \pytex.  When \pytex\ runs, it will modify at least one file that is brought into the document.  |latexmk| will detect this modification, and automatically recompile the document.
 %
-% If you are compiling to a different directory (using |-auxdir|, |-outdir|, or |$out_dir|, or alternatively |TEXINPUTS|), then this rule may fail due to the different directory configuration.  In that case, you should use |\setpythontexoutputdir{.}| so that \pytex\ will store its output in the current default location, rather than in a subdirectory, to ensure that |latexmk| will locate the output files.  Since the |tex| source is no longer in the location of the compiled output, you also need a different dependency specification.  It is probably simplest to use the |pytxmcr| file that \pytex\ always generates.
+% If you are compiling to a different directory (using |-auxdir|, |-outdir|, or |$out_dir|, or alternatively |TEXINPUTS|), then the preceding rule may fail due to the different directory configuration.  In that case, you should use |\setpythontexoutputdir{.}| so that \pytex\ will store its output in the current default location, rather than in a subdirectory, to ensure that |latexmk| will locate the output files.  Since the |tex| source is no longer in the location of the compiled output, you also need a different dependency specification.  It is probably simplest to use the |pytxmcr| file that \pytex\ always generates.
 %\begin{verbatim}
 %add_cus_dep('pytxcode','pytxmcr',0,'pythontex');
 %sub pythontex { return system("pythontex.py \"$_[0]\""); }
 %\end{verbatim}
 % Note that this configuration should \emph{always} work, but has the disadvantage of requiring that \pytex\ not use a subdirectory to isolate the files it automatically generates.
 %
-% If you are using the |rerun=always| setting, the above rules will fail to run \pytex\ on each and every compile; in that situation, you should configure your |.latexmkrc| so that \pytex\ always runs after the first \LaTeX\ run.
+% If you are using \pytex's dependency tracking, then you should run \pytex\ once during \emph{every} compile cycle (unless you simply wish to run it manually, as needed).  Checking the |pytxcode| for modification is not sufficient, because it does not reflect the state of dependencies.  If you are testing for dependency modification using modification time (the default) rather than hashing, this should typically add very little overhead.  If \pytex\ detects modified dependencies and actually does execute code, then the |pytxmcr| file will be updated, which will trigger another compile.  It is possible to have \pytex\ run after each individual \LaTeX\ run by modifying |latexmk|'s |-latex|, |-pdflatex|, or |-xelatex| options.  Ideally, however, \pytex\ would only run once per compile cycle.
+%
+% The situation is similar if you are using the |rerun=always| setting.  The above rules will fail to run \pytex\ on each and every compile; in that situation, you should configure your |.latexmkrc| so that \pytex\ always runs at least once during \emph{every} compile cycle.
 %
 %
 %
@@ -1275,7 +1295,7 @@
 %
 % The original and |depythontex| files should be nearly identical.  All Python-generated content is substituted directly, so it should be unchanged.  Usually, any differences will be due to changes in the way that code is typeset.  For example, by default all code in the |depythontex| file is typeset with |\verb| and |verbatim|.  But |\verb| is more fragile than the inline \pytex\ commands (it isn't allowed inside other commands), and |verbatim| does not support line numbering or syntax highlighting.
 %
-% Remember that the |depythontex| file will need to include any graphics created by \pytex.  By default, these are saved in the \pytex\ |outputdir|, which is |pythontex-files-<jobname>| unless you have customized it.  They may be in other locations if you have set a non-default |workingdir| or have specified a path when saving graphics.  Depending on your needs and configuration, you may wish to copy the graphics into a new location or specify their location via |\graphicspath|.  Or you can run |depythontex| with the |--graphicspath| option, which will add the |outputdir| to any existing usage of |\graphicspath|, or add a |\graphicspath| command if one does not already exist.\footnote{Keep in mind that any time \texttt{\string\graphicspath} is used, it overwrites any previously specified path.  If your document is using \texttt{\string\graphicspath} at multiple points in the preamble, or using it anywhere outside the preamble, then the \texttt{-{}-graphicspath} option will fail due to the path being overwritten.}
+% Remember that the |depythontex| file will need to include any graphics created by \pytex.  By default, these are saved in the document root directory.  They may be in other locations if you have set a non-default |workingdir| or have specified a path when saving graphics.  Depending on your needs and configuration, you may wish to copy the graphics into a new location or specify their location via |\graphicspath|.  If you are using the |outputdir| as the |workingdir|, you can run |depythontex| with the |--graphicspath| option, which will add the |outputdir| to any existing usage of |\graphicspath|, or add a |\graphicspath| command if one does not already exist.\footnote{Keep in mind that any time \texttt{\string\graphicspath} is used, it overwrites any previously specified path.  If your document is using \texttt{\string\graphicspath} at multiple points in the preamble, or using it anywhere outside the preamble, then the \texttt{-{}-graphicspath} option will fail due to the path being overwritten.}
 %
 % Depending on your needs, you may wish to customize |depythontex.py|.  The actual substitutions are performed in a few functions that are defined at the beginning of the script.
 % \end{enumerate}
@@ -1638,7 +1658,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{v0.13}
+\newcommand{\pytx@packageversion}{0.14}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
@@ -2202,38 +2222,41 @@
 % \begin{macro}{\pytx@outputdir}\begin{macro}{\setpythontexoutputdir}
 % To keep things tidy, all \pytex\ files are stored in a directory that is created in the document root directory.  By default, this directory is called |pythontex-files-|\meta{sanitized~jobname}, but we want to provide the user with the option to customize this.  For example, when \meta{sanitized~jobname} is very long, it might be convenient to use |pythontex-|\meta{abbreviated~name}.
 %
-% The command |\setpythontexoutputdir| stores the name of \pytex's output directory in |\pytx@outputdir|.  If the |graphicx| package is loaded, the output directory is also added to the graphics path at the beginning of the document, so that files in the output directory may be included within the main document without the necessity of specifying path information.  The command |\setpythontexoutputdir| is only allowed in the preamble, because the location of \pytex\ content should be specified before the body of the document is typeset.
+% The command |\setpythontexoutputdir| stores the name of \pytex's output directory in |\pytx@outputdir|.  The command |\setpythontexoutputdir| is only allowed in the preamble, because the location of \pytex\ content should be specified before the body of the document is typeset.
 %    \begin{macrocode}
+\def\pytx@outputdir{pythontex-files-\pytx@jobname}
 \newcommand{\setpythontexoutputdir}[1]{%
     \Depythontex{cmd:setpythontexoutputdir:m:n}%
     \def\pytx@outputdir{#1}}
-\setpythontexoutputdir{pythontex-files-\pytx@jobname}
-\AtBeginDocument{%
-    \@ifpackageloaded{graphicx}{%
-        \ifx\Ginput@path\@undefined
-            \graphicspath{{\pytx@outputdir/}}%
-        \else
-            \g@addto@macro\Ginput@path{{\pytx@outputdir/}}%
-        \fi
-    }{}%
-}
 \@onlypreamble\setpythontexoutputdir
 %    \end{macrocode}
 %
 %
 % \begin{macro}{pytx@workingdir}\begin{macro}{\setpythontexworkingdir}
-% We need to be able to set the current working directory for the scripts executed by \pytex.  By default, the working directory should be the same as the output directory.  That way, any files saved in the current working directory will be in the \pytex\ output directory, and will thus be kept separate.  But in some cases the user may wish to specify a different working directory, such as the document root.
+% We need to be able to set the current working directory for the scripts executed by \pytex.  By default, the working directory should be the same as the document root directory.  But in some cases the user may wish to specify a different working directory.  We want to be able to use ``|<outputdir>|'' as a shortcut for setting the working directory to the output directory.
 %
+% If the |graphicx| package is loaded, and the output directory is being used as the working directory, then the output directory is added to the graphics path at the beginning of the document, so that files in the output directory may be included within the main document without the necessity of specifying path information.
 %    \begin{macrocode}
+\def\pytx@workingdir{.}
+\def\pytx@workingdirset{false}
 \newcommand{\setpythontexworkingdir}[1]{%
     \Depythontex{cmd:setpythontexworkingdir:m:n}%
     \def\pytx@workingdir{#1}%
+    \def\pytx@workingdirset{true}%
 }
 \@onlypreamble\setpythontexworkingdir
 \AtBeginDocument{%
-    \ifcsname pytx@workingdir\endcsname\else
-        %\setpythontexworkingdir{\pytx@outputdir}\fi Depythontex
-        \let\pytx@workingdir\pytx@outputdir\fi
+    \ifdefstring{\pytx@workingdir}{<outputdir>}%
+        {\let\pytx@workingdir\pytx@outputdir}{}%
+    \ifdefstrequal{\pytx@workingdir}{\pytx@outputdir}{%
+        \@ifpackageloaded{graphicx}{%
+            \ifx\Ginput@path\@undefined
+                \graphicspath{{\pytx@outputdir/}}%
+            \else
+                \g@addto@macro\Ginput@path{{\pytx@outputdir/}}%
+            \fi
+        }{}%
+    }{}%
 }
 %    \end{macrocode}
 % \end{macro}\end{macro}
@@ -2310,6 +2333,7 @@
     \immediate\write\pytx@codefile{version=\pytx@packageversion}%
     \immediate\write\pytx@codefile{outputdir=\pytx@outputdir}%
     \immediate\write\pytx@codefile{workingdir=\pytx@workingdir}%
+    \immediate\write\pytx@codefile{workingdirset=\pytx@workingdirset}%
     \immediate\write\pytx@codefile{gobble=\pytx@opt@gobble}%
     \immediate\write\pytx@codefile{rerun=\pytx@opt@rerun}%
     \immediate\write\pytx@codefile{hashdependencies=\pytx@opt@hashdependencies}%
@@ -2967,13 +2991,13 @@
 %
 %
 % \subsubsection{Inline command constructors}
-% With the core inline macros complete, we are ready to create constructors for different kinds of inline commands.  All of these consctructors take a string and define an inline command named using that string as a base name.  Two forms of each constructor are created, one that uses Pygments and one that does not.  The Pygments variants have names ending in ``Pyg''.
+% With the core inline macros complete, we are ready to create constructors for different kinds of inline commands.  All of these consctructors take a string and define an inline command named using that string as a base name.  Two forms of each constructor are created, one that uses Pygments and one that does not.  The Pygments variants have names ending in ``Pyg''.  All commands are created using |etoolbox|'s |\newrobustcmd|.  Among other things, this is needed so that commands will work within the default caption command.
 %
 % \begin{macro}{\pytx@MakeInlinebFV}\begin{macro}{\pytx@MakeInlinebPyg}
 % These macros creates inline block commands, which both typeset code and save it so that it may be executed.  The base name of the command is stored in |\pytx@type|.  A string representing the kind of command is stored in |\pytx@cmd|.  Then |\pytx@SetContext| is used to set |\pytx@context| and |\pytx@SetGroup| is used to set |\pytx@group|.  Macros for showing, saving, and printing are set to appropriate values.  Then the core inline macros are invoked through |\pytx@Inline|.
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlinebFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1b\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1b\endcsname}{%
         \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
         \Depythontex{cmd:#1b:ov:c}%
         \xdef\pytx@type{#1}%
@@ -2987,7 +3011,7 @@
     }%
 }%
 \newcommand{\pytx@MakeInlinebPyg}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1b\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1b\endcsname}{%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{b}%
         \pytx@SetContext
@@ -3006,7 +3030,7 @@
 % This macro creates inline verbatim commands, which only typeset code.  |\pytx@type|, |\pytx@cmd|, |\pytx@context|, and |\pytx@group| are still set, for symmetry with other commands.  They are not needed for |fancyvrb| typesetting, though.  We use |\pytx@SetGroupVerb| to split verbatim content (|v| and |verb|) off into its own group.  That way, verbatim content doesn't affect the instance numbers of executed code, and thus executed code is not affected by the addition or removal of verbatim content.
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlinevFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1v\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1v\endcsname}{%
         \expandafter\let\expandafter\pytx@lexer\csname pytx@pyglexer@#1\endcsname
         \Depythontex{cmd:#1v:ov:c}%
         \xdef\pytx@type{#1}%
@@ -3020,7 +3044,7 @@
     }%
 }%
 \newcommand{\pytx@MakeInlinevPyg}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1v\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1v\endcsname}{%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{v}%
         \pytx@SetContext
@@ -3039,7 +3063,7 @@
 % This macro creates inline code commands, which save code for execution but do not typeset it.  If the code prints content, this content is inputted automatically if the package option |autoprint| is on.  Since no code is typeset, there is no difference between the |fancyvrb| and Pygments forms.
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlinecFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1c\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1c\endcsname}{%
         \Depythontex{cmd:#1c:ov:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{c}%
@@ -3060,7 +3084,7 @@
 % This macro creates plain inline commands, which save code and then bring in the output of |pytex.formatter(|\meta{code}|)| (|pytex.formatter()| is the formatter function in Python sessions that is provided by |pythontex_utils*.py|).  The Python output is saved in a \TeX\ macro, and the macro is written to a file shared by all \pytex\ sessions.  This greatly reduces the number of external files needed.  Since no code is typeset, there is no difference between the |fancyvrb| and Pygments forms.
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlineFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1\endcsname}{%
         \Depythontex{cmd:#1:ov:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{i}%
@@ -3081,7 +3105,7 @@
 % This is the inline form for |console| types.  It brings in |SaveVerbatim|.
 %    \begin{macrocode}
 \newcommand{\pytx@MakeInlineConsFV}[1]{%
-    \expandafter\newcommand\expandafter{\csname #1\endcsname}{%
+    \expandafter\newrobustcmd\expandafter{\csname #1\endcsname}{%
         \Depythontex{cmd:#1:ov:c}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{i}%
@@ -3101,7 +3125,7 @@
 %\begin{macro}{\pythontexcustomc}
 % This macro takes a single line of code and adds it to all sessions within a family.  It is the inline version of the |pythontexcustomcode| environment.
 %    \begin{macrocode}
-\newcommand{\pythontexcustomc}[2][begin]{%
+\newrobustcmd{\pythontexcustomc}[2][begin]{%
     \Depythontex{cmd:pythontexcustomc:omv:p}%
     \ifstrequal{#1}{begin}{}{%
         \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%

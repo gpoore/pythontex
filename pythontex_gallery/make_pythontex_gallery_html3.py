@@ -90,12 +90,12 @@ subprocess.call(['pandoc', '--standalone', '--mathjax', 'depythontex_pythontex_g
 if os.path.isfile(os.path.join('..', 'pythontex_gallery.html')):
     os.remove(os.path.join('..', 'pythontex_gallery.html'))
 shutil.move('pythontex_gallery.html', '..')
-graphics_files = os.listdir('pythontex-files-pythontex_gallery')
+graphics_files = os.listdir('.')
 for file in graphics_files:
     if file.endswith('.png'):
         if os.path.isfile(os.path.join('..', file)):
             os.remove(os.path.join('..', file))
-        shutil.move(os.path.join('pythontex-files-pythontex_gallery', file), '..')
+        shutil.move(file, '..')
 
 
 # Clean up

@@ -86,7 +86,7 @@ import codecs
 
 # Script parameters
 # Version
-version = 'v0.13'
+__version__ = '0.14'
 
 
 # Functions and parameters for customizing the script output
@@ -674,7 +674,7 @@ def replace_print_env(name, arglist, linenum,
 # Parse argv
 parser = argparse.ArgumentParser()
 parser.add_argument('--version', action='version', 
-                    version='DePythonTeX {0}'.format(version))
+                    version='DePythonTeX {0}'.format(__version__))
 parser.add_argument('--encoding', default='utf-8', 
                     help='encoding for all text files (see codecs module for encodings)')
 parser.add_argument('--overwrite', default=False, action='store_true',
@@ -726,7 +726,7 @@ elif args.listing == 'pythontex':
 
 # Let the user know things have started
 if args.output is not None:
-    print('This is DePythonTeX {0}'.format(version))
+    print('This is DePythonTeX {0}'.format(__version__))
     sys.stdout.flush()
 
 
@@ -792,7 +792,7 @@ while depytx[n].startswith('=>DEPYTHONTEX:SETTINGS#'):
     depytx[n] = ''
     n -= 1
 # Check .depytx version to make sure it is compatible
-if settings['version'] != version:
+if settings['version'] != __version__:
     print('* DePythonTeX warning:')
     print('    Version mismatch with DePythonTeX auxiliary file')
     print('    Do a complete compile cycle to update the auxiliary file')
