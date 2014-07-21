@@ -9,7 +9,7 @@
 
 :Author: Geoffrey Poore
 
-:Version: 0.13
+:Version: 0.14
 
 :License:  LPPL_ (LaTeX code) and `BSD 3-Clause`_ (Python code)
 
