@@ -86,6 +86,13 @@
 %   Right brace   \}     Tilde         \~}
 %
 %
+% \begin{changelog}{v0.15}{2014/??/??}
+% \textbf{New features}
+% \begin{itemize}
+% \item Counters for default sessions are now created automatically.  This prevents counter errors under some circumstances when working with \texttt{\string\includeonly}.  (See \url{http://tug.org/pipermail/macostex-archives/2010-December/046007.html} for more on the problematic counter behavior.)
+% \end{itemize}
+% \end{changelog}
+%
 % \begin{changelog}{v0.14}{2014/07/17}
 % \textbf{New features}
 % \begin{itemize}
@@ -3730,6 +3737,7 @@
             {\ifcsstring{pytx@console@#2}{true}%
                 {\pytx@MakeFamilyPygCons{#2}}{\pytx@MakeFamilyPyg{#2}}}{}%
     }%
+    \newcounter{pytx@#2@default@default}%
 }
 \@onlypreamble\makepythontexfamily
 %    \end{macrocode}
