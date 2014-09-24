@@ -67,7 +67,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3018}
+% \CheckSum{3021}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -89,6 +89,7 @@
 % \begin{changelog}{v0.15}{2014/??/??}
 % \textbf{New features}
 % \begin{itemize}
+% \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash under non-Windows operating systems.
 % \item Counters for default sessions are now created automatically.  This prevents counter errors under some circumstances when working with \texttt{\string\includeonly}.  (See \url{http://tug.org/pipermail/macostex-archives/2010-December/046007.html} for more on the problematic counter behavior.)
 % \end{itemize}
 % \end{changelog}
@@ -1440,6 +1441,9 @@
 % When |\setpythontexcontext| is used, it must be accessed as struct fields, of the form |octavetex.context.<name>|.
 %
 %
+% \subsection{bash}
+%
+% Support for bash was added in v0.15.  Support for bash is very basic.  Bash commands may be executed, and their output (stdout and stderr) may be typeset.  As with other languages, all commands are executed in a single session unless the user specifies otherwise.  There is not a utilities class or any related features.
 %
 % \subsection{Adding support for a new language}
 %
@@ -3661,6 +3665,8 @@
 %
 % \begin{macro}{\makepythontexfamily}
 % This macro creates a family of commands.  It needs a some |pgfkeys| to handle the optional arguments.  The actual creation of all non-code commands and environments is delayed using |\AtBeginDocument|, so that the user has the option to choose whether |fancyvrb| or Pygments is used for the family.
+%
+% We need to create a counter for the default session for each family to avoid (some of the) issues with |\includeonly| and counters.  See \url{http://tug.org/pipermail/macostex-archives/2010-December/046007.html} for more on the problematic counter behavior with |\includeonly|.
 %    \begin{macrocode}
 \pgfkeys{
     /PYTX/family/.is family,
@@ -3826,6 +3832,7 @@
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
+	\ifstrequal{#1}{bash}{\makepythontexfamily[pyglexer=bash]{bash}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}

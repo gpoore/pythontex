@@ -205,7 +205,7 @@ def process_argv(data, temp_data):
         for interp in interp_list:
             if interp:
                 try:
-                    k, v = interp.split(':')
+                    k, v = interp.split(':', 1)
                     k = k.strip(' \'"')
                     v = v.strip(' \'"')
                     interpreter_dict[k] = v

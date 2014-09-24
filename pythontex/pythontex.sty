@@ -1253,6 +1253,7 @@
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
+\ifstrequal{#1}{bash}{\makepythontexfamily[pyglexer=bash]{bash}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 \newbool{pytx@listingenv}

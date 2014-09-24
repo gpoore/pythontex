@@ -32,7 +32,7 @@ from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
 
-interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave')}
+interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash')}
 # The {file} field needs to be replaced by itself, since the actual 
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is 
@@ -1130,3 +1130,22 @@ CodeEngine('octave', 'octave', '.m',
            '{octave} -q "{File}.m"', 
            octave_template, octave_wrapper, 'disp({code})',
            'error', 'warning', 'line {number}')
+
+bash_template = '''
+    cd "{workingdir}"
+    {body}
+    echo "{dependencies_delim}"
+    echo "{created_delim}"
+    '''
+
+bash_wrapper = '''
+    echo "{stdoutdelim}"
+    >&2 echo "{stderrdelim}"
+    {code}
+    '''
+
+CodeEngine('bash', 'bash', '.sh',
+           '{bash} "{file}.sh"', 
+           bash_template, bash_wrapper, '{code}',
+           ['error', 'Error'], ['warning', 'Warning'], 
+           'line {number}')
