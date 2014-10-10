@@ -1,3 +1,5 @@
+|flattr|_
+
 ===============================================
                   PythonTeX
 ===============================================
@@ -79,3 +81,10 @@ Objectives for future releases
 * Improve ``stderr`` synchronization.  Simplify support for multiple languages.
 * Add finer-grained control.  Work toward ``rerun`` control of execution at the session level, and control of whether ``stdout`` and ``strerr`` are displayed at the command/environment level.
 * Refactor to separate the code-management core from LaTeX-related features, so that the core can be used with other document formats (for example, markdown) in a manner similar to Sweave.
+
+
+
+
+.. |flattr| image:: https://api.flattr.com/button/flattr-badge-large.png
+
+.. _flattr: https://flattr.com/submit/auto?user_id=gpoore&url=https://github.com/gpoore/pythontex&title=pythontex&category=software
