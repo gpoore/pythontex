@@ -1503,17 +1503,17 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
     err_file_name = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename + '.err')))
     out_file = open(out_file_name, 'w', encoding=encoding)
     err_file = open(err_file_name, 'w', encoding=encoding)
+    script = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename)))
+    if os.path.isabs(script):
+        script_full = script
+    else:
+        script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
     # #### Need to revise so that intermediate files can be detected and cleaned up
     for f in command_created:
         files.append(f.format(file=script))
     for command in commands:
         # Note that command is a string, which must be converted to list
         # Must double-escape any backslashes so that they survive `shlex.split()`
-        script = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename)))
-        if os.path.isabs(script):
-            script_full = script
-        else:
-            script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
         # `shlex.split()` only works with Unicode after 2.7.2
         if (sys.version_info.major == 2 and sys.version_info.micro < 3):
             exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'))))
