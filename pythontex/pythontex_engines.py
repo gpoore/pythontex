@@ -32,7 +32,7 @@ from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
 
-interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash')}
+interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', 'sage')}
 # The {file} field needs to be replaced by itself, since the actual 
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is 
@@ -59,13 +59,13 @@ class CodeEngine(object):
     templates and user code.  It also creates the records needed for 
     synchronizing `stderr` with the document.
     '''
-    def __init__(self, name, language, extension, command, template, wrapper, 
+    def __init__(self, name, language, extension, commands, template, wrapper, 
                  formatter, errors=None, warnings=None,
                  linenumbers=None, lookbehind=False, 
                  console=False, startup=None, created=None):
 
         # Save raw arguments so that they may be reused by subtypes
-        self._rawargs = (name, language, extension, command, template, wrapper, 
+        self._rawargs = (name, language, extension, commands, template, wrapper, 
                          formatter, errors, warnings,
                          linenumbers, lookbehind, console, startup, created)
         
@@ -74,7 +74,6 @@ class CodeEngine(object):
             if (not isinstance(name, basestring) or 
                     not isinstance(language, basestring) or 
                     not isinstance(extension, basestring) or 
-                    not isinstance(command, basestring) or 
                     not isinstance(template, basestring) or
                     not isinstance(wrapper, basestring) or
                     not isinstance(formatter, basestring)):
@@ -82,7 +81,6 @@ class CodeEngine(object):
             self.name = unicode(name)
             self.language = unicode(language)
             self.extension = unicode(extension)
-            self.command = unicode(command)
             self.template = unicode(template)
             self.wrapper = unicode(wrapper)
             self.formatter = unicode(formatter)
@@ -90,7 +88,6 @@ class CodeEngine(object):
             if (not isinstance(name, str) or 
                     not isinstance(language, str) or 
                     not isinstance(extension, str) or 
-                    not isinstance(command, str) or 
                     not isinstance(template, str) or
                     not isinstance(wrapper, str) or
                     not isinstance(formatter, str)):    
@@ -98,7 +95,6 @@ class CodeEngine(object):
             self.name = name
             self.language = language
             self.extension = extension
-            self.command = command
             self.template = template
             self.wrapper = wrapper
             self.formatter = formatter
@@ -106,6 +102,25 @@ class CodeEngine(object):
         self.extension = self.extension.lstrip('.')
         self.template = self._dedent(self.template)
         self.wrapper = self._dedent(self.wrapper)
+        # Deal with commands
+        if sys.version_info.major == 2:
+            if isinstance(commands, basestring):
+                commands = [commands]
+            elif not isinstance(commands, list) and not isinstance(commands, tuple):
+                raise TypeError('CodeEngine needs "commands" to be a string, list, or tuple')
+            for c in commands:
+                if not isinstance(c, basestring):
+                    raise TypeError('CodeEngine needs "commands" to contain strings')
+            commands = [unicode(c) for c in commands]
+        else:
+            if isinstance(commands, str):
+                commands = [commands]
+            elif not isinstance(commands, list) and not isinstance(commands, tuple):
+                raise TypeError('CodeEngine needs "commands" to be a string, list, or tuple')
+            for c in commands:
+                if not isinstance(c, str):
+                    raise TypeError('CodeEngine needs "commands" to contain strings')
+        self.commands = commands
         # Make sure formatter string ends with a newline
         if not self.formatter.endswith('\n'):
             self.formatter = self.formatter + '\n'
@@ -269,7 +284,7 @@ class CodeEngine(object):
         # Take care of `--interpreter`
         # The `interpreter_dict` has entries that allow `{file}` and
         # `{outputdir}` fields to be replaced with themselves
-        self.command = self.command.format(**interpreter_dict)
+        self.commands = [c.format(**interpreter_dict) for c in self.commands]
         # Take care of `__future__`
         if self.language.startswith('python'):
             if sys.version_info[0] == 2 and 'pyfuture' in kwargs:
@@ -328,7 +343,8 @@ class CodeEngine(object):
         # the user, since a unique hash is all that's needed.
         if self._hash is None:
             hasher = sha1()
-            hasher.update(self.command.encode('utf8'))
+            for c in self.commands:
+                hasher.update(c.encode('utf8'))
             hasher.update(self.template.encode('utf8'))
             hasher.update(self.wrapper.encode('utf8'))
             hasher.update(self.formatter.encode('utf8'))
@@ -561,12 +577,12 @@ class SubCodeEngine(CodeEngine):
     '''
     Create Engine instances that inherit from existing instances.
     '''
-    def __init__(self, base, name, language=None, extension=None, command=None, 
+    def __init__(self, base, name, language=None, extension=None, commands=None, 
                  template=None, wrapper=None, formatter=None, errors=None,
                  warnings=None, linenumbers=None, lookbehind=False,
                  console=None, created=None, startup=None, extend=None):
         
-        self._rawargs = (name, language, extension, command, template, wrapper, 
+        self._rawargs = (name, language, extension, commands, template, wrapper, 
                          formatter, errors, warnings,
                          linenumbers, lookbehind, console, startup, created)
                          
@@ -608,7 +624,7 @@ class PythonConsoleEngine(CodeEngine):
     '''
     def __init__(self, name, startup=None):
         CodeEngine.__init__(self, name=name, language='python', 
-                            extension='', command='', template='', 
+                            extension='', commands='', template='', 
                             wrapper='', formatter='', errors=None, 
                             warnings=None, linenumbers=None, lookbehind=False,
                             console=True, startup=startup, created=None)
@@ -685,6 +701,15 @@ CodeEngine('python', 'python', '.py', '{python} {file}.py',
 SubCodeEngine('python', 'py')
 
 SubCodeEngine('python', 'pylab', extend='from pylab import *')
+
+
+SubCodeEngine('python', 'sage', language='sage', extension='.sage',
+              template=python_template.replace('{future}', ''),
+              extend = 'pytex.formatter = latex',
+              commands=['{sage} --preparse {file}.sage',
+                        '{sage} {file}.sage.py'],
+              created = '{file}.sage.py')
+
 
 sympy_extend = '''
     from sympy import *

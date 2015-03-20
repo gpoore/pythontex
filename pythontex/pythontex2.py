@@ -1275,7 +1275,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         # Uncomment the following for debugging, and comment out what follows
         '''run_code(encoding, outputdir, workingdir, code_dict[key],
                                                  engine_dict[family].language,
-                                                 engine_dict[family].command,
+                                                 engine_dict[family].commands,
                                                  engine_dict[family].created,
                                                  engine_dict[family].extension,
                                                  makestderr, stderrfilename,
@@ -1288,7 +1288,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         tasks.append(pool.apply_async(run_code, [encoding, outputdir, 
                                                  workingdir, code_dict[key],
                                                  engine_dict[family].language,
-                                                 engine_dict[family].command,
+                                                 engine_dict[family].commands,
                                                  engine_dict[family].created,
                                                  engine_dict[family].extension,
                                                  makestderr, stderrfilename,
@@ -1465,7 +1465,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
 
 
 
-def run_code(encoding, outputdir, workingdir, code_list, language, command, 
+def run_code(encoding, outputdir, workingdir, code_list, language, commands, 
              command_created, extension, makestderr, stderrfilename, 
              code_index, errorsig, warningsig, linesig, stderrlookbehind, 
              keeptemps, hashdependencies):
@@ -1503,40 +1503,42 @@ def run_code(encoding, outputdir, workingdir, code_list, language, command,
     err_file_name = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename + '.err')))
     out_file = open(out_file_name, 'w', encoding=encoding)
     err_file = open(err_file_name, 'w', encoding=encoding)
-    # Note that command is a string, which must be converted to list
-    # Must double-escape any backslashes so that they survive `shlex.split()`
-    script = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename)))
-    if os.path.isabs(script):
-        script_full = script
-    else:
-        script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
-    # `shlex.split()` only works with Unicode after 2.7.2
-    if (sys.version_info.major == 2 and sys.version_info.micro < 3):
-        exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'))))
-        exec_cmd = [unicode(elem) for elem in exec_cmd]
-    else:
-        exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\')))
-    # Add any created files due to the command
-    # This needs to be done before attempts to execute, to prevent orphans
+    # #### Need to revise so that intermediate files can be detected and cleaned up
     for f in command_created:
         files.append(f.format(file=script))
-    try:
-        proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=err_file)
-    except WindowsError as e:
-        if e.errno == 2:
-            # Batch files won't be found when called without extension. They
-            # would be found if `shell=True`, but then getting the right
-            # exit code is tricky.  So we perform some `cmd` trickery that
-            # is essentially equivalent to `shell=True`, but gives correct 
-            # exit codes.  Note that `subprocess.Popen()` works with strings
-            # under Windows; a list is not required.
-            exec_cmd_string = ' '.join(exec_cmd)
-            exec_cmd_string = 'cmd /C "@echo off & call {0} & if errorlevel 1 exit 1"'.format(exec_cmd_string)
-            proc = subprocess.Popen(exec_cmd_string, stdout=out_file, stderr=err_file)
+    for command in commands:
+        # Note that command is a string, which must be converted to list
+        # Must double-escape any backslashes so that they survive `shlex.split()`
+        script = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename)))
+        if os.path.isabs(script):
+            script_full = script
         else:
-            raise
-        
-    proc.wait()        
+            script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
+        # `shlex.split()` only works with Unicode after 2.7.2
+        if (sys.version_info.major == 2 and sys.version_info.micro < 3):
+            exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'))))
+            exec_cmd = [unicode(elem) for elem in exec_cmd]
+        else:
+            exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\')))
+        # Add any created files due to the command
+        # This needs to be done before attempts to execute, to prevent orphans
+        try:
+            proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=err_file)
+        except WindowsError as e:
+            if e.errno == 2:
+                # Batch files won't be found when called without extension. They
+                # would be found if `shell=True`, but then getting the right
+                # exit code is tricky.  So we perform some `cmd` trickery that
+                # is essentially equivalent to `shell=True`, but gives correct 
+                # exit codes.  Note that `subprocess.Popen()` works with strings
+                # under Windows; a list is not required.
+                exec_cmd_string = ' '.join(exec_cmd)
+                exec_cmd_string = 'cmd /C "@echo off & call {0} & if errorlevel 1 exit 1"'.format(exec_cmd_string)
+                proc = subprocess.Popen(exec_cmd_string, stdout=out_file, stderr=err_file)
+            else:
+                raise
+            
+        proc.wait()
     out_file.close()
     err_file.close()
     
@@ -2521,6 +2523,8 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                 # Process for LaTeX
                 if pygmentize:
                     processed = highlight(console_content, lexer, formatter)
+                    # #### Need to add wrapping:
+                    #processed = highlight('\n'.join([textwrap.fill(x) for x in console_content.splitlines(True)]), lexer, formatter)
                     if console_content.count('\n') < fvextfile:                            
                         processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
                                         r'\\begin{{pytx@SaveVerbatim}}[\1]{{pytx@{0}}}'.format(key_typeset.replace('#', '@')),
