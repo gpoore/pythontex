@@ -35,7 +35,7 @@ The ``depythontex`` utility creates a copy of a PythonTeX document in which all 
 Citing PythonTeX
 ================
 
-If you use PythonTeX in your writing and research, please consider citing it in any resulting publications.  Currently, the best paper to cite is the one published in the `2013 SciPy proceedings <http://conference.scipy.org/proceedings/scipy2013/poore.html>`_.
+If you use PythonTeX in your writing and research, please consider citing it in any resulting publications.  The best and most recent paper is in `Computational Science & Discovery <http://stacks.iop.org/1749-4699/8/i=1/a=014010>`_ (doi:10.1088/1749-4699/8/1/014010). You may also cite the paper in the `2013 SciPy proceedings <http://conference.scipy.org/proceedings/scipy2013/poore.html>`_.
 
 
 Latest release
