@@ -1222,8 +1222,8 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
             exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\')))
         try:
             proc = subprocess.Popen(exec_cmd)
-        except WindowsError as e:
-            if e.errno == 2:
+        except (WindowsError, FileNotFoundError) as e:
+            if platform.system() == 'Windows' and e.errno == 2:
                 # Batch files won't be found when called without extension. They
                 # would be found if `shell=True`, but then getting the right
                 # exit code is tricky.  So we perform some `cmd` trickery that
@@ -2380,6 +2380,9 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
             for c in cons_list:
                 self.console_code.append('=>PYTHONTEX#{0}#{1}#\n'.format(c.instance, c.command))
                 self.console_code.extend(c.code.splitlines())
+            # Reset sys.excepthook to its default, to prevent apport systems
+            # in some Linux distributions from breaking exception handling
+            sys.excepthook = sys.__excepthook__
             old_stdout = sys.stdout
             sys.stdout = self.iostdout
             self.interact(self.banner)
