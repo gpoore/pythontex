@@ -1255,6 +1255,8 @@
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
     \ifstrequal{#1}{bash}{\makepythontexfamily[pyglexer=bash]{bash}}{}%
     \ifstrequal{#1}{sage}{\makepythontexfamily[pyglexer=sage]{sage}}{}%
+    \ifstrequal{#1}{rust}{\makepythontexfamily[pyglexer=rust]{rust}}{}%
+    \ifstrequal{#1}{rs}{\makepythontexfamily[pyglexer=rust]{rs}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 \newbool{pytx@listingenv}

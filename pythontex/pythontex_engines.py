@@ -32,7 +32,7 @@ from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
 
-interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', 'sage')}
+interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', 'sage', 'rustc')}
 # The {file} field needs to be replaced by itself, since the actual 
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is 
@@ -1174,3 +1174,29 @@ CodeEngine('bash', 'bash', '.sh',
            bash_template, bash_wrapper, '{code}',
            ['error', 'Error'], ['warning', 'Warning'], 
            'line {number}')
+
+# unfortunately, there doesn't seem to be an easy way
+# to make Rust cooperate with anything other than UTF-8
+rust_template = '''
+    // -*- coding: utf-8 -*-
+    use std::io::prelude::*;
+
+    struct RustTeXUtils {
+    }
+    impl RustteXUtils {
+    }
+
+    fn main() {
+    let mut rstex = RustTeXUtils::new();
+    }
+'''
+
+rust_wrapper = '''
+'''
+
+CodeEngine('rust', 'rust', '.rs',
+           # Despite appearances, using `.exe` works on Unix too.
+           ['{rustc} --crate-type bin -o {File}.exe {file}.rs', '{File}.exe']
+           rust_template, rust_wrapper, 'print!("{{}}", {code})')
+
+SubCodeEngine('rust', 'rs')

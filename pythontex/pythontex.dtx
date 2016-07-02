@@ -67,7 +67,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3023}
+% \CheckSum{3027}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -86,7 +86,7 @@
 %   Right brace   \}     Tilde         \~}
 %
 %
-% \begin{changelog}{v0.15}{2014/??/??}
+% \begin{changelog}{v0.15}{2016/??/??}
 % \textbf{New features}
 % \begin{itemize}
 % \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash under non-Windows operating systems.
@@ -3835,6 +3835,8 @@
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
     \ifstrequal{#1}{bash}{\makepythontexfamily[pyglexer=bash]{bash}}{}%
     \ifstrequal{#1}{sage}{\makepythontexfamily[pyglexer=sage]{sage}}{}%
+    \ifstrequal{#1}{rust}{\makepythontexfamily[pyglexer=rust]{rust}}{}%
+    \ifstrequal{#1}{rs}{\makepythontexfamily[pyglexer=rust]{rs}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}
