@@ -1510,7 +1510,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
     # #### Need to revise so that intermediate files can be detected and cleaned up
     for f in command_created:
-        files.append(f.format(file=script))
+        files.append(f.format(file=script, File=script_full))
     for command in commands:
         # Note that command is a string, which must be converted to list
         # Must double-escape any backslashes so that they survive `shlex.split()`
