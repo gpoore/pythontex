@@ -86,7 +86,7 @@ import codecs
 
 # Script parameters
 # Version
-__version__ = '0.14'
+__version__ = '0.15dev'
 
 
 # Functions and parameters for customizing the script output

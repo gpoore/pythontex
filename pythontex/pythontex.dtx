@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2014/07/17 Version~0.14 ]
+    [2016/07/04 v0.15dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -86,9 +86,10 @@
 %   Right brace   \}     Tilde         \~}
 %
 %
-% \begin{changelog}{v0.15}{2014/??/??}
+% \begin{changelog}{v0.15}{2016/07/??}
 % \textbf{New features}
 % \begin{itemize}
+% \item Improved \texttt{console} compatibility under Linux with Python 3 (\#70).
 % \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash under non-Windows operating systems.
 % \item Counters for default sessions are now created automatically.  This prevents counter errors under some circumstances when working with \texttt{\string\includeonly}.  (See \url{http://tug.org/pipermail/macostex-archives/2010-December/046007.html} for more on the problematic counter behavior.)
 % \end{itemize}
@@ -417,7 +418,7 @@
 %
 % \pytex\ requires a \TeX\ installation.  It has been tested with  \href{http://www.tug.org/texlive/}{\TeX\ Live} and  \href{http://miktex.org/}{MiK\TeX}, but should work with other distributions.  The following \LaTeX\ packages, with their dependencies, are required:  |fancyvrb|, |etex|, |etoolbox|, |xstring|, |pgfopts|, |newfloat| (part of the |caption| bundle), |currfile|, and |color| or |xcolor|.  A current \TeX\ installation is recommended, since some features require recent versions of the packages.  If you are creating and including graphics, you will also need |graphicx|.  The \href{http://www.ctan.org/pkg/mdframed}{\texttt{mdframed}} package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors; \href{http://www.ctan.org/pkg/tcolorbox}{\texttt{tcolorbox}} and \href{http://www.ctan.org/pkg/framed}{\texttt{framed}} are alternatives.
 %
-% \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools, although many scientific packages are now compatible with Python 3.  \pytex\ is compatible with Python 2.7 and 3.2+.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile |pythontex_gallery.tex|, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}. 
+% \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools, although many scientific packages are now compatible with Python 3.  \pytex\ is compatible with Python 2.7 and 3.2+.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile |pythontex_gallery.tex|, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}.  When using \pytex\ with LyX, be aware that LyX may try to use its own version of Python; you may need to reconfigure LyX.
 %
 % \pytex\ also provides support for other languages such as Ruby, so you will need to install any additional languags you plan to use.  Typically, the most recent major version of these languages is supported.
 %
@@ -1670,7 +1671,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.14}
+\newcommand{\pytx@packageversion}{0.15dev}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
