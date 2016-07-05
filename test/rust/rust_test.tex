@@ -1,0 +1,77 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={rust, rs}]{pythontex}
+
+\begin{document}
+
+
+\section*{Rust (\texttt{rust})}
+
+Inline:  \rust{format!("$3 + 5 = {}$", 3+5)}.
+
+
+\begin{rustcode}
+println!("Hello from Rust!");
+println!("Running command family ``{}'', session ``{}'', restart ``{}''.", rstex.family, rstex.session, rstex.restart);
+\end{rustcode}
+
+
+
+\begin{rustblock}
+println!("{}\\endinput", 2.0_f64.powf(8.0_f64));
+\end{rustblock}
+
+Printed output:  \printpythontex.
+
+
+\section*{Rust (\texttt{rs})}
+
+Inline:  \rs{format!("$3 + 5 = {}$", 3+5)}.
+
+
+\begin{rscode}
+println!("Hello from Rust!");
+println!("Running command family ``{}'', session ``{}'', restart ``{}''.", rstex.family, rstex.session, rstex.restart);
+\end{rscode}
+
+
+
+\begin{rsblock}
+println!("{}\\endinput", 2.0_f64.powf(8.0_f64));
+\end{rsblock}
+
+Printed output:  \printpythontex.
+
+
+
+\section*{Errors}
+
+\begin{rustblock}[error]
+println!("{}\\endinput", 2.0_f64.powf(8.0_f64);
+\end{rustblock}
+
+\stderrpythontex
+
+
+\end{document}

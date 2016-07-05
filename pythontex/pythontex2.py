@@ -4,10 +4,10 @@
 '''
 This is the main PythonTeX script.  It should be launched via pythontex.py.
 
-Two versions of this script are provided.  One, with name ending in "2", runs 
+Two versions of this script are provided.  One, with name ending in "2", runs
 under Python 2.7.  The other, with name ending in "3", runs under Python 3.2+.
 
-This script needs to be able to import pythontex_engines.py; in general it 
+This script needs to be able to import pythontex_engines.py; in general it
 should be in the same directory.
 
 
@@ -86,7 +86,7 @@ class Pytxcode(object):
     def __init__(self, data, gobble):
         self.delims, self.code = data.split('#\n', 1)
         self.family, self.session, self.restart, self.instance, self.command, self.context, self.args_run, self.args_prettyprint, self.input_file, self.line = self.delims.split('#')
-        self.instance_int = int(self.instance)        
+        self.instance_int = int(self.instance)
         self.line_int = int(self.line)
         self.key_run = self.family + '#' + self.session + '#' + self.restart
         self.key_typeset = self.key_run + '#' + self.instance
@@ -118,41 +118,41 @@ class Pytxcode(object):
             self.is_typeset = False
         else:
             self.is_typeset = True
-        
+
         if gobble == 'auto':
             self.code = textwrap.dedent(self.code)
-            
+
 
 
 
 def process_argv(data, temp_data):
     '''
     Process command line options using the argparse module.
-    
+
     Most options are passed via the file of code, rather than via the command
     line.
     '''
-    
+
     # Create a command line argument parser
     parser = argparse.ArgumentParser()
     parser.add_argument('TEXNAME',
                         help='LaTeX file, with or without .tex extension')
-    parser.add_argument('--version', action='version', 
-                        version='PythonTeX {0}'.format(data['version']))                    
-    parser.add_argument('--encoding', default='UTF-8', 
+    parser.add_argument('--version', action='version',
+                        version='PythonTeX {0}'.format(data['version']))
+    parser.add_argument('--encoding', default='UTF-8',
                         help='encoding for all text files (see codecs module for encodings)')
-    parser.add_argument('--error-exit-code', default='true', 
-                        choices=('true', 'false'),                          
+    parser.add_argument('--error-exit-code', default='true',
+                        choices=('true', 'false'),
                         help='return exit code of 1 if there are errors (not desirable with some TeX editors and workflows)')
     group_run = parser.add_mutually_exclusive_group()
     group_run.add_argument('--runall', nargs='?', default='false',
                            const='true', choices=('true', 'false'),
                            help='run ALL code; equivalent to package option')
-    group_run.add_argument('--rerun', default='errors', 
+    group_run.add_argument('--rerun', default='errors',
                            choices=('never', 'modified', 'errors', 'warnings', 'always'),
                            help='set conditions for rerunning code; equivalent to package option')
-    parser.add_argument('--hashdependencies', nargs='?', default='false', 
-                        const='true', choices=('true', 'false'),                          
+    parser.add_argument('--hashdependencies', nargs='?', default='false',
+                        const='true', choices=('true', 'false'),
                         help='hash dependencies (such as external data) to check for modification, rather than using mtime; equivalent to package option')
     parser.add_argument('-j', '--jobs', metavar='N', default=None, type=int,
                         help='Allow N jobs at once; defaults to cpu_count().')
@@ -160,17 +160,17 @@ def process_argv(data, temp_data):
                         help='verbose output')
     parser.add_argument('--interpreter', default=None, help='set a custom interpreter; argument should be in the form "<interpreter>:<command>, <interp>:<cmd>, ..." where <interpreter> is "python", "ruby", etc., and <command> is the command for invoking the interpreter; argument may also be in the form of a Python dictionary')
     group_debug = parser.add_mutually_exclusive_group()
-    group_debug.add_argument('--debug', nargs='?', default=None, 
+    group_debug.add_argument('--debug', nargs='?', default=None,
                              const='default',
                              metavar='<family>:<session>:<restart>',
                              help='Run the specified session (or default session) with the default debugger, if available.  If there is only one session, it need not be specified.  If the session name is unambiguous, it is sufficient.  The full <family>:<session>:<restart> (for example, py:default:default) is only needed when the session name alone would be ambiguous.')
-    group_debug.add_argument('--interactive', nargs='?', default=None, 
+    group_debug.add_argument('--interactive', nargs='?', default=None,
                              const='default',
                              metavar='<family>:<session>:<restart>',
                              help='Run the specified session (or default session) in interactive mode.  If there is only one session, it need not be specified.  If the session name is unambiguous, it is sufficient.  The full <family>:<session>:<restart> (for example, py:default:default) is only needed when the session name alone would be ambiguous.')
     args = parser.parse_args()
-    
-    # Store the parsed argv in data and temp_data          
+
+    # Store the parsed argv in data and temp_data
     data['encoding'] = args.encoding
     if args.error_exit_code == 'true':
         temp_data['error_exit_code'] = True
@@ -215,7 +215,7 @@ def process_argv(data, temp_data):
                     print('Invalid --interpreter argument')
                     return sys.exit(2)
     # If the Python interpreter wasn't set, then try to set an appropriate
-    # default value, based on how PythonTeX was launched (pythontex.py, 
+    # default value, based on how PythonTeX was launched (pythontex.py,
     # pythontex2.py, or pythontex3.py).
     if not set_python_interpreter:
         if temp_data['python'] == 2:
@@ -230,12 +230,12 @@ def process_argv(data, temp_data):
                               directly.  This should only be done when you want
                               to use Python version {0}, but have a different
                               version installed as the default.  (Otherwise, you
-                              should start PythonTeX with pythontex.py.)  For 
+                              should start PythonTeX with pythontex.py.)  For
                               this to work correctly, you should install Python
                               version 3.3+, which has a Windows wrapper (py) that
-                              PythonTeX can use to run the correct version of 
+                              PythonTeX can use to run the correct version of
                               Python.  If you do not want to install Python 3.3+,
-                              you can also use the --interpreter command-line 
+                              you can also use the --interpreter command-line
                               option to tell PythonTeX how to access the version
                               of Python you wish to use.
                           '''.format(temp_data['python'])
@@ -255,12 +255,12 @@ def process_argv(data, temp_data):
                               directly.  This should only be done when you want
                               to use Python version {0}, but have a different
                               version installed as the default.  (Otherwise, you
-                              should start PythonTeX with pythontex.py.)  For 
+                              should start PythonTeX with pythontex.py.)  For
                               this to work correctly, you should install Python
                               version 3.3+, which has a Windows wrapper (py) that
-                              PythonTeX can use to run the correct version of 
+                              PythonTeX can use to run the correct version of
                               Python.  If you do not want to install Python 3.3+,
-                              you can also use the --interpreter command-line 
+                              you can also use the --interpreter command-line
                               option to tell PythonTeX how to access the version
                               of Python you wish to use.
                           '''.format(temp_data['python'])
@@ -268,10 +268,10 @@ def process_argv(data, temp_data):
                     return sys.exit(2)
             else:
                 interpreter_dict['python'] = 'python3'
-    
+
     if args.TEXNAME is not None:
-        # Determine if we a dealing with just a filename, or a name plus 
-        # path.  If there's a path, we need to make the document directory 
+        # Determine if we a dealing with just a filename, or a name plus
+        # path.  If there's a path, we need to make the document directory
         # the current working directory.
         dir, raw_jobname = os.path.split(args.TEXNAME)
         dir = os.path.expanduser(os.path.normcase(dir))
@@ -287,30 +287,30 @@ def process_argv(data, temp_data):
                 print('    Code file ' + raw_jobname + '.pytxcode does not exist.')
                 print('    Run LaTeX to create it.')
                 return sys.exit(1)
-        
-        # We need a "sanitized" version of the jobname, with spaces and 
-        # asterisks replaced with hyphens.  This is done to avoid TeX issues 
-        # with spaces in file names, paralleling the approach taken in 
-        # pythontex.sty.  From now on, we will use the sanitized version every 
-        # time we create a file that contains the jobname string.  The raw 
-        # version will only be used in reference to pre-existing files created 
+
+        # We need a "sanitized" version of the jobname, with spaces and
+        # asterisks replaced with hyphens.  This is done to avoid TeX issues
+        # with spaces in file names, paralleling the approach taken in
+        # pythontex.sty.  From now on, we will use the sanitized version every
+        # time we create a file that contains the jobname string.  The raw
+        # version will only be used in reference to pre-existing files created
         # on the TeX side, such as the .pytxcode file.
         jobname = raw_jobname.replace(' ', '-').replace('"', '').replace('*', '-')
         # Store the results in data
         data['raw_jobname'] = raw_jobname
         data['jobname'] = jobname
-        
-        # We need to check to make sure that the "sanitized" jobname doesn't 
-        # lead to a collision with a file that already has that name, so that 
+
+        # We need to check to make sure that the "sanitized" jobname doesn't
+        # lead to a collision with a file that already has that name, so that
         # two files attempt to use the same PythonTeX folder.
-        # 
+        #
         # If <jobname>.<ext> and <raw_jobname>.<ext> both exist, where <ext>
-        # is a common LaTeX extension, we exit.  We operate under the 
-        # assumption that there should be only a single file <jobname> in the 
-        # document root directory that has a common LaTeX extension.  That 
-        # could be false, but if so, the user probably has worse things to 
+        # is a common LaTeX extension, we exit.  We operate under the
+        # assumption that there should be only a single file <jobname> in the
+        # document root directory that has a common LaTeX extension.  That
+        # could be false, but if so, the user probably has worse things to
         # worry about than a potential PythonTeX output collision.
-        # If <jobname>* and <raw_jobname>* both exist, we issue a warning but 
+        # If <jobname>* and <raw_jobname>* both exist, we issue a warning but
         # attempt to proceed.
         if jobname != raw_jobname:
             resolved = False
@@ -335,9 +335,9 @@ def process_argv(data, temp_data):
                         print('      ' + jobname + '*')
                         print('    Attempting to proceed.')
                         temp_data['warnings'] += 1
-                        break            
-        
-        
+                        break
+
+
 
 
 def load_code_get_settings(data, temp_data):
@@ -357,7 +357,7 @@ def load_code_get_settings(data, temp_data):
         print('    Code file ' + raw_jobname + '.pytxcode does not exist.')
         print('    Run LaTeX to create it.')
         return sys.exit(1)
-    
+
     # Split code and settings
     try:
         pytxcode, pytxsettings = pytxcode.rsplit('=>PYTHONTEX:SETTINGS#', 1)
@@ -365,8 +365,8 @@ def load_code_get_settings(data, temp_data):
         print('The .pytxcode file appears to have an outdated format or be invalid')
         print('Run LaTeX to make sure the file is current')
         return sys.exit(1)
-    
-    
+
+
     # Prepare to process settings
     #
     # Create a dict for storing settings.
@@ -374,7 +374,7 @@ def load_code_get_settings(data, temp_data):
     # Create a dict for storing Pygments settings.
     # Each dict entry will itself be a dict.
     pygments_settings = defaultdict(dict)
-    
+
     # Create a dict of processing functions, and generic processing functions
     settings_func = dict()
     def set_kv_data(k, v):
@@ -396,7 +396,7 @@ def load_code_get_settings(data, temp_data):
     def set_kv_data_fvextfile(k, v):
         # Error checking on TeX side should be enough, but be careful anyway
         try:
-            v = int(v)                    
+            v = int(v)
         except ValueError:
             print('* PythonTeX error')
             print('    Unable to parse package option fvextfile.')
@@ -468,7 +468,7 @@ def load_code_get_settings(data, temp_data):
     settings_func['pyconbanner'] = set_kv_data
     settings_func['pyconfilename'] = set_kv_data
     settings_func['depythontex'] = set_kv_data
-    
+
     # Process settings
     for line in pytxsettings.split('\n'):
         if line:
@@ -486,33 +486,33 @@ def load_code_get_settings(data, temp_data):
         print('    The version of the PythonTeX scripts does not match the last code')
         print('    saved by the document--run LaTeX to create an updated version.\n')
         sys.exit(1)
-    
+
     # Store all results that haven't already been stored.
     data['settings'] = settings
     data['pygments_settings'] = pygments_settings
-    
+
     # Create a tuple of vital quantities that invalidate old saved data
     # Don't need to include outputdir, because if that changes, no old output
     # fvextfile could be checked on a case-by-case basis, which would result
-    # in faster output, but that would involve a good bit of additional 
+    # in faster output, but that would involve a good bit of additional
     # logic, which probably isn't worth it for a feature that will rarely be
     # changed.
-    data['vitals'] = (data['version'], data['encoding'], 
+    data['vitals'] = (data['version'], data['encoding'],
                       settings['gobble'], settings['fvextfile'])
-    
+
     # Create tuples of vital quantities
     data['code_vitals'] = (settings['workingdir'], settings['keeptemps'],
                            settings['makestderr'], settings['stderrfilename'])
     data['cons_vitals'] = (settings['workingdir'])
     data['typeset_vitals'] = ()
-    
+
     # Pass any customizations to types
     for k in engine_dict:
         engine_dict[k].customize(pyfuture=settings['pyfuture'],
                                  pyconfuture=settings['pyconfuture'],
                                  pyconbanner=settings['pyconbanner'],
                                  pyconfilename=settings['pyconfilename'])
-    
+
     # Store code
     # Do this last, so that Pygments settings are available
     if pytxcode.startswith('=>PYTHONTEX#'):
@@ -529,12 +529,12 @@ def set_upgrade_compatibility(data, old, temp_data):
     When upgrading, modify settings to maintain backward compatibility when
     possible and important
     '''
-    if (old['version'].startswith('v') and 
+    if (old['version'].startswith('v') and
             not data['settings']['workingdirset'] and
             data['settings']['outputdir'] != '.'):
         old['compatibility'] = '0.13'
         do_upgrade_compatibility(data, old, temp_data)
-    
+
 
 def do_upgrade_compatibility(data, old_data, temp_data):
     if 'compatibility' in old_data:
@@ -549,10 +549,10 @@ def do_upgrade_compatibility(data, old_data, temp_data):
                   directory rather than the output directory.  PythonTeX has detected
                   that you have been using the output directory as the working directory.
                   It will continue to use the output directory for now.  To keep your
-                  current settings long-term and avoid seeing this message in the future, 
-                  add the following command to the preamble of your document, right after 
+                  current settings long-term and avoid seeing this message in the future,
+                  add the following command to the preamble of your document, right after
                   the "\\usepackage{pythontex}":  "\setpythontexworkingdir{<outputdir>}".
-                  If you wish to continue with the new settings instead, simply delete 
+                  If you wish to continue with the new settings instead, simply delete
                   the file with extension .pkl in the output directory, and run PythonTeX.
                   ****  End PythonTeX upgrade message  ****
                   '''
@@ -561,29 +561,29 @@ def do_upgrade_compatibility(data, old_data, temp_data):
 
 def get_old_data(data, old_data, temp_data):
     '''
-    Load data from the last run, if it exists, into the dict old_data.  
-    Determine the path to the PythonTeX scripts, either by using a previously 
+    Load data from the last run, if it exists, into the dict old_data.
+    Determine the path to the PythonTeX scripts, either by using a previously
     found, saved path or via kpsewhich.
-    
-    The old data is used for determining when PythonTeX has been upgraded, 
-    when any settings have changed, when code has changed (via hashes), and 
-    what files may need to be cleaned up.  The location of the PythonTeX 
-    scripts is needed so that they can be imported by the scripts created by 
-    PythonTeX.  The location of the scripts is confirmed even if they were 
-    previously located, to make sure that the path is still valid.  Finding 
-    the scripts depends on having a TeX installation that includes the 
+
+    The old data is used for determining when PythonTeX has been upgraded,
+    when any settings have changed, when code has changed (via hashes), and
+    what files may need to be cleaned up.  The location of the PythonTeX
+    scripts is needed so that they can be imported by the scripts created by
+    PythonTeX.  The location of the scripts is confirmed even if they were
+    previously located, to make sure that the path is still valid.  Finding
+    the scripts depends on having a TeX installation that includes the
     Kpathsea library (TeX Live and MiKTeX, possibly others).
-    
+
     All code that relies on old_data is written based on the assumption that
-    if old_data exists and has the current PythonTeX version, then it 
+    if old_data exists and has the current PythonTeX version, then it
     contains all needed information.  Thus, all code relying on old_data must
-    check that it was loaded and that it has the current version.  If not, 
+    check that it was loaded and that it has the current version.  If not,
     code should adapt gracefully.
     '''
 
     # Create a string containing the name of the data file
     pythontex_data_file = os.path.expanduser(os.path.normcase(os.path.join(data['settings']['outputdir'], 'pythontex_data.pkl')))
-    
+
     # Load the old data if it exists (read as binary pickle)
     if os.path.isfile(pythontex_data_file):
         f = open(pythontex_data_file, 'rb')
@@ -613,9 +613,9 @@ def get_old_data(data, old_data, temp_data):
                             os.remove(f)
     else:
         temp_data['loaded_old_data'] = False
-    
+
     # Set the utilspath
-    # Assume that if the utils aren't in the same location as 
+    # Assume that if the utils aren't in the same location as
     # `pythontex.py`, then they are somewhere else on `sys.path` that
     # will always be available (for example, installed as a Python module),
     # and thus specifying a path isn't necessary.
@@ -636,9 +636,9 @@ def modified_dependencies(key, data, old_data, temp_data):
         old_dep_hash_dict = old_data['dependencies'][key]
         workingdir = data['settings']['workingdir']
         for dep in old_dep_hash_dict.keys():
-            # We need to know if the path is relative (based off the 
-            # working directory) or absolute.  We can't use 
-            # os.path.isabs() alone for determining the distinction, 
+            # We need to know if the path is relative (based off the
+            # working directory) or absolute.  We can't use
+            # os.path.isabs() alone for determining the distinction,
             # because we must take into account the possibility of an
             # initial ~ (tilde) standing for the home directory.
             dep_file = os.path.expanduser(os.path.normcase(dep))
@@ -650,15 +650,15 @@ def modified_dependencies(key, data, old_data, temp_data):
                 print('    It belongs to ' + key.replace('#', ':'))
                 print('    Relative paths to dependencies must be specified from the working directory.')
                 temp_data['errors'] += 1
-                # A removed dependency should trigger an error, but it 
-                # shouldn't cause code to execute.  Running the code 
-                # again would just give more errors when it can't find 
-                # the dependency.  (There won't be issues when a 
-                # dependency is added or removed, because that would 
-                # involve modifying code, which would trigger 
+                # A removed dependency should trigger an error, but it
+                # shouldn't cause code to execute.  Running the code
+                # again would just give more errors when it can't find
+                # the dependency.  (There won't be issues when a
+                # dependency is added or removed, because that would
+                # involve modifying code, which would trigger
                 # re-execution.)
             elif hashdependencies:
-                # Read and hash the file in binary.  Opening in text mode 
+                # Read and hash the file in binary.  Opening in text mode
                 # would require an unnecessary decoding and encoding cycle.
                 f = open(dep_file, 'rb')
                 hasher = sha1()
@@ -707,28 +707,28 @@ def should_rerun(hash, old_hash, old_exit_status, key, rerun, data, old_data, te
 def hash_all(data, temp_data, old_data, engine_dict):
     '''
     Hash the code to see what has changed and needs to be updated.
-    
-    Save the hashes in hashdict.  Create update_code, a list of bools 
-    regarding whether code should be executed.  Create update_pygments, a 
-    list of bools determining what needs updated Pygments highlighting.  
-    Update pygments_settings to account for Pygments (as opposed to PythonTeX) 
+
+    Save the hashes in hashdict.  Create update_code, a list of bools
+    regarding whether code should be executed.  Create update_pygments, a
+    list of bools determining what needs updated Pygments highlighting.
+    Update pygments_settings to account for Pygments (as opposed to PythonTeX)
     commands and environments.
     '''
 
-    # Note that the PythonTeX information that accompanies code must be 
-    # hashed in addition to the code itself; the code could stay the same, 
-    # but its context or args could change, which might require that code be 
-    # executed.  All of the PythonTeX information is hashed except for the 
-    # input line number.  Context-dependent code is going too far if 
+    # Note that the PythonTeX information that accompanies code must be
+    # hashed in addition to the code itself; the code could stay the same,
+    # but its context or args could change, which might require that code be
+    # executed.  All of the PythonTeX information is hashed except for the
+    # input line number.  Context-dependent code is going too far if
     # it depends on that.
-    
+
     # Create variables to more easily access parts of data
     pytxcode = temp_data['pytxcode']
     encoding = data['encoding']
     loaded_old_data = temp_data['loaded_old_data']
     rerun = temp_data['rerun']
     pygments_settings = data['pygments_settings']
-    
+
     # Calculate cumulative hashes for all code that is executed
     # Calculate individual hashes for all code that will be typeset
     code_hasher = defaultdict(sha1)
@@ -759,31 +759,31 @@ def hash_all(data, temp_data, old_data, engine_dict):
             typeset_hasher[c.key_typeset].update(c.hashable_delims_typeset.encode(encoding))
             typeset_hasher[c.key_typeset].update(c.code.encode(encoding))
             typeset_hasher[c.key_typeset].update(c.args_prettyprint.encode(encoding))
-        
+
 
     # Store hashes
     code_hash_dict = {}
     for key in code_hasher:
         family = key.split('#', 1)[0]
-        code_hash_dict[key] = (code_hasher[key].hexdigest(), 
+        code_hash_dict[key] = (code_hasher[key].hexdigest(),
                                cc_hasher[family].hexdigest(),
                                engine_dict[family].get_hash())
     data['code_hash_dict'] = code_hash_dict
-    
+
     cons_hash_dict = {}
     for key in cons_hasher:
         family = key.split('#', 1)[0]
-        cons_hash_dict[key] = (cons_hasher[key].hexdigest(), 
+        cons_hash_dict[key] = (cons_hasher[key].hexdigest(),
                                cc_hasher[family].hexdigest(),
                                engine_dict[family].get_hash())
     data['cons_hash_dict'] = cons_hash_dict
-    
+
     typeset_hash_dict = {}
     for key in typeset_hasher:
         typeset_hash_dict[key] = typeset_hasher[key].hexdigest()
     data['typeset_hash_dict'] = typeset_hash_dict
-    
-    
+
+
     # See what needs to be updated.
     # In the process, copy over macros and files that may be reused.
     code_update = {}
@@ -810,27 +810,27 @@ def hash_all(data, temp_data, old_data, engine_dict):
         old_typeset_hash_dict = old_data['typeset_hash_dict']
         old_pygments_settings = old_data['pygments_settings']
         for s in pygments_settings:
-            if (s in old_pygments_settings and 
+            if (s in old_pygments_settings and
                     pygments_settings[s] == old_pygments_settings[s]):
                 pygments_settings_changed[s] = False
             else:
                 pygments_settings_changed[s] = True
 
-    # If old data was loaded (and thus is compatible) determine what has 
-    # changed so that only 
+    # If old data was loaded (and thus is compatible) determine what has
+    # changed so that only
     # modified code may be executed.  Otherwise, execute everything.
     # We don't have to worry about checking for changes in pyfuture, because
     # custom code and default code are hashed.  The treatment of keeptemps
     # could be made more efficient (if changed to 'none', just delete old temp
-    # files rather than running everything again), but given that it is 
+    # files rather than running everything again), but given that it is
     # intended as a debugging aid, that probable isn't worth it.
-    # We don't have to worry about hashdependencies changing, because if it 
+    # We don't have to worry about hashdependencies changing, because if it
     # does the hashes won't match (file contents vs. mtime) and thus code will
     # be re-executed.
     if loaded_old_data and data['code_vitals'] == old_data['code_vitals']:
         # Compare the hash values, and set which code needs to be run
         for key in code_hash_dict:
-            if (key in old_code_hash_dict and 
+            if (key in old_code_hash_dict and
                     not should_rerun(code_hash_dict[key], old_code_hash_dict[key], old_exit_status[key], key, rerun, data, old_data, temp_data)):
                 code_update[key] = False
                 macros[key] = old_macros[key]
@@ -838,15 +838,15 @@ def hash_all(data, temp_data, old_data, engine_dict):
                 dependencies[key] = old_dependencies[key]
                 exit_status[key] = old_exit_status[key]
             else:
-                code_update[key] = True        
-    else:        
+                code_update[key] = True
+    else:
         for key in code_hash_dict:
             code_update[key] = True
-    
+
     if loaded_old_data and data['cons_vitals'] == old_data['cons_vitals']:
         # Compare the hash values, and set which code needs to be run
         for key in cons_hash_dict:
-            if (key in old_cons_hash_dict and 
+            if (key in old_cons_hash_dict and
                     not should_rerun(cons_hash_dict[key], old_cons_hash_dict[key], old_exit_status[key], key, rerun, data, old_data, temp_data)):
                 cons_update[key] = False
                 macros[key] = old_macros[key]
@@ -855,17 +855,17 @@ def hash_all(data, temp_data, old_data, engine_dict):
                 dependencies[key] = old_dependencies[key]
                 exit_status[key] = old_exit_status[key]
             else:
-                cons_update[key] = True        
-    else:        
+                cons_update[key] = True
+    else:
         for key in cons_hash_dict:
             cons_update[key] = True
-    
+
     if loaded_old_data and data['typeset_vitals'] == old_data['typeset_vitals']:
         for key in typeset_hash_dict:
             family = key.split('#', 1)[0]
             if family in pygments_settings:
                 if (not pygments_settings_changed[family] and
-                        key in old_typeset_hash_dict and 
+                        key in old_typeset_hash_dict and
                         typeset_hash_dict[key] == old_typeset_hash_dict[key]):
                     pygments_update[key] = False
                     if key in old_pygments_macros:
@@ -902,7 +902,7 @@ def hash_all(data, temp_data, old_data, engine_dict):
         for s in pygments_style_list:
             formatter = LatexFormatter(style=s, commandprefix='PYG'+s)
             pygments_style_defs[s] = formatter.get_style_defs()
-    
+
     # Save to data
     temp_data['code_update'] = code_update
     temp_data['cons_update'] = cons_update
@@ -916,9 +916,9 @@ def hash_all(data, temp_data, old_data, engine_dict):
     data['typeset_cache'] = typeset_cache
     data['dependencies'] = dependencies
     data['exit_status'] = exit_status
-    
-    
-    # Clean up for code that will be run again, and for code that no longer 
+
+
+    # Clean up for code that will be run again, and for code that no longer
     # exists.
     if loaded_old_data:
         # Take care of code files
@@ -948,8 +948,8 @@ def hash_all(data, temp_data, old_data, engine_dict):
                     if os.path.isfile(f):
                         os.remove(f)
         # Take care of old Pygments files
-        # The approach here is a little different since there isn't a 
-        # Pygments-specific hash dict, but there is a Pygments-specific 
+        # The approach here is a little different since there isn't a
+        # Pygments-specific hash dict, but there is a Pygments-specific
         # dict of lists of files.
         for key in pygments_update:
             if pygments_update[key] and key in old_pygments_files:
@@ -989,7 +989,7 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
     files = data['files']
     debug = temp_data['debug']
     interactive = temp_data['interactive']
-    
+
     # Tweak the update dicts to work with debug command-line option.
     # #### This should probably be refactored later, once the debug interface
     # stabilizes
@@ -1035,12 +1035,12 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
                     temp_data['debug_key'] = arg_key
                 else:
                     temp_data['interactive_key'] = arg_key
-        
-    
-    
-    # We need to keep track of the last instance for each session, so 
-    # that duplicates can be eliminated.  Some LaTeX environments process 
-    # their content multiple times and thus will create duplicates.  We 
+
+
+
+    # We need to keep track of the last instance for each session, so
+    # that duplicates can be eliminated.  Some LaTeX environments process
+    # their content multiple times and thus will create duplicates.  We
     # need to initialize everything at -1, since instances begin at zero.
     def negative_one():
         return -1
@@ -1054,7 +1054,7 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
                 if c.is_typeset and pygments_update[c.key_typeset]:
                     pygments_list.append(c)
             elif c.is_cons:
-                # Only append to Pygments if not run, since Pygments is 
+                # Only append to Pygments if not run, since Pygments is
                 # automatically taken care of during run for console content
                 if cons_update[c.key_run]:
                     cons_dict[c.key_run].append(c)
@@ -1067,7 +1067,7 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
                     cc_dict_begin[c.cc_type].append(c)
                 else:
                     cc_dict_end[c.cc_type].append(c)
-    
+
     # Save
     temp_data['code_dict'] = code_dict
     temp_data['cc_dict_begin'] = cc_dict_begin
@@ -1100,7 +1100,7 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
         sessionfile.close()
         code_index_dict[key] = code_index
     temp_data['code_index_dict'] = code_index_dict
-    
+
     # Write synchronization file if in debug mode
     if debug is not None:
         # Might improve tracking/cleanup of syncdb files
@@ -1150,7 +1150,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     pygments_settings = data['pygments_settings']
     jobs = temp_data['jobs']
     verbose = temp_data['verbose']
-    
+
     code_dict = temp_data['code_dict']
     cons_dict = temp_data['cons_dict']
     cc_dict_begin = temp_data['cc_dict_begin']
@@ -1163,21 +1163,21 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     pygments_files = data['pygments_files']
     pygments_macros = data['pygments_macros']
     typeset_cache = data['typeset_cache']
-    
+
     errors = temp_data['errors']
     warnings = temp_data['warnings']
-    
+
     makestderr = data['settings']['makestderr']
     stderrfilename = data['settings']['stderrfilename']
     code_index_dict = temp_data['code_index_dict']
-    
+
     hashdependencies = temp_data['hashdependencies']
     dependencies = data['dependencies']
     exit_status = data['exit_status']
     start_time = data['start_time']
     debug = temp_data['debug']
     interactive = temp_data['interactive']
-    
+
     # If in debug or interactive mode, short-circuit the whole process
     # #### This should probably be refactored later, once debugging is more
     # mature
@@ -1185,17 +1185,17 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         import shlex
         if debug is not None:
             print('Entering debug mode for "{0}"\n'.format(debug) + '-'*20 + '\n')
-            key = temp_data['debug_key']            
+            key = temp_data['debug_key']
         else:
             print('Entering interactive mode for "{0}"\n'.format(interactive) + '-'*20 + '\n')
-            key = temp_data['interactive_key']            
+            key = temp_data['interactive_key']
         basename = key.replace('#', '_')
         family, session, restart = key.split('#')
         # #### Revise as debugging is expanded
         if debug is not None and engine_dict[family].language != 'python':
             return sys.exit('Currently, debug only supports Python')
         if debug is not None:
-            # #### Eventually, should move to pythontex_engines.py and 
+            # #### Eventually, should move to pythontex_engines.py and
             # provide means for customization
             command = '{python} {debug} {file}.py --interactive'
             command = command.replace('{python}', interpreter_dict['python'])
@@ -1227,18 +1227,18 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
                 # Batch files won't be found when called without extension. They
                 # would be found if `shell=True`, but then getting the right
                 # exit code is tricky.  So we perform some `cmd` trickery that
-                # is essentially equivalent to `shell=True`, but gives correct 
+                # is essentially equivalent to `shell=True`, but gives correct
                 # exit codes.  Note that `subprocess.Popen()` works with strings
                 # under Windows; a list is not required.
                 exec_cmd_string = ' '.join(exec_cmd)
                 exec_cmd_string = 'cmd /C "@echo off & call {0} & if errorlevel 1 exit 1"'.format(exec_cmd_string)
                 proc = subprocess.Popen(exec_cmd_string)
             else:
-                raise          
+                raise
         proc.wait()
         os.chdir(orig_cwd)
         # Do a basic update of pickled data
-        # This is only really needed for tracking the code file and the 
+        # This is only really needed for tracking the code file and the
         # synchronization file (if it was created)
         if temp_data['loaded_old_data'] and key in old_data['exit_status']:
             exit_status[key] = old_data['exit_status'][key]
@@ -1253,22 +1253,22 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         pickle.dump(data, f, -1)
         f.close()
         return
-    
-    
-    # Create a pool for multiprocessing.  Set the maximum number of 
+
+
+    # Create a pool for multiprocessing.  Set the maximum number of
     # concurrent processes to a user-specified value for jobs.  If the user
-    # has not specified a value, then it will be None, and 
+    # has not specified a value, then it will be None, and
     # multiprocessing.Pool() will use cpu_count().
     pool = multiprocessing.Pool(jobs)
     tasks = []
-    
+
     # If verbose, print a list of processes
     if verbose:
         print('\n* PythonTeX will run the following processes')
         print('  with working directory {0}'.format(workingdir))
         print('  (maximum concurrent processes = {0})'.format(jobs))
-    
-    # Add code processes.  Note that everything placed in the codedict 
+
+    # Add code processes.  Note that everything placed in the codedict
     # needs to be executed, based on previous testing, except for custom code.
     for key in code_dict:
         family = key.split('#')[0]
@@ -1285,7 +1285,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
                                                  engine_dict[family].linenumbers,
                                                  engine_dict[family].lookbehind,
                                                  keeptemps, hashdependencies)'''
-        tasks.append(pool.apply_async(run_code, [encoding, outputdir, 
+        tasks.append(pool.apply_async(run_code, [encoding, outputdir,
                                                  workingdir, code_dict[key],
                                                  engine_dict[family].language,
                                                  engine_dict[family].commands,
@@ -1300,18 +1300,18 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
                                                  keeptemps, hashdependencies]))
         if verbose:
             print('    - Code process ' + key.replace('#', ':'))
-    
+
     # Add console processes
     for key in cons_dict:
         family = key.split('#')[0]
         if engine_dict[family].language.startswith('python'):
             if family in pygments_settings:
                 # Uncomment the following for debugging
-                '''python_console(jobname, encoding, outputdir, workingdir, 
+                '''python_console(jobname, encoding, outputdir, workingdir,
                                fvextfile, pygments_settings[family],
                                cc_dict_begin[family], cons_dict[key],
                                cc_dict_end[family], engine_dict[family].startup,
-                               engine_dict[family].banner, 
+                               engine_dict[family].banner,
                                engine_dict[family].filename)'''
                 tasks.append(pool.apply_async(python_console, [jobname, encoding,
                                                                outputdir, workingdir,
@@ -1333,31 +1333,31 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
                                                                cc_dict_end[family],
                                                                engine_dict[family].startup,
                                                                engine_dict[family].banner,
-                                                               engine_dict[family].filename]))  
+                                                               engine_dict[family].filename]))
         else:
             print('* PythonTeX error')
             print('    Currently, non-Python consoles are not supported')
             errors += 1
         if verbose:
             print('    - Console process ' + key.replace('#', ':'))
-    
+
     # Add a Pygments process
     if pygments_list:
-        tasks.append(pool.apply_async(do_pygments, [encoding, outputdir, 
+        tasks.append(pool.apply_async(do_pygments, [encoding, outputdir,
                                                     fvextfile,
                                                     pygments_list,
                                                     pygments_settings,
                                                     typeset_cache]))
         if verbose:
             print('    - Pygments process')
-    
+
     # Execute the processes
     pool.close()
     pool.join()
-    
+
     # Get the outputs of processes
     # Get the files and macros created.  Get the number of errors and warnings
-    # produced.  Get any messages returned.  Get the exit_status, which is a 
+    # produced.  Get any messages returned.  Get the exit_status, which is a
     # dictionary of code that failed and thus must be run again (its hash is
     # set to a null string).  Keep track of whether there were any new files,
     # so that the last time of file creation in .pytxmcr can be updated.
@@ -1375,7 +1375,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
             errors += result['errors']
             warnings += result['warnings']
             exit_status[key] = (result['errors'], result['warnings'])
-            messages.extend(result['messages'])            
+            messages.extend(result['messages'])
         elif result['process'] == 'console':
             key = result['key']
             files[key].extend(result['files'])
@@ -1399,8 +1399,8 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
             pygments_macros.update(result['pygments_macros'])
             errors += result['errors']
             warnings += result['warnings']
-            messages.extend(result['messages'])        
-    
+            messages.extend(result['messages'])
+
     # Do a quick check to see if any dependencies were modified since the
     # beginning of the run.  If so, reset them so they will run next time and
     # issue a warning
@@ -1419,11 +1419,11 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         for s in set(unresolved_sessions):
             print('    - ' + s)
         warnings += 1
-    
-    
+
+
     # Save all content (only needs to be done if code was indeed run).
     # Save a commented-out time corresponding to the last time PythonTeX ran
-    # and created files, so that tools like latexmk can easily detect when 
+    # and created files, so that tools like latexmk can easily detect when
     # another run is needed.
     if tasks:
         if new_files or not temp_data['loaded_old_data']:
@@ -1431,13 +1431,13 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         else:
             last_new_file_time = old_data['last_new_file_time']
         data['last_new_file_time'] = last_new_file_time
-        
+
         macro_file = open(os.path.expanduser(os.path.normcase(os.path.join(outputdir, jobname + '.pytxmcr'))), 'w', encoding=encoding)
         macro_file.write('%Last time of file creation:  ' + str(last_new_file_time) + '\n\n')
         for key in macros:
             macro_file.write(''.join(macros[key]))
         macro_file.close()
-        
+
         pygments_macro_file = open(os.path.expanduser(os.path.normcase(os.path.join(outputdir, jobname + '.pytxpyg'))), 'w', encoding=encoding)
         # Only save Pygments styles that are used
         style_set = set([pygments_settings[k]['formatter_options']['style'] for k in pygments_settings if k != ':GLOBAL'])
@@ -1447,12 +1447,12 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         for key in pygments_macros:
             pygments_macro_file.write(''.join(pygments_macros[key]))
         pygments_macro_file.close()
-        
+
         pythontex_data_file = os.path.expanduser(os.path.normcase(os.path.join(outputdir, 'pythontex_data.pkl')))
         f = open(pythontex_data_file, 'wb')
         pickle.dump(data, f, -1)
         f.close()
-    
+
     # Print any errors and warnings.
     if messages:
         print('\n'.join(messages))
@@ -1465,15 +1465,15 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
 
 
 
-def run_code(encoding, outputdir, workingdir, code_list, language, commands, 
-             command_created, extension, makestderr, stderrfilename, 
-             code_index, errorsig, warningsig, linesig, stderrlookbehind, 
+def run_code(encoding, outputdir, workingdir, code_list, language, commands,
+             command_created, extension, makestderr, stderrfilename,
+             code_index, errorsig, warningsig, linesig, stderrlookbehind,
              keeptemps, hashdependencies):
     '''
     Function for multiprocessing code files
     '''
     import shlex
-    
+
     # Create what's needed for storing results
     family = code_list[0].family
     session = code_list[0].session
@@ -1485,18 +1485,18 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
     warnings = 0
     unknowns = 0
     messages = []
-    
-    # Create message lists only for stderr, one for undelimited stderr and 
-    # one for delimited, so it's easy to keep track of if there is any 
+
+    # Create message lists only for stderr, one for undelimited stderr and
+    # one for delimited, so it's easy to keep track of if there is any
     # stderr.  These are added onto messages at the end.
     err_messages_ud = []
     err_messages_d = []
-    
+
     # We need to let the user know we are switching code files
     # We check at the end to see if there were indeed any errors and warnings
     # and if not, clear messages.
     messages.append('\n----  Messages for ' + key_run.replace('#', ':') + '  ----')
-    
+
     # Open files for stdout and stderr, run the code, then close the files
     basename = key_run.replace('#', '_')
     out_file_name = os.path.expanduser(os.path.normcase(os.path.join(outputdir, basename + '.out')))
@@ -1510,16 +1510,16 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         script_full = os.path.expanduser(os.path.normcase(os.path.join(os.getcwd(), outputdir, basename)))
     # #### Need to revise so that intermediate files can be detected and cleaned up
     for f in command_created:
-        files.append(f.format(file=script))
+        files.append(f.format(file=script, File=script_full))
     for command in commands:
         # Note that command is a string, which must be converted to list
         # Must double-escape any backslashes so that they survive `shlex.split()`
         # `shlex.split()` only works with Unicode after 2.7.2
         if (sys.version_info.major == 2 and sys.version_info.micro < 3):
-            exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'))))
+            exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'), workingdir=workingdir.replace('\\', '\\\\'))))
             exec_cmd = [unicode(elem) for elem in exec_cmd]
         else:
-            exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\')))
+            exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'), workingdir=workingdir.replace('\\', '\\\\')))
         # Add any created files due to the command
         # This needs to be done before attempts to execute, to prevent orphans
         try:
@@ -1529,7 +1529,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 # Batch files won't be found when called without extension. They
                 # would be found if `shell=True`, but then getting the right
                 # exit code is tricky.  So we perform some `cmd` trickery that
-                # is essentially equivalent to `shell=True`, but gives correct 
+                # is essentially equivalent to `shell=True`, but gives correct
                 # exit codes.  Note that `subprocess.Popen()` works with strings
                 # under Windows; a list is not required.
                 exec_cmd_string = ' '.join(exec_cmd)
@@ -1537,14 +1537,14 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 proc = subprocess.Popen(exec_cmd_string, stdout=out_file, stderr=err_file)
             else:
                 raise
-            
+
         proc.wait()
     out_file.close()
     err_file.close()
-    
+
     # Process saved stdout into file(s) that are included in the TeX document.
     #
-    # Go through the saved output line by line, and save any printed content 
+    # Go through the saved output line by line, and save any printed content
     # to its own file, named based on instance.
     #
     # The very end of the stdout lists dependencies, if any, so we start by
@@ -1565,7 +1565,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
             valid_stdout = False
             if proc.returncode == 0:
                 raise ValueError('Missing "created" and/or "dependencies" delims in stdout; invalid template?')
-                    
+
         if valid_stdout:
             # Add created files to created list
             for c in created.splitlines():
@@ -1573,11 +1573,11 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     files.append(c)
                 else:
                     files.append(os.path.join(workingdir, c))
-            
+
             # Create a set of dependencies, to eliminate duplicates in the event
             # that there are any.  This is mainly useful when dependencies are
-            # automatically determined (for example, through redefining open()), 
-            # may be specified multiple times as a result, and are hashed (and 
+            # automatically determined (for example, through redefining open()),
+            # may be specified multiple times as a result, and are hashed (and
             # of a large enough size that hashing time is non-negligible).
             deps = set([dep for dep in deps.splitlines()])
             # Process dependencies; get mtimes and (if specified) hashes
@@ -1586,21 +1586,21 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 if not os.path.isabs(dep_file):
                     dep_file = os.path.expanduser(os.path.normcase(os.path.join(workingdir, dep_file)))
                 if not os.path.isfile(dep_file):
-                    # If we can't find the file, we return a null hash and issue 
-                    # an error.  We don't need to change the exit status.  If the 
-                    # code does depend on the file, there will be a separate 
-                    # error when the code attempts to use the file.  If the code 
-                    # doesn't really depend on the file, then the error will be 
-                    # raised again anyway the next time PythonTeX runs when the 
+                    # If we can't find the file, we return a null hash and issue
+                    # an error.  We don't need to change the exit status.  If the
+                    # code does depend on the file, there will be a separate
+                    # error when the code attempts to use the file.  If the code
+                    # doesn't really depend on the file, then the error will be
+                    # raised again anyway the next time PythonTeX runs when the
                     # dependency is listed but not found.
                     dependencies[dep] = (None, None)
                     messages.append('* PythonTeX error')
                     messages.append('    Cannot find dependency "' + dep + '"')
                     messages.append('    It belongs to ' + key_run.replace('#', ':'))
                     messages.append('    Relative paths to dependencies must be specified from the working directory.')
-                    errors += 1                
+                    errors += 1
                 elif hashdependencies:
-                    # Read and hash the file in binary.  Opening in text mode 
+                    # Read and hash the file in binary.  Opening in text mode
                     # would require an unnecessary decoding and encoding cycle.
                     hasher = sha1()
                     f = open(dep_file, 'rb')
@@ -1609,7 +1609,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     dependencies[dep] = (os.path.getmtime(dep_file), hasher.hexdigest())
                 else:
                     dependencies[dep] = (os.path.getmtime(dep_file), '')
-            
+
             for block in out.split('=>PYTHONTEX:STDOUT#')[1:]:
                 if block:
                     delims, content = block.split('#\n', 1)
@@ -1659,8 +1659,8 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         # Create the full basename that will be replaced in stderr
         # We need two versions, one with the correct slashes for the OS,
         # and one with the opposite slashes.  This is needed when a language
-        # doesn't obey the OS's slash convention in paths given in stderr.  
-        # For example, Windows uses backslashes, but Ruby under Windows uses 
+        # doesn't obey the OS's slash convention in paths given in stderr.
+        # For example, Windows uses backslashes, but Ruby under Windows uses
         # forward in paths given in stderr.
         # #### Consider os.path.normcase(), making search case-insensitive
         outputdir_exp = os.path.expanduser(outputdir)
@@ -1669,7 +1669,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
             fullbasename_reslashed = fullbasename_correct.replace('\\', '/')
         else:
             fullbasename_reslashed = fullbasename_correct.replace('/', '\\')
-        
+
         if err_ud:
             it = iter(code_index.items())
             index_now = next(it)
@@ -1677,7 +1677,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
             start_errgobble = None
             for n, line in enumerate(err_ud):
                 if basename in line:
-                    # Get the gobbleation.  This is used to determine if 
+                    # Get the gobbleation.  This is used to determine if
                     # other lines containing the basename are a continuation,
                     # or separate messages.
                     errgobble = match('(\s*)', line).groups()[0]
@@ -1685,7 +1685,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                         start_errgobble = errgobble
                     # Only issue a message and track down the line numer if
                     # this is indeed the start of a new message, rather than
-                    # a continuation of an old message that happens to 
+                    # a continuation of an old message that happens to
                     # contain the basename
                     if errgobble == start_errgobble:
                         # Determine the corresponding line number in the document
@@ -1711,15 +1711,15 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                         else:
                             doclinenum = '??'
                             input_file = '??'
-                        
-                        # Try to determine if we are dealing with an error or a 
+
+                        # Try to determine if we are dealing with an error or a
                         # warning.
                         found = False
                         index = n
                         if stderrlookbehind:
                             while index >= 0:
-                                # The order here is important.  If a line matches 
-                                # both the error and warning patterns, default to 
+                                # The order here is important.  If a line matches
+                                # both the error and warning patterns, default to
                                 # error.
                                 past_line = err_ud[index]
                                 if (index < n and basename in past_line):
@@ -1741,11 +1741,11 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                                 index -= 1
                         else:
                             while index < len(err_ud):
-                                # The order here is important.  If a line matches 
-                                # both the error and warning patterns, default to 
+                                # The order here is important.  If a line matches
+                                # both the error and warning patterns, default to
                                 # error.
                                 future_line = err_ud[index]
-                                if (index > n and basename in future_line and 
+                                if (index > n and basename in future_line and
                                         future_line.startswith(start_errgobble)):
                                     break
                                 for pattern in warningsig:
@@ -1775,7 +1775,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     err_messages_ud.append('  ' + line.replace(outputdir_exp, '<outputdir>').rstrip('\n'))
                 else:
                     err_messages_ud.append('  ' + line.rstrip('\n'))
-            
+
             # Create .stderr
             if makestderr and err_messages_ud:
                 process = False
@@ -1830,7 +1830,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                             messages.append('    Content from stderr is not delimited, and cannot be resolved')
                             errors += 1
                             process = False
-                        
+
                         if process:
                             if int(index_now[0]) > err_key_last_int:
                                 err_key = basename + '_' + index_now[0]
@@ -1851,7 +1851,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                             err_dict[err_key].append(line)
                     elif process:
                         err_dict[err_key].append(line)
-        
+
         if err_d:
             start_errgobble = None
             msg = []
@@ -1860,11 +1860,11 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 if line.startswith('=>PYTHONTEX:STDERR#'):
                     # Store the last group of messages.  Messages
                     # can't be directly appended to the main list, because
-                    # a PythonTeX message must be inserted at the beginning 
+                    # a PythonTeX message must be inserted at the beginning
                     # of each chunk of stderr that never references
                     # the script that was executed.  If the script is never
-                    # referenced, then line numbers aren't automatically 
-                    # synced.  These types of situations are created by 
+                    # referenced, then line numbers aren't automatically
+                    # synced.  These types of situations are created by
                     # warnings.warn() etc.
                     if msg:
                         if not found_basename:
@@ -1874,10 +1874,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                             doclinenum = str(code_index[instance].line_int)
                             input_file = code_index[instance].input_file
                             # Try to identify alert.  We have to parse all
-                            # lines for signs of errors and warnings.  This 
+                            # lines for signs of errors and warnings.  This
                             # may result in overcounting, but it's the best
-                            # we can do--otherwise, we could easily 
-                            # undercount, or, finding a warning, miss a 
+                            # we can do--otherwise, we could easily
+                            # undercount, or, finding a warning, miss a
                             # subsequent error.  When this code is actually
                             # used, it's already a sign that normal parsing
                             # has failed.
@@ -1911,7 +1911,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     last_delim = line
                 elif basename in line:
                     found_basename = True
-                    # Get the gobbleation.  This is used to determine if 
+                    # Get the gobbleation.  This is used to determine if
                     # other lines containing the basename are a continuation,
                     # or separate messages.
                     errgobble = match('(\s*)', line).groups()[0]
@@ -1919,7 +1919,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                         start_errgobble = errgobble
                     # Only issue a message and track down the line numer if
                     # this is indeed the start of a new message, rather than
-                    # a continuation of an old message that happens to 
+                    # a continuation of an old message that happens to
                     # contain the basename
                     if errgobble == start_errgobble:
                         # Determine the corresponding line number in the document
@@ -1944,18 +1944,18 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                         else:
                             doclinenum = '??'
                             input_file = '??'
-                        
-                        # Try to determine if we are dealing with an error or a 
+
+                        # Try to determine if we are dealing with an error or a
                         # warning.
                         found = False
                         index = n
                         if stderrlookbehind:
                             while index >= 0:
-                                # The order here is important.  If a line matches 
-                                # both the error and warning patterns, default to 
+                                # The order here is important.  If a line matches
+                                # both the error and warning patterns, default to
                                 # error.
                                 past_line = err_d[index]
-                                if (past_line.startswith('=>PYTHONTEX:STDERR#') or 
+                                if (past_line.startswith('=>PYTHONTEX:STDERR#') or
                                         (index < n and basename in past_line)):
                                     break
                                 for pattern in warningsig:
@@ -1975,11 +1975,11 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                                 index -= 1
                         else:
                             while index < len(err_d):
-                                # The order here is important.  If a line matches 
-                                # both the error and warning patterns, default to 
+                                # The order here is important.  If a line matches
+                                # both the error and warning patterns, default to
                                 # error.
                                 future_line = err_d[index]
-                                if (future_line.startswith('=>PYTHONTEX:STDERR#') or 
+                                if (future_line.startswith('=>PYTHONTEX:STDERR#') or
                                         (index > n and basename in future_line and future_line.startswith(start_errgobble))):
                                     break
                                 for pattern in warningsig:
@@ -2022,10 +2022,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     doclinenum = str(code_index[instance].line_int)
                     input_file = code_index[instance].input_file
                     # Try to identify alert.  We have to parse all
-                    # lines for signs of errors and warnings.  This 
+                    # lines for signs of errors and warnings.  This
                     # may result in overcounting, but it's the best
-                    # we can do--otherwise, we could easily 
-                    # undercount, or, finding a warning, miss a 
+                    # we can do--otherwise, we could easily
+                    # undercount, or, finding a warning, miss a
                     # subsequent error.  When this code is actually
                     # used, it's already a sign that normal parsing
                     # has failed.
@@ -2052,7 +2052,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     else:
                         err_messages_d.append('* PythonTeX stderr - {0} near line {1}:'.format(alert_type, doclinenum))
                 err_messages_d.extend(msg)
-            
+
             # Create .stderr
             if makestderr and err_messages_d:
                 process = False
@@ -2077,17 +2077,17 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                             # Calculate the line number in the document
                             # Account for inline
                             ei = code_index[instance]
-                            # Store the `instance` in case it's 
+                            # Store the `instance` in case it's
                             # incremented later
                             last_instance = instance
                             # If the error or warning was actually triggered
                             # later on (for example, multiline string with
-                            # missing final delimiter), look ahead and 
+                            # missing final delimiter), look ahead and
                             # determine the correct instance, so that
                             # we get the correct line number.  We don't
                             # associate the created stderr with this later
                             # instance, however, but rather with the instance
-                            # in which the error began.  Doing that might 
+                            # in which the error began.  Doing that might
                             # possibly be preferable in some cases, but would
                             # also require that the current stderr be split
                             # between multiple instances, requiring extra
@@ -2116,7 +2116,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                             codelinenum = '??'
                             messages.append('* PythonTeX notice')
                             messages.append('    Line number ' + str(errlinenum) + ' could not be synced with the document')
-                        
+
                         line = line.replace(str(errlinenum), str(codelinenum), 1)
                         if fullbasename_correct in line:
                             fullbasename = fullbasename_correct
@@ -2140,7 +2140,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 f.write(''.join(err_dict[err_key]))
                 f.close()
                 files.append(stderr_file_name)
-    
+
     # Clean up temp files, and update the list of existing files
     if keeptemps == 'none':
         for ext in [extension, 'pytxmcr', 'out', 'err']:
@@ -2159,7 +2159,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
 
     # Take care of any unknowns, based on exit code
     # Interpret the exit code as an indicator of whether there were errors,
-    # and treat unknowns accordingly.  This will cause all warnings to be 
+    # and treat unknowns accordingly.  This will cause all warnings to be
     # misinterpreted as errors if warnings trigger a nonzero exit code.
     # It will also cause all warnings to be misinterpreted as errors if there
     # is a single error that causes a nonzero exit code.  That isn't ideal,
@@ -2178,7 +2178,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     {0} message(s) could not be classified
                     Interpreted as {1}, based on the return code(s)'''
         messages[0] += textwrap.dedent(unknowns_message.format(unknowns, unknowns_type))
-    
+
     # Take care of anything that has escaped detection thus far.
     if proc.returncode == 1 and not errors:
         errors += 1
@@ -2189,7 +2189,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     The following command was executed:
                         "{0}"'''
         messages[0] += textwrap.dedent(command_message.format(' '.join(exec_cmd)))
-    
+
     # Add any stderr messages; otherwise, clear the default message header
     if err_messages_ud:
         messages.extend(err_messages_ud)
@@ -2197,7 +2197,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         messages.extend(err_messages_d)
     if len(messages) == 1:
         messages = []
-    
+
     # Return a dict of dicts of results
     return {'process': 'code',
             'key': key_run,
@@ -2211,18 +2211,18 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
 
 
 
-def do_pygments(encoding, outputdir, fvextfile, pygments_list, 
+def do_pygments(encoding, outputdir, fvextfile, pygments_list,
                 pygments_settings, typeset_cache):
     '''
     Create Pygments content.
-    
+
     To be run during multiprocessing.
     '''
     # Lazy import
     from pygments import highlight
     from pygments.lexers import get_lexer_by_name
     from pygments.formatters import LatexFormatter
-    
+
     # Create what's needed for storing results
     pygments_files = defaultdict(list)
     pygments_macros = defaultdict(list)
@@ -2230,16 +2230,16 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
     warnings = 0
     messages = []
     messages.append('\n----  Messages for Pygments  ----')
-    
+
     # Create dicts of formatters and lexers.
     formatter = dict()
     lexer = dict()
     for codetype in pygments_settings:
         if codetype != ':GLOBAL':
             formatter[codetype] = LatexFormatter(**pygments_settings[codetype]['formatter_options'])
-            lexer[codetype] = get_lexer_by_name(pygments_settings[codetype]['lexer'], 
+            lexer[codetype] = get_lexer_by_name(pygments_settings[codetype]['lexer'],
                                                 **pygments_settings[codetype]['lexer_options'])
-    
+
     # Actually parse and highlight the code.
     for c in pygments_list:
         if c.is_cons:
@@ -2260,19 +2260,19 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
         if c.is_inline or content.count('\n') < fvextfile:
             # Highlighted code brought in via macros needs SaveVerbatim
             if c.args_prettyprint:
-                processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                processed = sub(r'\\begin{Verbatim}\[(.+)\]',
                                 r'\\begin{{pytx@SaveVerbatim}}[\1, {4}]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance, c.args_prettyprint), processed, count=1)
             else:
-                processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                processed = sub(r'\\begin{Verbatim}\[(.+)\]',
                                 r'\\begin{{pytx@SaveVerbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance), processed, count=1)
             processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@SaveVerbatim}\n\n'
             pygments_macros[c.key_typeset].append(processed)
         else:
             if c.args_prettyprint:
-                processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                processed = sub(r'\\begin{Verbatim}\[(.+)\]',
                                 r'\\begin{{pytx@Verbatim}}[\1, {4}]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance, c.args_prettyprint), processed, count=1)
             else:
-                processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                processed = sub(r'\\begin{Verbatim}\[(.+)\]',
                                 r'\\begin{{pytx@Verbatim}}[\1]{{pytx@{0}@{1}@{2}@{3}}}'.format(c.family, c.session, c.restart, c.instance), processed, count=1)
             processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@Verbatim}\n\n'
             fname = os.path.join(outputdir, c.key_typeset.replace('#', '_') + '.pygtex')
@@ -2280,7 +2280,7 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
             f.write(processed)
             f.close()
             pygments_files[c.key_typeset].append(fname)
-    
+
     if len(messages) == 1:
         messages = []
     # Return a dict of dicts of results
@@ -2289,7 +2289,7 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
             'pygments_macros': pygments_macros,
             'errors': errors,
             'warnings': warnings,
-            'messages': messages} 
+            'messages': messages}
 
 
 
@@ -2298,7 +2298,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                    pygments_settings, cc_begin_list, cons_list, cc_end_list,
                    startup, banner, filename):
     '''
-    Use Python's ``code`` module to typeset emulated Python interactive 
+    Use Python's ``code`` module to typeset emulated Python interactive
     sessions, optionally highlighting with Pygments.
     '''
     # Create what's needed for storing results
@@ -2313,7 +2313,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
     warnings = 0
     messages = []
     messages.append('\n----  Messages for ' + key_run.replace('#', ':') + '  ----')
-    
+
     # Lazy import what's needed
     import code
     from collections import deque
@@ -2326,14 +2326,14 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                 self._orig_write(unicode(s))
     else:
         from io import StringIO
-    
+
     # Create a custom console class
     class Console(code.InteractiveConsole):
         '''
         A subclass of code.InteractiveConsole that takes a list and treats it
         as a series of console input.
         '''
-        
+
         def __init__(self, banner, filename):
             if banner == 'none':
                 self.banner = 'NULL BANNER'
@@ -2352,7 +2352,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                 self.filename = None
             code.InteractiveConsole.__init__(self, filename=self.filename)
             self.iostdout = StringIO()
-    
+
         def consolize(self, startup, cons_list):
             self.console_code = deque()
             # Delimiters are passed straight through and need newlines
@@ -2367,10 +2367,10 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                             sys.path.append(os.getcwd())
                     else:
                         sys.exit('Cannot find directory "{workingdir}"')
-                    
+
                     if docdir not in sys.path:
                         sys.path.append(docdir)
-                    
+
                     del docdir
                     '''
             cons_config = cons_config.format(workingdir=os.path.expanduser(os.path.normcase(workingdir)))[1:]
@@ -2388,16 +2388,16 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
             self.interact(self.banner)
             sys.stdout = old_stdout
             self.session_log = self.iostdout.getvalue()
-    
+
         def raw_input(self, prompt):
-            # Have to do a lot of looping and trying to make sure we get 
+            # Have to do a lot of looping and trying to make sure we get
             # something valid to execute
             try:
                 line = self.console_code.popleft()
             except IndexError:
                 raise EOFError
             while line.startswith('=>PYTHONTEX#'):
-                # Get new lines until we get one that doesn't begin with a 
+                # Get new lines until we get one that doesn't begin with a
                 # delimiter.  Then write the last delimited line.
                 old_line = line
                 try:
@@ -2410,19 +2410,19 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
             else:
                 self.write('\n')
             return line
-        
+
         def write(self, data):
             self.iostdout.write(data)
-    
+
     # Need to combine all custom code and user code to pass to consolize
     cons_list = cc_begin_list + cons_list + cc_end_list
-    # Create a dict for looking up exceptions.  This is needed for startup 
+    # Create a dict for looking up exceptions.  This is needed for startup
     # commands and for code commands and environments, since their output
     # isn't typeset
     cons_index = {}
     for c in cons_list:
-        cons_index[c.instance] = c.line    
-    
+        cons_index[c.instance] = c.line
+
     # Consolize the code
     # If the working directory is changed as part of the console code,
     # then we need to get back to where we were.
@@ -2430,7 +2430,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
     cwd = os.getcwd()
     con.consolize(startup, cons_list)
     os.chdir(cwd)
-    
+
     # Set up Pygments, if applicable
     if pygments_settings is not None:
         pygmentize = True
@@ -2439,11 +2439,11 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
         from pygments.lexers import get_lexer_by_name
         from pygments.formatters import LatexFormatter
         formatter = LatexFormatter(**pygments_settings['formatter_options'])
-        lexer = get_lexer_by_name(pygments_settings['lexer'], 
+        lexer = get_lexer_by_name(pygments_settings['lexer'],
                                   **pygments_settings['lexer_options'])
     else:
         pygmentize = False
-    
+
     # Process the console output
     output = con.session_log.split('=>PYTHONTEX#')
     # Extract banner
@@ -2460,8 +2460,8 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                 exception = False
                 console_content_lines = console_content.splitlines()
                 for line in console_content_lines:
-                    if (not line.startswith(sys.ps1) and 
-                            not line.startswith(sys.ps2) and 
+                    if (not line.startswith(sys.ps1) and
+                            not line.startswith(sys.ps2) and
                             line and not line.isspace()):
                         exception = True
                         break
@@ -2482,8 +2482,8 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                 exception = False
                 console_content_lines = console_content.splitlines()
                 for line in console_content_lines:
-                    if (line and not line.startswith(sys.ps1) and 
-                            not line.startswith(sys.ps2) and 
+                    if (line and not line.startswith(sys.ps1) and
+                            not line.startswith(sys.ps2) and
                             not line.isspace()):
                         exception = True
                         break
@@ -2507,7 +2507,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
             else:
                 if command == 'i':
                     # Currently, there isn't any error checking for invalid
-                    # content; it is assumed that a single line of commands 
+                    # content; it is assumed that a single line of commands
                     # was entered, producing one or more lines of output.
                     # Given that the current ``\pycon`` command doesn't
                     # allow line breaks to be written to the .pytxcode, that
@@ -2528,14 +2528,14 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                     processed = highlight(console_content, lexer, formatter)
                     # #### Need to add wrapping:
                     #processed = highlight('\n'.join([textwrap.fill(x) for x in console_content.splitlines(True)]), lexer, formatter)
-                    if console_content.count('\n') < fvextfile:                            
-                        processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                    if console_content.count('\n') < fvextfile:
+                        processed = sub(r'\\begin{Verbatim}\[(.+)\]',
                                         r'\\begin{{pytx@SaveVerbatim}}[\1]{{pytx@{0}}}'.format(key_typeset.replace('#', '@')),
                                         processed, count=1)
                         processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@SaveVerbatim}\n\n'
                         pygments_macros[key_typeset].append(processed)
                     else:
-                        processed = sub(r'\\begin{Verbatim}\[(.+)\]', 
+                        processed = sub(r'\\begin{Verbatim}\[(.+)\]',
                                         r'\\begin{{pytx@Verbatim}}[\1]{{pytx@{0}}}'.format(key_typeset.replace('#', '@')),
                                         processed, count=1)
                         processed = processed.rsplit('\\', 1)[0] + '\\end{pytx@Verbatim}\n\n'
@@ -2543,10 +2543,10 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                         f = open(os.path.expanduser(os.path.normcase(fname)), 'w', encoding=encoding)
                         f.write(processed)
                         f.close()
-                        pygments_files[key_typeset].append(fname)  
+                        pygments_files[key_typeset].append(fname)
                 else:
                     if console_content.count('\n') < fvextfile:
-                        processed = ('\\begin{{pytx@SaveVerbatim}}{{pytx@{0}}}\n'.format(key_typeset.replace('#', '@')) + 
+                        processed = ('\\begin{{pytx@SaveVerbatim}}{{pytx@{0}}}\n'.format(key_typeset.replace('#', '@')) +
                                      console_content + '\\end{pytx@SaveVerbatim}\n\n')
                         macros.append(processed)
                     else:
@@ -2557,10 +2557,10 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                         f.write(processed)
                         f.close()
                         files.append(fname)
-    
+
     if len(messages) == 1:
         messages = []
-    
+
     # Return a dict of dicts of results
     return {'process': 'console',
             'key': key_run,
@@ -2572,7 +2572,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
             'dependencies': dependencies,
             'errors': errors,
             'warnings': warnings,
-            'messages': messages} 
+            'messages': messages}
 
 
 
@@ -2593,25 +2593,25 @@ def main(python=None):
     temp_data = {'errors': 0, 'warnings': 0, 'python': python}
     old_data = dict()
 
-    
+
     # Process command-line options.
     #
-    # This gets the raw_jobname (actual job name), jobname (a sanitized job 
+    # This gets the raw_jobname (actual job name), jobname (a sanitized job
     # name, used for creating files named after the jobname), and any options.
     process_argv(data, temp_data)
-    # If there aren't errors in argv, and the program is going to run 
-    # (rather than just exit due to --version or --help command-line options), 
-    # print PythonTeX version.  Flush to make the message go out immediately,  
+    # If there aren't errors in argv, and the program is going to run
+    # (rather than just exit due to --version or --help command-line options),
+    # print PythonTeX version.  Flush to make the message go out immediately,
     # so that the user knows PythonTeX has started.
     print('This is PythonTeX {0}'.format(__version__))
     sys.stdout.flush()
-    # Once we have the encoding (from argv), we set stdout and stderr to use 
-    # this encoding.  Later, we will parse the saved stderr of scripts 
-    # executed via multiprocessing subprocesses, and print the parsed results 
-    # to stdout.  The saved stderr uses the same encoding that was used 
-    # for the files that created it (this is important for code containing 
+    # Once we have the encoding (from argv), we set stdout and stderr to use
+    # this encoding.  Later, we will parse the saved stderr of scripts
+    # executed via multiprocessing subprocesses, and print the parsed results
+    # to stdout.  The saved stderr uses the same encoding that was used
+    # for the files that created it (this is important for code containing
     # unicode characters), so we also need stdout for the main PythonTeX
-    # script to support this encoding.  Setting stderr encoding is primarily 
+    # script to support this encoding.  Setting stderr encoding is primarily
     # a matter of symmetry.  Ideally, pythontex*.py will be bug-free,
     # and stderr won't be needed!
     if sys.version_info[0] == 2:
@@ -2624,7 +2624,7 @@ def main(python=None):
 
     # Load the code and process the settings it passes from the TeX side.
     #
-    # This gets a list containing the code (the part of the code file 
+    # This gets a list containing the code (the part of the code file
     # containing the settings is removed) and the processed settings.
     load_code_get_settings(data, temp_data)
     # Now that the settings are loaded, check if outputdir exits.
@@ -2635,19 +2635,19 @@ def main(python=None):
 
     # Load/create old_data
     get_old_data(data, old_data, temp_data)
-    
-    
+
+
     # Hash the code.  Determine what needs to be executed.  Determine whether
-    # Pygments should be used.  Update pygments_settings to account for 
-    # Pygments commands and environments (as opposed to PythonTeX commands 
+    # Pygments should be used.  Update pygments_settings to account for
+    # Pygments commands and environments (as opposed to PythonTeX commands
     # and environments).
     hash_all(data, temp_data, old_data, engine_dict)
-    
-    
+
+
     # Parse the code and write scripts for execution.
     parse_code_write_scripts(data, temp_data, engine_dict)
-    
-    
+
+
     # Execute the code and perform Pygments highlighting via multiprocessing.
     do_multiprocessing(data, temp_data, old_data, engine_dict)
 
@@ -2657,11 +2657,11 @@ def main(python=None):
         if 'upgrade_message' in temp_data:
             print(temp_data['upgrade_message'])
         sys.exit()
-        
+
     # Print exit message
     print('\n--------------------------------------------------')
-    # If some rerun settings are used, there may be unresolved errors or 
-    # warnings; if so, print a summary of those along with the current 
+    # If some rerun settings are used, there may be unresolved errors or
+    # warnings; if so, print a summary of those along with the current
     # error and warning summary
     unresolved_errors = 0
     unresolved_warnings = 0
@@ -2676,13 +2676,13 @@ def main(python=None):
     if unresolved_warnings != 0 or unresolved_errors != 0:
         print('PythonTeX:  {0}'.format(data['raw_jobname']))
         print('    - Old:      {0} error(s), {1} warnings(s)'.format(unresolved_errors, unresolved_warnings))
-        print('    - Current:  {0} error(s), {1} warnings(s)'.format(temp_data['errors'], temp_data['warnings']))        
+        print('    - Current:  {0} error(s), {1} warnings(s)'.format(temp_data['errors'], temp_data['warnings']))
     else:
         print('PythonTeX:  {0} - {1} error(s), {2} warning(s)\n'.format(data['raw_jobname'], temp_data['errors'], temp_data['warnings']))
-        
+
     if 'upgrade_message' in temp_data:
         print(temp_data['upgrade_message'])
-    
+
     # Exit with appropriate exit code based on user settings.
     if temp_data['error_exit_code'] and temp_data['errors'] > 0:
         sys.exit(1)
@@ -2691,8 +2691,8 @@ def main(python=None):
 
 
 
-# The "if" statement is needed for multiprocessing under Windows; see the 
-# multiprocessing documentation.  It is also needed in this case when the 
+# The "if" statement is needed for multiprocessing under Windows; see the
+# multiprocessing documentation.  It is also needed in this case when the
 # script is invoked via the wrapper.
 if __name__ == '__main__':
     #// Python 2

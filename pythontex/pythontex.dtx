@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2016/07/04 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/05 v0.15dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -67,7 +67,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3023}
+% \CheckSum{3027}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -89,9 +89,10 @@
 % \begin{changelog}{v0.15}{2016/07/??}
 % \textbf{New features}
 % \begin{itemize}
+% \item Added \texttt{rust} and \texttt{rs} families of commands and environments.  This provides complete support for Rust, except that \texttt{rstex.formatter()}, \texttt{rstex.before()}, and \texttt{rstex.after()} will likely need additional refinement (\#90).
 % \item Improved \texttt{console} compatibility under Linux with Python 3 (\#70).
-% \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash under non-Windows operating systems.
-% \item Counters for default sessions are now created automatically.  This prevents counter errors under some circumstances when working with \texttt{\string\includeonly}.  (See \url{http://tug.org/pipermail/macostex-archives/2010-December/046007.html} for more on the problematic counter behavior.)
+% \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash.  Bash works with Windows if it is installed.
+% \item Counters for default sessions are now created automatically.  This prevents counter errors under some circumstances when working with \texttt{\string\includeonly}.
 % \end{itemize}
 % \end{changelog}
 %
@@ -1446,6 +1447,16 @@
 % \subsection{bash}
 %
 % Support for bash was added in v0.15.  Support for bash is very basic.  Bash commands may be executed, and their output (stdout and stderr) may be typeset.  As with other languages, all commands are executed in a single session unless the user specifies otherwise.  There is not a utilities class or any related features.
+%
+% Bash will work with Windows if it is installed.
+%
+%
+% \subsection{Rust}
+%
+% Support for Rust was added in v0.15.  Complete support is provided, except that |rstex.formatter()|, |rstex.before()|, and |rstex.after()| will likely need additional refinement in the future to make them more convenient to work with.  Because Rust typically gives a long sequence of errors, \pytex\ processing and synchronization of |stderr| is currently verbose and may need to be improved in the future as well.
+%
+% When using |\rust| and |\rs|, keep in mind that these wrap code in |rstex.formatter()|.  Because |rstex| is mutable, accessing its fields within |rstex.formatter()| will require |&rstex.|\meta{field}|.to_string()| or similar.
+%
 %
 % \subsection{Adding support for a new language}
 %
@@ -3836,6 +3847,8 @@
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
     \ifstrequal{#1}{bash}{\makepythontexfamily[pyglexer=bash]{bash}}{}%
     \ifstrequal{#1}{sage}{\makepythontexfamily[pyglexer=sage]{sage}}{}%
+    \ifstrequal{#1}{rust}{\makepythontexfamily[pyglexer=rust]{rust}}{}%
+    \ifstrequal{#1}{rs}{\makepythontexfamily[pyglexer=rust]{rs}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}
