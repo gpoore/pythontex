@@ -1,0 +1,47 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily=bash]{pythontex}
+
+\begin{document}
+
+
+\section*{Bash}
+
+Inline:  \bash{echo "Hello from bash!"}.
+
+
+\begin{bashcode}
+echo "More from bash."
+\end{bashcode}
+
+
+\begin{bashblock}
+ls
+\end{bashblock}
+
+Printed output:  \printpythontex[verbatim].
+
+
+
+\end{document}
