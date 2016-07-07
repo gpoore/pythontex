@@ -4,50 +4,50 @@
 '''
 PythonTeX depythontex script.
 
-This script takes a LaTeX document that uses the PythonTeX package and 
-creates a new document that does not depend on PythonTeX.  It substitutes all 
-externally generated content into a copy of the original LaTeX document.  
-This is useful when you need a document that relies on few external packages 
-or custom macros (for example, for submission to a journal or conversion to 
+This script takes a LaTeX document that uses the PythonTeX package and
+creates a new document that does not depend on PythonTeX.  It substitutes all
+externally generated content into a copy of the original LaTeX document.
+This is useful when you need a document that relies on few external packages
+or custom macros (for example, for submission to a journal or conversion to
 another document format).
 
-If you just want to share a document that uses PythonTeX, keep in mind that 
-the document can be modified and compiled just like a regular LaTeX document, 
-without needing Python or any other external tools, so long as the following 
+If you just want to share a document that uses PythonTeX, keep in mind that
+the document can be modified and compiled just like a regular LaTeX document,
+without needing Python or any other external tools, so long as the following
 conditions are met:
 
   * A copy of pythontex.sty is included with the document.
   * The pythontex-files-<name> directory is included with the document.
   * The PythonTeX-specific parts of the document are not modified.
 
-To work, this script requires that the original LaTeX document be compiled 
-with the package option `depythontex`.  That creates an auxiliary file with 
+To work, this script requires that the original LaTeX document be compiled
+with the package option `depythontex`.  That creates an auxiliary file with
 the extension .depytx that contains information about all content that needs
 to be substituted.
 
-This script is purposely written in a simple, largely linear form to 
-facilitate customization.  Most of the key substitutions are performed by a 
+This script is purposely written in a simple, largely linear form to
+facilitate customization.  Most of the key substitutions are performed by a
 few functions defined near the beginning of the script, so if you need custom
-substitutions, you should begin there.  By default, all typeset code is 
-wrapped in `\verb` commands and verbatim environments, since these have the 
-greatest generality.  However, the command-line option --listing allows code 
-to be typeset with the fancyvrb, listings, minted, or PythonTeX packages 
+substitutions, you should begin there.  By default, all typeset code is
+wrapped in `\verb` commands and verbatim environments, since these have the
+greatest generality.  However, the command-line option --listing allows code
+to be typeset with the fancyvrb, listings, minted, or PythonTeX packages
 instead.
 
-The script automatically extracts all arguments of all commands and 
-environments that it replaces, so that these are available if desired for 
-customized substitution.  Two additional pieces of information are also 
-available for any typeset code:  the Pygments lexer (often the same as the 
+The script automatically extracts all arguments of all commands and
+environments that it replaces, so that these are available if desired for
+customized substitution.  Two additional pieces of information are also
+available for any typeset code:  the Pygments lexer (often the same as the
 language) and the starting line number (if line numbering was used).
 
 Keep in mind that some manual adjustments may be required after a document is
-depythontex'ed.  While depythontex attempts to create an exact copy of the 
-original document, in many cases an identical copy is impossible.  For 
-example, typeset code may have a different appearance or layout when it is 
+depythontex'ed.  While depythontex attempts to create an exact copy of the
+original document, in many cases an identical copy is impossible.  For
+example, typeset code may have a different appearance or layout when it is
 typeset with a different package.
 
 
-Copyright (c) 2013-2014, Geoffrey M. Poore
+Copyright (c) 2013-2016, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -103,77 +103,77 @@ listing = None  #'verbatim', 'fancyvrb', 'listings', 'minted', 'pythontex'
 preamble_additions = list()
 
 # Lexer dict
-# If you are using Pygments lexers that don't directly correspond to the 
-# languages used by the listings package, you can submit replacements via the 
-# command line option --lexer-dict, or edit this dict manually here.  When 
-# listings is used, all lexers are checked against this dict to see if a 
-# substitution should be made.  This approach could easily be modified to 
+# If you are using Pygments lexers that don't directly correspond to the
+# languages used by the listings package, you can submit replacements via the
+# command line option --lexer-dict, or edit this dict manually here.  When
+# listings is used, all lexers are checked against this dict to see if a
+# substitution should be made.  This approach could easily be modified to
 # work with another, non-Pygments highlighting package.
 lexer_dict = dict()
 
 
-def replace_code_cmd(name, arglist, linenum, code_replacement, 
+def replace_code_cmd(name, arglist, linenum, code_replacement,
                      code_replacement_mode, after, lexer, firstnumber):
     '''
     Typeset code from a command with a command.
-    
+
     It is only ever called if there is indeed code to typeset.
-    
-    Usually, code from a command is also typeset with a command.  This 
-    function primarily deals with that case.  In cases where code from a 
+
+    Usually, code from a command is also typeset with a command.  This
+    function primarily deals with that case.  In cases where code from a
     command is typeset with an environment (for example, `\inputpygments`),
-    this function performs some preprocessing and then uses 
+    this function performs some preprocessing and then uses
     replace_code_env() to do the real work.  This approach prevents the two
     functions from unnecessarily duplicating each other, while still giving
     the desired output.
-    
+
     Args:
         name (str):  name of the command
-        arglist (list, of str/None):  all arguments given to the original 
-            command; the last argument is what is typeset, unless a 
+        arglist (list, of str/None):  all arguments given to the original
+            command; the last argument is what is typeset, unless a
             code_replacement is specified or other instructions are given
         linenum (int):  line number in the original TeX document
         code_replacement (str/None):  replacement for the code; usually None
-            for commands, because typically the code to be typeset is the 
-            last argument passed to the command, rather than something 
+            for commands, because typically the code to be typeset is the
+            last argument passed to the command, rather than something
             captured elsewhere (like the body of an environment) or something
             preprocessed (like a console environment's content)
-        code_replacement_mode (str/None):  mode in which the replacement is 
-            to be typeset; raw/None (as TeX; generally unused for code), 
+        code_replacement_mode (str/None):  mode in which the replacement is
+            to be typeset; raw/None (as TeX; generally unused for code),
             verb (inline), or verbatim (environment)
-        after (str):  text immediately following the command; usually 
+        after (str):  text immediately following the command; usually
             shouldn't be needed
         lexer (str/None):  Pygments lexer
     Returns:
         (replacement, after) (tuple, of str)
-    
+
     '''
     # Get the correct replacement
     if code_replacement is None:
         code_replacement = arglist[-1]
-    
+
     # We only consider two possible modes of typesetting, verbatim and inline
     # verbatim
     if code_replacement_mode == 'verbatim':
-        # Sometimes we must replace a command with an environment, for 
+        # Sometimes we must replace a command with an environment, for
         # example, for `\inputpygments`
-        
-        # Make sure the introduction of an environment where a command was 
-        # previously won't produce errors with following content; make sure 
+
+        # Make sure the introduction of an environment where a command was
+        # previously won't produce errors with following content; make sure
         # that any following content is on a separate line
         if bool(match('[ \t]*\S', after)):
             after = '\n' + after
         # Rather than duplicating much of replace_code_env(), just use it
-        return replace_code_env(name, arglist, linenum, code_replacement, 
+        return replace_code_env(name, arglist, linenum, code_replacement,
                                 code_replacement_mode, after, lexer, firstnumber)
     else:
         # Usually, we're replacing a command with a command
-        
+
         # Wrap the replacement in appropriate delimiters
-        if (listing in ('verbatim', 'fancyvrb', 'minted') or 
-                (listing in ('listings', 'pythontex') and 
+        if (listing in ('verbatim', 'fancyvrb', 'minted') or
+                (listing in ('listings', 'pythontex') and
                 ('{' in code_replacement or '}' in code_replacement))):
-            for delim in ('|', '/', '`', '!', '&', '#', '@', ':', '%', '~', '$', 
+            for delim in ('|', '/', '`', '!', '&', '#', '@', ':', '%', '~', '$',
                           '=', '+', '-', '^', '_', '?', ';'):
                 if delim not in code_replacement:
                     break
@@ -198,40 +198,40 @@ def replace_code_cmd(name, arglist, linenum, code_replacement,
             else:
                 code_replacement = r'\pygment{' + lexer + '}' + code_replacement
         return (code_replacement, after)
-    
 
-def replace_code_env(name, arglist, linenum, code_replacement, 
+
+def replace_code_env(name, arglist, linenum, code_replacement,
                      code_replacement_mode, after, lexer, firstnumber):
     '''
     Typeset code from an environment with an environment.
-    
+
     It is only ever called if there is indeed code to typeset.
-    
+
     Usually it is only used to typeset code from an environment.  However,
     some commands bring in code that must be typeset as an environment.  In
-    those cases, replace_code_cmd() is called initially, and after it 
+    those cases, replace_code_cmd() is called initially, and after it
     performs some preprocessing, this function is called.  This approach
     avoids unnecessary duplication between the two functions.
-    
+
     Args:
         name (str):  name of the environment
-        arglist (list, of str/None):  all arguments given to the original 
+        arglist (list, of str/None):  all arguments given to the original
             environment
-        linenum (int):  line number in the original TeX document where 
+        linenum (int):  line number in the original TeX document where
             the environment began
         code_replacement (str):  replacement for the code; unlike the case of
             commands, this is always not None if the function is called
-        code_replacement_mode (str/None):  mode in which the replacement is 
-            to be typeset; raw/None (as TeX; generally unused for code), 
+        code_replacement_mode (str/None):  mode in which the replacement is
+            to be typeset; raw/None (as TeX; generally unused for code),
             verb (inline), or verbatim (environment)
-        after (str):  text immediately following the environment; usually 
+        after (str):  text immediately following the environment; usually
             shouldn't be needed
         lexer (str/None):  Pygments lexer
         firstnumber (str/None):  the first number of the listing, if the listing
             had numbered lines
     Returns:
         (replacement, after) (tuple, of str)
-    
+
     '''
     # Currently, there is no need to test for code_replacement_mode, because
     # this function is only ever called if the mode is 'verbatim'.  That may
@@ -245,7 +245,7 @@ def replace_code_env(name, arglist, linenum, code_replacement,
             pre = '\\begin{Verbatim}'
         else:
             pre = '\\begin{{Verbatim}}[numbers=left,firstnumber={0}]'.format(firstnumber)
-        post = '\\end{Verbatim}'        
+        post = '\\end{Verbatim}'
     elif listing == 'listings':
         if lexer is None:
             if firstnumber is None:
@@ -300,26 +300,26 @@ def replace_print_cmd(name, arglist, linenum,
                       after):
     '''
     Typeset printed content from a command.
-    
+
     It is only ever called if there is indeed printed content to typeset.
-    
+
     Args:
         name (str):  name of the command
-        arglist (list, of str/None):  all arguments given to the original 
+        arglist (list, of str/None):  all arguments given to the original
             command
         linenum (int):  line number in the original TeX document
         print_replacement (str):  printed content, read directly from file
             into a single string
-        print_replacement_mode (str/None):  mode in which the replacement is 
-            to be typeset; raw/None (as TeX), inlineverb (or v) (as inline), 
+        print_replacement_mode (str/None):  mode in which the replacement is
+            to be typeset; raw/None (as TeX), inlineverb (or v) (as inline),
             or verb (as environment)
         source (str/None):  source of the replacement content
         after (str):  text immediately following the command; important in
             some situations, because spacing can depend on what's next
     Returns:
         (replacement, after) (tuple, of str)
-    
-    '''    
+
+    '''
     if print_replacement_mode == 'verb':
         if print_replacement.count('\n') > 1:
             print('* DePythonTeX error:')
@@ -327,7 +327,7 @@ def replace_print_cmd(name, arglist, linenum,
             print('    This is not possible in inline verbatim mode')
             sys.exit(1)
         print_replacement = print_replacement.rstrip('\n')
-        for delim in ('|', '/', '`', '!', '&', '#', '@', ':', '%', '~', '$', 
+        for delim in ('|', '/', '`', '!', '&', '#', '@', ':', '%', '~', '$',
                       '=', '+', '-', '^', '_', '?', ';'):
             if delim not in print_replacement:
                 break
@@ -335,71 +335,71 @@ def replace_print_cmd(name, arglist, linenum,
     elif print_replacement_mode == 'verbatim':
         if bool(match('\s*?\n', after)):
             # Usually, we would end the verbatim environment with a newline.
-            # This is fine if there is content in `after` before the next 
+            # This is fine if there is content in `after` before the next
             # newline---in fact, it's desirable, because the verbatim package
-            # doesn't allow for content on the same line as the end of the 
-            # environment.  But if `after` is an empty line, then adding a 
+            # doesn't allow for content on the same line as the end of the
+            # environment.  But if `after` is an empty line, then adding a
             # newline will throw off spacing and must be avoided
             print_replacement = '\\begin{verbatim}\n' + print_replacement + '\\end{verbatim}'
         else:
             print_replacement = '\\begin{verbatim}\n' + print_replacement + '\\end{verbatim}\n'
     else:
-        # When printed content from a file is included as LaTeX code, we have 
-        # to be particularly careful to ensure that the content produces the 
-        # same output when substituted as when brought in by `\input`.  In 
-        # particular, `\input` strips newlines from each line of content and 
+        # When printed content from a file is included as LaTeX code, we have
+        # to be particularly careful to ensure that the content produces the
+        # same output when substituted as when brought in by `\input`.  In
+        # particular, `\input` strips newlines from each line of content and
         # adds a space at the end of each line.  This space is inside the
-        # `\input`, so it will not merge with following spaces.  So when we 
-        # substitute the content, sometimes we need to replace the final 
+        # `\input`, so it will not merge with following spaces.  So when we
+        # substitute the content, sometimes we need to replace the final
         # newline with a space that cannot be gobbled.
         #
-        # It gets more complicated.  This final space is often not 
-        # desirable.  It can be prevented by either printing an `\endinput` 
-        # command, to terminate the `\input`, or printing a percent 
+        # It gets more complicated.  This final space is often not
+        # desirable.  It can be prevented by either printing an `\endinput`
+        # command, to terminate the `\input`, or printing a percent
         # character % in the last line of the content, which comments out the
-        # final newline.  So we must check for `\endinput` anywhere in 
-        # printed content, and % in the final line, and remove any content 
-        # after them.  It's also possible that the print is followed by 
+        # final newline.  So we must check for `\endinput` anywhere in
+        # printed content, and % in the final line, and remove any content
+        # after them.  It's also possible that the print is followed by
         # an `\unskip` that eats the space, so we need to check for that too.
         #
-        # It turns out that the same approach is needed when a command like 
+        # It turns out that the same approach is needed when a command like
         # `\py` brings in content ending in a newline
-        if (print_replacement.endswith('\\endinput\n') and 
+        if (print_replacement.endswith('\\endinput\n') and
                 not print_replacement.endswith('\\string\\endinput\n')):
-            # If `\endinput` is present, everything from it on should be 
+            # If `\endinput` is present, everything from it on should be
             # discarded, unless the `\endinput` is not actually a command
-            # but rather a typeset name (for example, `\string\endinput` or 
-            # `\verb|\endinput|`).  It's impossible to check for all cases in 
-            # which `\endinput` is not a command (at least, without actually 
-            # using LaTeX), and even checking for most of them would require 
-            # a good bit of parsing.  We assume that `\endinput`, as a 
-            # command, will only ever occur at the immediate end of the 
-            # printed content.  Later, we issue a warning in case it appears 
+            # but rather a typeset name (for example, `\string\endinput` or
+            # `\verb|\endinput|`).  It's impossible to check for all cases in
+            # which `\endinput` is not a command (at least, without actually
+            # using LaTeX), and even checking for most of them would require
+            # a good bit of parsing.  We assume that `\endinput`, as a
+            # command, will only ever occur at the immediate end of the
+            # printed content.  Later, we issue a warning in case it appears
             # anywhere else.
             print_replacement = print_replacement.rsplit(r'\endinput', 1)[0]
-        elif (print_replacement.endswith('%\n') and 
-                not print_replacement.endswith('\\%\n') and 
+        elif (print_replacement.endswith('%\n') and
+                not print_replacement.endswith('\\%\n') and
                 not print_replacement.endswith('\\string%\n')):
             # Perform an analogous check for a terminating percent characer %.
-            # This case would be a bit easier to parse fully, since a percent 
-            # that comments out the last newline would have to be in the 
-            # final line of the replacement.  But it would still be 
-            # very difficult to perform a complete check.  Later, we issue a 
-            # warning if there is reason to think that a percent character 
+            # This case would be a bit easier to parse fully, since a percent
+            # that comments out the last newline would have to be in the
+            # final line of the replacement.  But it would still be
+            # very difficult to perform a complete check.  Later, we issue a
+            # warning if there is reason to think that a percent character
             # was active in the last line.
             print_replacement = print_replacement.rsplit(r'%', 1)[0]
         elif print_replacement.endswith('\n'):
             # We can't just use `else` because that would catch content
             # from `\py` and similar
-            # By default, LaTeX strips newlines and adds a space at the end 
-            # of each line of content that is brought in by `\input`.  This 
-            # may or may not be desirable, but we replicate the effect here 
-            # for consistency with the original document.  We use `\space{}` 
-            # because plain `\space` would gobble a following space, which 
+            # By default, LaTeX strips newlines and adds a space at the end
+            # of each line of content that is brought in by `\input`.  This
+            # may or may not be desirable, but we replicate the effect here
+            # for consistency with the original document.  We use `\space{}`
+            # because plain `\space` would gobble a following space, which
             # isn't consistent with the `\input` behavior being replicated.
             if bool(match(r'\\unskip\s+\S', after)):
-                # If there's an `\unskip`, fix the spacing and remove the 
-                # `\unskip`.  Since this is inline, the `\unskip` must 
+                # If there's an `\unskip`, fix the spacing and remove the
+                # `\unskip`.  Since this is inline, the `\unskip` must
                 # immediately follow the command to do any good; otherwise,
                 # it eliminates spaces that precede it, but doesn't get into
                 # the `\input` content.
@@ -410,9 +410,9 @@ def replace_print_cmd(name, arglist, linenum,
                 # the `\n`, and it will yield a space.
                 pass
             elif bool(match('\s*$', after)):
-                # If the rest of the current line, and the next line, are 
+                # If the rest of the current line, and the next line, are
                 # whitespace, we will get the correct spacing without needing
-                # `\space{}`.  We could leave `\n`, but it would be 
+                # `\space{}`.  We could leave `\n`, but it would be
                 # extraneous whitespace.
                 print_replacement = print_replacement[:-1]
             else:
@@ -431,7 +431,7 @@ def replace_print_cmd(name, arglist, linenum,
                 after = sub('^\s+', '\n', after)
         # Issue warnings, if warranted
         # Warn about `\endinput`
-        if (r'\endinput' in print_replacement and 
+        if (r'\endinput' in print_replacement and
                 print_replacement.count(r'\endinput') != print_replacement.count(r'\string\endinput')):
             print('* DePythonTeX warning:')
             print('    "\\endinput" was present in printed content near line ' + str(linenum))
@@ -441,7 +441,7 @@ def replace_print_cmd(name, arglist, linenum,
         # Warn if it looks like there are active `%` that could comment
         # out part of the original document.  We only need to check the
         # last line of printed content, because only there could
-        # percent characters escape from their original confines within 
+        # percent characters escape from their original confines within
         # `\input`, and comment out part of the document.
         if print_replacement.endswith('\n'):
             if print_replacement.count('\n') > 1:
@@ -471,42 +471,42 @@ def replace_print_cmd(name, arglist, linenum,
             print('    If it should have adjusted the spacing of printed content')
             print('    you should double-check the spacing')
     return (print_replacement, after)
-    
+
 
 def replace_print_env(name, arglist, linenum,
                       print_replacement, print_replacement_mode, source,
                       after):
     '''
     Typeset printed content from an environment.
-    
+
     It is only ever called if there is indeed printed content to typeset.
-    
+
     This should be similar to replace_print_cmd().  The main difference is
-    that the environment context typically ends with a newline, so 
+    that the environment context typically ends with a newline, so
     substitution has to be a little different to ensure that spacing after
     the environment isn't modified.
-    
+
     Args:
         name (str):  name of the environment
-        arglist (list, of str/None):  all arguments given to the original 
+        arglist (list, of str/None):  all arguments given to the original
             environment
-        linenum (int):  line number in the original TeX document where the 
+        linenum (int):  line number in the original TeX document where the
             environment began
         print_replacement (str):  printed content, read directly from file
             into a single string
-        print_replacement_mode (str/None):  mode in which the replacement is 
-            to be typeset; raw/None (as TeX), inlineverb (or v) (as inline), 
+        print_replacement_mode (str/None):  mode in which the replacement is
+            to be typeset; raw/None (as TeX), inlineverb (or v) (as inline),
             or verb (as environment)
         source (str/None):  source of the replacement content
         after (str):  text immediately following the command; important in
             some situations, because spacing can depend on what's next
     Returns:
         (replacement, after) (tuple, of str)
-    
+
     #### The inlineverb and verb modes should work, but haven't been tested
     since there are currently no environments that use them; they are only
     used by `\printpythontex`, which is a command.
-    ''' 
+    '''
     if print_replacement_mode == 'verb':
         if print_replacement.count('\n') > 1:
             print('* DePythonTeX error:')
@@ -514,119 +514,119 @@ def replace_print_env(name, arglist, linenum,
             print('    This is not possible in inline verbatim mode')
             sys.exit(1)
         print_replacement = print_replacement.rstrip('\n')
-        for delim in ('|', '/', '`', '!', '&', '#', '@', ':', '%', '~', '$', 
+        for delim in ('|', '/', '`', '!', '&', '#', '@', ':', '%', '~', '$',
                       '=', '+', '-', '^', '_', '?', ';'):
             if delim not in print_replacement:
                 break
         print_replacement = r'\verb' + delim + print_replacement + delim
         if not bool(match('[ \t]+\S', after)):
-            # If there is text on the same line as the end of the 
-            # environment, we're fine (this is unusual).  Otherwise, 
+            # If there is text on the same line as the end of the
+            # environment, we're fine (this is unusual).  Otherwise,
             # we need to toss the newline at the end of the environment
-            # and gobble leading spaces.  Leading spaces need to be 
-            # gobbled because previously they were at the beginning of a 
+            # and gobble leading spaces.  Leading spaces need to be
+            # gobbled because previously they were at the beginning of a
             # line, where they would have been discarded.
             if not bool(match('\s*$', after)):
                 after = sub('^\s*?\n\s*', '', after)
     elif print_replacement_mode == 'verbatim':
         if bool(match('\s*?\n', after)):
             # Usually, we would end the verbatim environment with a newline.
-            # This is fine if there is content in `after` before the next 
+            # This is fine if there is content in `after` before the next
             # newline---in fact, it's desirable, because the verbatim package
-            # doesn't allow for content on the same line as the end of the 
-            # environment.  But if `after` is an empty line, then adding a 
+            # doesn't allow for content on the same line as the end of the
+            # environment.  But if `after` is an empty line, then adding a
             # newline will throw off spacing and must be avoided
             print_replacement = '\\begin{verbatim}\n' + print_replacement + '\\end{verbatim}'
         else:
             print_replacement = '\\begin{verbatim}\n' + print_replacement + '\\end{verbatim}\n'
     else:
-        # When printed content is included as LaTeX code, we have to be 
-        # particularly careful to ensure that the content produces the same 
-        # output when substituted as when brought in by `\input`.  In 
-        # particular, `\input` strips newlines from each line of content and 
+        # When printed content is included as LaTeX code, we have to be
+        # particularly careful to ensure that the content produces the same
+        # output when substituted as when brought in by `\input`.  In
+        # particular, `\input` strips newlines from each line of content and
         # adds a space at the end of each line.  This space is inside the
-        # `\input`, so it will not merge with following spaces.  So when we 
-        # substitute the content, sometimes we need to replace the final 
+        # `\input`, so it will not merge with following spaces.  So when we
+        # substitute the content, sometimes we need to replace the final
         # newline with a space that cannot be gobbled.
         #
-        # It gets more complicated.  This final space is often not 
-        # desirable.  It can be prevented by either printing an `\endinput` 
-        # command, to terminate the `\input`, or printing a percent 
+        # It gets more complicated.  This final space is often not
+        # desirable.  It can be prevented by either printing an `\endinput`
+        # command, to terminate the `\input`, or printing a percent
         # character % in the last line of the content, which comments out the
-        # final newline.  So we must check for `\endinput` anywhere in 
-        # printed content, and % in the final line, and remove any content 
-        # after them.  It's also possible that the print is followed by 
+        # final newline.  So we must check for `\endinput` anywhere in
+        # printed content, and % in the final line, and remove any content
+        # after them.  It's also possible that the print is followed by
         # an `\unskip` that eats the space, so we need to check for that too.
-        if (print_replacement.endswith('\\endinput\n') and 
+        if (print_replacement.endswith('\\endinput\n') and
                 not print_replacement.endswith('\\string\\endinput\n')):
-            # If `\endinput` is present, everything from it on should be 
+            # If `\endinput` is present, everything from it on should be
             # discarded, unless the `\endinput` is not actually a command
-            # but rather a typeset name (for example, `\string\endinput` or 
-            # `\verb|\endinput|`).  It's impossible to check for all cases in 
-            # which `\endinput` is not a command (at least, without actually 
-            # using LaTeX), and even checking for most of them would require 
-            # a good bit of parsing.  We assume that `\endinput`, as a 
-            # command, will only ever occur at the immediate end of the 
-            # printed content.  Later, we issue a warning in case it appears 
+            # but rather a typeset name (for example, `\string\endinput` or
+            # `\verb|\endinput|`).  It's impossible to check for all cases in
+            # which `\endinput` is not a command (at least, without actually
+            # using LaTeX), and even checking for most of them would require
+            # a good bit of parsing.  We assume that `\endinput`, as a
+            # command, will only ever occur at the immediate end of the
+            # printed content.  Later, we issue a warning in case it appears
             # anywhere else.
             print_replacement = print_replacement.rsplit(r'\endinput', 1)[0]
             if not bool(match('[ \t]+\S', after)):
-                # If there is text on the same line as the end of the 
-                # environment, we're fine (this is unusual).  Otherwise, 
+                # If there is text on the same line as the end of the
+                # environment, we're fine (this is unusual).  Otherwise,
                 # we need to toss the newline at the end of the environment
-                # and gobble leading spaces.  Leading spaces need to be 
-                # gobbled because previously they were at the beginning of a 
+                # and gobble leading spaces.  Leading spaces need to be
+                # gobbled because previously they were at the beginning of a
                 # line, where they would have been discarded.
                 if not bool(match('\s*$', after)):
                     after = sub('^\s*?\n\s*', '', after)
-        elif (print_replacement.endswith('%\n') and 
-                not print_replacement.endswith('\\%\n') and 
+        elif (print_replacement.endswith('%\n') and
+                not print_replacement.endswith('\\%\n') and
                 not print_replacement.endswith('\\string%\n')):
             # Perform an analogous check for a terminating percent characer %.
-            # This case would be a bit easier to parse fully, since a percent 
-            # that comments out the last newline would have to be in the 
-            # final line of the replacement.  But it would still be 
-            # very difficult to perform a complete check.  Later, we issue a 
-            # warning if there is reason to think that a percent character 
+            # This case would be a bit easier to parse fully, since a percent
+            # that comments out the last newline would have to be in the
+            # final line of the replacement.  But it would still be
+            # very difficult to perform a complete check.  Later, we issue a
+            # warning if there is reason to think that a percent character
             # was active in the last line.
             print_replacement = print_replacement.rsplit(r'%', 1)[0]
             if not bool(match('[ \t]+\S', after)):
-                # If there is text on the same line as the end of the 
-                # environment, we're fine (this is unusual).  Otherwise, 
+                # If there is text on the same line as the end of the
+                # environment, we're fine (this is unusual).  Otherwise,
                 # we need to toss the newline at the end of the environment
-                # and gobble leading spaces.  Leading spaces need to be 
-                # gobbled because previously they were at the beginning of a 
+                # and gobble leading spaces.  Leading spaces need to be
+                # gobbled because previously they were at the beginning of a
                 # line, where they would have been discarded.
                 if not bool(match('\s*$', after)):
                     after = sub('^\s*?\n\s*', '', after)
         else:
-            # By default, LaTeX strips newlines and adds a space at the end 
-            # of each line of content that is brought in by `\input`.  This 
-            # may or may not be desirable, but we replicate the effect here 
-            # for consistency with the original document.  We use `\space{}` 
-            # because plain `\space` would gobble a following space, which 
+            # By default, LaTeX strips newlines and adds a space at the end
+            # of each line of content that is brought in by `\input`.  This
+            # may or may not be desirable, but we replicate the effect here
+            # for consistency with the original document.  We use `\space{}`
+            # because plain `\space` would gobble a following space, which
             # isn't consistent with the `\input` behavior being replicated.
             if bool(match(r'\s*\\unskip\s+\S', after)):
-                # If there's an `\unskip`, fix the spacing and remove the 
+                # If there's an `\unskip`, fix the spacing and remove the
                 # `\unskip`
                 print_replacement = print_replacement.rstrip(' \t\n')
                 after = sub(r'^\s*\\unskip\s+', '', after)
             elif bool(match('[ \t]+\S', after)):
-                # If the next character after the end of the environment is 
+                # If the next character after the end of the environment is
                 # not whitespace (usually not allowed), we can just leave
-                # the `\n` in printed content, and it will yield a space.  
-                # So we need do nothing.  But if there is text on that line 
+                # the `\n` in printed content, and it will yield a space.
+                # So we need do nothing.  But if there is text on that line
                 # we need `\space{}`.
                 after = sub('^\s+', '\\space', after)
                 forced_double_space_list.append((name, linenum))
             else:
                 # If the line at the end of the environment is blank,
-                # we can just discard it and keep the newline at the end of 
+                # we can just discard it and keep the newline at the end of
                 # the printed content; the newline gives us the needed space
                 after = after.split('\n', 1)[1]
         # Issue warnings, if warranted
         # Warn about `\endinput`
-        if (r'\endinput' in print_replacement and 
+        if (r'\endinput' in print_replacement and
                 print_replacement.count(r'\endinput') != print_replacement.count(r'\string\endinput')):
             print('* DePythonTeX warning:')
             print('    "\\endinput" was present in printed content near line ' + str(linenum))
@@ -636,7 +636,7 @@ def replace_print_env(name, arglist, linenum,
         # Warn if it looks like there are active `%` that could comment
         # out part of the original document.  We only need to check the
         # last line of printed content, because only there could
-        # percent characters escape from their original confines within 
+        # percent characters escape from their original confines within
         # `\input`, and comment out part of the document.
         if print_replacement.endswith('\n'):
             if print_replacement.count('\n') > 1:
@@ -673,9 +673,9 @@ def replace_print_env(name, arglist, linenum,
 # Deal with argv
 # Parse argv
 parser = argparse.ArgumentParser()
-parser.add_argument('--version', action='version', 
+parser.add_argument('--version', action='version',
                     version='DePythonTeX {0}'.format(__version__))
-parser.add_argument('--encoding', default='utf-8', 
+parser.add_argument('--encoding', default='utf-8',
                     help='encoding for all text files (see codecs module for encodings)')
 parser.add_argument('--overwrite', default=False, action='store_true',
                     help='overwrite existing output, if it exists (off by default)')
@@ -755,7 +755,7 @@ if args.output is not None:
         ans = input('    Do you want to overwrite this file? [y,n]\n    ')
         if ans != 'y':
             sys.exit(1)
-# Make sure the .depytx file exists    
+# Make sure the .depytx file exists
 depytxfile_name = texfile_name.rsplit('.')[0] + '.depytx'
 if not os.path.isfile(depytxfile_name):
     print('* DePythonTeX error:')
@@ -768,7 +768,7 @@ if not os.path.isfile(depytxfile_name):
 
 # Start opening files and loading data
 # Read in the LaTeX file
-# We read into a list with an empty first entry, so that we don't have to 
+# We read into a list with an empty first entry, so that we don't have to
 # worry about zero indexing when comparing list index to file line number
 f = open(texfile_name, 'r', encoding=encoding)
 tex = ['']
@@ -798,7 +798,7 @@ if settings['version'] != __version__:
     print('    Do a complete compile cycle to update the auxiliary file')
     print('    Attempting to proceed')
 # Go ahead and open the outfile, even though we don't need it until the end
-# This lets us change working directories for convenience without worrying 
+# This lets us change working directories for convenience without worrying
 # about having to modify the outfile path
 if args.output is not None:
     outfile = open(outfile_name, 'w', encoding=encoding)
@@ -807,15 +807,15 @@ if args.output is not None:
 
 
 # Change working directory to the document directory
-# Technically, we could get by without this, but that would require a lot of 
-# path modification.  This way, we can just use all paths straight out of the 
+# Technically, we could get by without this, but that would require a lot of
+# path modification.  This way, we can just use all paths straight out of the
 # .depytx without any modification, which is much simpler and less error-prone.
 if os.path.split(texfile_name)[0] != '':
     os.chdir(os.path.split(texfile_name)[0])
 
 
 
-  
+
 # Open and process the file of macros
 # Read in the macros
 if os.path.isfile(os.path.expanduser(os.path.normcase(settings['macrofile']))):
@@ -830,7 +830,7 @@ else:
     sys.exit(1)
 # Create a dict for storing macros
 macrodict = defaultdict(list)
-# Create variables for keeping track of whether we're inside a macro or 
+# Create variables for keeping track of whether we're inside a macro or
 # environment
 # These must exist before we begin processing
 inside_macro = False
@@ -842,13 +842,13 @@ for line in macros:
     if inside_macro:
         # If we're in a macro, look for the end-of-macro command
         if r'\endpytx@SVMCR' in line:
-            # If the current line contains the end-of-macro command, split 
-            # off any content that comes before it.  Also reset 
+            # If the current line contains the end-of-macro command, split
+            # off any content that comes before it.  Also reset
             # `inside_macro`.
             macrodict[current_macro].append(line.rsplit(r'\endpytx@SVMCR', 1)[0])
             inside_macro = False
         else:
-            # If the current line doesn't end the macro, we add the whole 
+            # If the current line doesn't end the macro, we add the whole
             # line to the macro dict
             macrodict[current_macro].append(line)
     elif inside_environment:
@@ -856,7 +856,7 @@ for line in macros:
             # If the environment is ending, we reset inside_environment
             inside_environment = False
         else:
-            # If we're still in the environment, add the current line to the 
+            # If we're still in the environment, add the current line to the
             # macro dict
             macrodict[current_macro].append(line)
     else:
@@ -865,10 +865,10 @@ for line in macros:
         # file to increase readability).  Once we've determined which one,
         # we need to get its name and extract any content.
         if line.startswith(r'\begin{'):
-            # Any \begin will indicate a use of fancyvrb to save verbatim 
-            # content, since that is the only time an environment is used in 
+            # Any \begin will indicate a use of fancyvrb to save verbatim
+            # content, since that is the only time an environment is used in
             # the macro file.  All other content is saved in a standard macro.
-            # We extract the name of the macro in which the verbatim content 
+            # We extract the name of the macro in which the verbatim content
             # is saved.
             current_macro = line.rsplit('{', 1)[1].rstrip('}\n')
             inside_environment = True
@@ -894,8 +894,8 @@ for line in macros:
 # Start at 1, since the first entry in the tex list is `''`
 texlinenum = 1
 # Create a variable for storing the current line(s) we are processing.
-# This contains all lines from immediately after the last successfully 
-# processed line up to and including texlinenum.  We may have to process 
+# This contains all lines from immediately after the last successfully
+# processed line up to and including texlinenum.  We may have to process
 # multiple lines at once if a macro is split over multiple lines, etc.
 texcontent = tex[texlinenum]
 # Create a list for storing processed content.
@@ -908,21 +908,21 @@ for n, depytxline in enumerate(depytx):
         depy_type, depy_name, depy_args, depy_typeset, depy_linenum, depy_lexer = depytxcontent.split(':')
         if depy_lexer == '':
             depy_lexer = None
-        
+
         # Do a quick check on validity of info
         # #### Eventually add 'cp' and 'pc'
         if not (depy_type in ('cmd', 'env') and
                 all([letter in ('o', 'm', 'v', 'n', '|') for letter in depy_args]) and
                 ('|' not in depy_args or (depy_args.count('|') == 1 and depy_args.endswith('|'))) and
-                depy_typeset in ('c', 'p', 'n')):  
+                depy_typeset in ('c', 'p', 'n')):
             print('* PythonTeX error:')
             print('    Invalid \\Depythontex string for operation on line ' + str(depy_linenum))
             print('    The offending string was ' + depytxcontent)
             sys.exit(1)
-        # If depy_args contains a `|` to indicate `\obeylines`, strip it and 
-        # store in a variable.  Create a bool to keep track of obeylines 
-        # status, which governs whether we can look on the next line for 
-        # arguments.  (If obeylines is active, a newline terminates the 
+        # If depy_args contains a `|` to indicate `\obeylines`, strip it and
+        # store in a variable.  Create a bool to keep track of obeylines
+        # status, which governs whether we can look on the next line for
+        # arguments.  (If obeylines is active, a newline terminates the
         # argument search.)
         if depy_args.endswith('|'):
             obeylines = True
@@ -932,8 +932,8 @@ for n, depytxline in enumerate(depytx):
         # Get the line number as an integer
         # We don't have to adjust for zero indexing in tex
         depy_linenum = int(depy_linenum)
-        
-        
+
+
         # Check for information passed from LaTeX
         # This will be extra listings information, or replacements to plug in
         code_replacement = None
@@ -983,13 +983,13 @@ for n, depytxline in enumerate(depytx):
             elif nextdepytxline.startswith('FILE:'):
                 source = 'file'
                 try:
-                    typeset, f_name = nextdepytxline.rstrip('\n').split(':', 2)[1:]    
+                    typeset, f_name = nextdepytxline.rstrip('\n').split(':', 2)[1:]
                 except:
                     print('* DePythonTeX error:')
                     print('    Improperly formatted file information on line ' + str(depy_linenum))
                     print('    The file information was "' + nextdepytxline + '"')
                     sys.exit(1)
-                # Files that are brought in have an optional mode that 
+                # Files that are brought in have an optional mode that
                 # determines if they need special handling (for example, verbatim)
                 if ':mode=' in f_name:
                     f_name, mode = f_name.split(':mode=')
@@ -1002,32 +1002,32 @@ for n, depytxline in enumerate(depytx):
                     code_replacement_mode = mode
                     if depy_type == 'cmd' and code_replacement_mode != 'verbatim':
                         # Usually, code from commands is typeset with commands
-                        # and code from environments is typeset in 
-                        # environments.  The except is code from commands 
+                        # and code from environments is typeset in
+                        # environments.  The except is code from commands
                         # that bring in external files, like `\inputpygments`
                         code_replacement = replacement
                     else:
                         # If we're replacing an environment of code with a
                         # file, then we lose the newline at the beginning
                         # of the environment, and need to get it back.
-                        code_replacement = '\n' + replacement                    
+                        code_replacement = '\n' + replacement
                 elif typeset == 'p':
                     print_replacement_mode = mode
-                    print_replacement = replacement                    
+                    print_replacement = replacement
                 else:
                     print('* DePythonTeX error:')
                     print('    Improper typesetting information for file information on line ' + str(depy_linenum))
                     print('    The file information was "' + nextdepytxline + '"')
                     sys.exit(1)
-            # Increment the line in depytx to check for more information 
+            # Increment the line in depytx to check for more information
             # from LaTeX
             scan_ahead_line += 1
             if scan_ahead_line == len(depytx):
                 break
             else:
                 nextdepytxline = depytx[scan_ahead_line]
-        
-        
+
+
         # If the line we're looking for is within the range currently held by
         # texcontent, do nothing.  Otherwise, transfer content from tex
         # to texout until we get to the line of tex that we're looking for
@@ -1039,12 +1039,12 @@ for n, depytxline in enumerate(depytx):
                 texlinenum += 1
             texcontent = tex[texlinenum]
 
-        
+
         # Deal with arguments
-        # All arguments are parsed and stored in a list variables, even if 
-        # they are not used, for completeness; this makes it easy to add 
+        # All arguments are parsed and stored in a list variables, even if
+        # they are not used, for completeness; this makes it easy to add
         # functionality
-        # Start by splitting the current line into what comes before the 
+        # Start by splitting the current line into what comes before the
         # command or environment, and what is after it
         if depy_type == 'cmd':
             try:
@@ -1060,10 +1060,10 @@ for n, depytxline in enumerate(depytx):
                 print('* DePythonTeX error:')
                 print('    Could not find environment "' + depy_name + '" on line ' + str(depy_linenum))
                 sys.exit(1)
-        # We won't need the content from before the command or environment 
+        # We won't need the content from before the command or environment
         # again, so we go ahead and store it
         texout.append(before)
-        
+
         # Parse the arguments
         # Create a list for storing the recovered arguments
         arglist = list()
@@ -1075,7 +1075,7 @@ for n, depytxline in enumerate(depytx):
                     # Account for possible line breaks before end of arg
                     while ']' not in after:
                         texlinenum += 1
-                        after += tex[texlinenum]                  
+                        after += tex[texlinenum]
                     optarg, after = after[1:].split(']', 1)
                 else:
                     if obeylines:
@@ -1084,7 +1084,7 @@ for n, depytxline in enumerate(depytx):
                             after = after.split('[', 1)[1]
                             while ']' not in after:
                                 texlinenum += 1
-                                after += tex[texlinenum]               
+                                after += tex[texlinenum]
                             optarg, after = after.split(']', 1)
                         else:
                             optarg = None
@@ -1102,7 +1102,7 @@ for n, depytxline in enumerate(depytx):
                             after = after.split('[', 1)[1]
                             while ']' not in after:
                                 texlinenum += 1
-                                after += tex[texlinenum]               
+                                after += tex[texlinenum]
                             optarg, after = after.split(']', 1)
                         else:
                             optarg = None
@@ -1141,8 +1141,8 @@ for n, depytxline in enumerate(depytx):
                 # Go through the argument character by character to find the
                 # closing brace.
                 # If possible, use a very simple approach
-                if (r'\{' not in after and r'\}' not in after and 
-                        r'\string' not in after and 
+                if (r'\{' not in after and r'\}' not in after and
+                        r'\string' not in after and
                         after.count('{') + 1 == after.count('}')):
                     pos = 0
                     lbraces = 1
@@ -1158,7 +1158,7 @@ for n, depytxline in enumerate(depytx):
                         if pos == len(after):
                             texlinenum += 1
                             after += tex[texlinenum]
-                # If a simple parsing approach won't work, parse in much 
+                # If a simple parsing approach won't work, parse in much
                 # greater depth
                 else:
                     pos = 0
@@ -1183,7 +1183,7 @@ for n, depytxline in enumerate(depytx):
                             # First, jump ahead to after `\string`
                             pos += 7 #+= len(r'\string')
                             # See if `\string` is followed by a regular macro
-                            # If so, jump past it; otherwise, figure out if a 
+                            # If so, jump past it; otherwise, figure out if a
                             # single-character macro, or just a single character, is next,
                             # and jump past it
                             standard_macro = match(r'\\[a-zA-Z]+', line[pos:])
@@ -1194,7 +1194,7 @@ for n, depytxline in enumerate(depytx):
                             else:
                                 pos += 1
                         elif line[pos] == '\\':
-                            # If the current position is a backslash, figure out what 
+                            # If the current position is a backslash, figure out what
                             # macro is used, and jump past it
                             # The macro must either be a standard alphabetic macro,
                             # or a single-character macro
@@ -1239,8 +1239,8 @@ for n, depytxline in enumerate(depytx):
                         after += tex[texlinenum]
                     mainarg, after = after[1:].split(delim, 1)
                 arglist.append(mainarg)
-            
-        
+
+
         # Do substitution, depending on what is required
         # Need a variable for processed content to be added to texout
         processed = None
@@ -1251,8 +1251,8 @@ for n, depytxline in enumerate(depytx):
                 if after.count('\n') < 2:
                     texlinenum += 1
                     after += tex[texlinenum]
-                processed, texcontent = replace_code_cmd(depy_name, arglist, 
-                                                         depy_linenum, 
+                processed, texcontent = replace_code_cmd(depy_name, arglist,
+                                                         depy_linenum,
                                                          code_replacement,
                                                          code_replacement_mode,
                                                          after, depy_lexer,
@@ -1291,7 +1291,7 @@ for n, depytxline in enumerate(depytx):
                                                          depy_linenum,
                                                          code_replacement,
                                                          code_replacement_mode,
-                                                         after, depy_lexer, 
+                                                         after, depy_lexer,
                                                          firstnumber)
         elif depy_typeset == 'p' and print_replacement is not None:
             if depy_type == 'cmd':
@@ -1300,7 +1300,7 @@ for n, depytxline in enumerate(depytx):
                 if after.count('\n') < 2:
                     texlinenum += 1
                     after += tex[texlinenum]
-                processed, texcontent = replace_print_cmd(depy_name, arglist, 
+                processed, texcontent = replace_print_cmd(depy_name, arglist,
                                                           depy_linenum,
                                                           print_replacement,
                                                           print_replacement_mode,
@@ -1320,9 +1320,9 @@ for n, depytxline in enumerate(depytx):
                 if after.count('\n') < 2:
                     texlinenum += 1
                     after += tex[texlinenum]
-                processed, texcontent = replace_print_env(depy_name, arglist, 
+                processed, texcontent = replace_print_env(depy_name, arglist,
                                                           depy_linenum,
-                                                          print_replacement, 
+                                                          print_replacement,
                                                           print_replacement_mode,
                                                           source,
                                                           after)
@@ -1346,8 +1346,8 @@ for n, depytxline in enumerate(depytx):
                 texcontent = after
         # #### Once it's supported on the TeX side, need to add support for
         # pc and cp
-        
-        
+
+
         # Store any processed content
         if processed is not None:
             texout.append(processed)

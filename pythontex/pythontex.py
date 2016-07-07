@@ -3,20 +3,20 @@
 
 '''
 This is the PythonTeX wrapper script.  It automatically detects the version
-of Python, and then imports the correct code from pythontex2.py or 
-pythontex3.py.  It is intended for use with the default Python installation 
-on your system.  If you wish to use a different version of Python, you could 
-launch pythontex2.py or pythontex3.py directly.  You should also consider the 
+of Python, and then imports the correct code from pythontex2.py or
+pythontex3.py.  It is intended for use with the default Python installation
+on your system.  If you wish to use a different version of Python, you could
+launch pythontex2.py or pythontex3.py directly.  You should also consider the
 command-line option `--interpreter`.  This allows you to specify the command
-that is actually used to execute the code from your LaTeX documents.  Except 
-for Python console content, it doesn't matter which version of Python is used 
+that is actually used to execute the code from your LaTeX documents.  Except
+for Python console content, it doesn't matter which version of Python is used
 to launch pythontex.py; pythontex.py just manages the execution of code from
-your LaTeX document.  The interpreter setting is what determines the version 
+your LaTeX document.  The interpreter setting is what determines the version
 under which your code is actually executed.
 
 Licensed under the BSD 3-Clause License:
 
-Copyright (c) 2012-2014, Geoffrey M. Poore
+Copyright (c) 2012-2016, Geoffrey M. Poore
 
 All rights reserved.
 
@@ -55,8 +55,8 @@ elif sys.version_info.major == 3:
         import pythontex3 as pythontex
     else:
         sys.exit('PythonTeX require Python 3.2+; you are using 3.{0}'.format(sys.version_info.minor))
- 
-# The "if" statement is needed for multiprocessing under Windows; see the 
+
+# The "if" statement is needed for multiprocessing under Windows; see the
 # multiprocessing documentation.
 if __name__ == '__main__':
     pythontex.main()

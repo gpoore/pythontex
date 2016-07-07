@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2016/07/05 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/07 v0.15dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -39,6 +39,7 @@
 \usepackage[svgnames]{xcolor}
 \usepackage{environ}
 \usepackage{enumitem}
+\usepackage{fvextra}
 \usepackage{pythontex}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,urlcolor=Green,linkcolor=blue}
@@ -67,7 +68,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3027}
+% \CheckSum{3067}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -89,10 +90,12 @@
 % \begin{changelog}{v0.15}{2016/07/??}
 % \textbf{New features}
 % \begin{itemize}
-% \item Added \texttt{rust} and \texttt{rs} families of commands and environments.  This provides complete support for Rust, except that \texttt{rstex.formatter()}, \texttt{rstex.before()}, and \texttt{rstex.after()} will likely need additional refinement (\#90).
+% \item Added \texttt{sub} commands and environments (\texttt{\string\pys}, \texttt{pysub}, ...).  These commands and environments perform string interpolation on text.  Fields delimited by \texttt{!\{...\}} are replaced by the result of evaluating and then printing their content.  This works for all families of commands and environments, not just Python.  See the documentation for details about field delimiters and escaping.
+% \item Added \texttt{rust} and \texttt{rs} families of commands and environments.  These provide complete support for Rust, except that \texttt{rstex.formatter()}, \texttt{rstex.before()}, and \texttt{rstex.after()} will likely need additional refinement (\#90).
+% \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash (no utilities class or equivalent).  Bash works with Windows if it is installed.
 % \item Improved \texttt{console} compatibility under Linux with Python 3 (\#70).
-% \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash.  Bash works with Windows if it is installed.
 % \item Counters for default sessions are now created automatically.  This prevents counter errors under some circumstances when working with \texttt{\string\includeonly}.
+% \item Fixed a bug that could cause an endless loop when a \texttt{code} command or environment printed a \texttt{code} command or environment of the same family with \texttt{autoprint=true}.
 % \end{itemize}
 % \end{changelog}
 %
@@ -417,7 +420,7 @@
 %
 % \subsection{Installing \pytex} 
 %
-% \pytex\ requires a \TeX\ installation.  It has been tested with  \href{http://www.tug.org/texlive/}{\TeX\ Live} and  \href{http://miktex.org/}{MiK\TeX}, but should work with other distributions.  The following \LaTeX\ packages, with their dependencies, are required:  |fancyvrb|, |etex|, |etoolbox|, |xstring|, |pgfopts|, |newfloat| (part of the |caption| bundle), |currfile|, and |color| or |xcolor|.  A current \TeX\ installation is recommended, since some features require recent versions of the packages.  If you are creating and including graphics, you will also need |graphicx|.  The \href{http://www.ctan.org/pkg/mdframed}{\texttt{mdframed}} package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors; \href{http://www.ctan.org/pkg/tcolorbox}{\texttt{tcolorbox}} and \href{http://www.ctan.org/pkg/framed}{\texttt{framed}} are alternatives.
+% \pytex\ requires a \TeX\ installation.  It has been tested with  \href{http://www.tug.org/texlive/}{\TeX\ Live} and  \href{http://miktex.org/}{MiK\TeX}, but should work with other distributions.  The following \LaTeX\ packages, with their dependencies, are required:  |fancyvrb|, |fvextra|, |etoolbox|, |xstring|, |pgfopts|, |newfloat| (part of the |caption| bundle), |currfile|, and |color| or |xcolor|.  A current \TeX\ installation is recommended, since some features require recent versions of the packages.  If you are creating and including graphics, you will also need |graphicx|.  The \href{http://www.ctan.org/pkg/mdframed}{\texttt{mdframed}} package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors; \href{http://www.ctan.org/pkg/tcolorbox}{\texttt{tcolorbox}} and \href{http://www.ctan.org/pkg/framed}{\texttt{framed}} are alternatives.
 %
 % \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools, although many scientific packages are now compatible with Python 3.  \pytex\ is compatible with Python 2.7 and 3.2+.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile |pythontex_gallery.tex|, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}.  When using \pytex\ with LyX, be aware that LyX may try to use its own version of Python; you may need to reconfigure LyX.
 %
@@ -1453,7 +1456,7 @@
 %
 % \subsection{Rust}
 %
-% Support for Rust was added in v0.15.  Complete support is provided, except that |rstex.formatter()|, |rstex.before()|, and |rstex.after()| will likely need additional refinement in the future to make them more convenient to work with.  Because Rust typically gives a long sequence of errors, \pytex\ processing and synchronization of |stderr| is currently verbose and may need to be improved in the future as well.
+% Support for Rust was added in v0.15.  Complete support is provided, except that |rstex.formatter()|, |rstex.before()|, and |rstex.after()| will likely need additional refinement in the future to make them more convenient to work with.  Because Rust typically gives a long sequence of errors, \pytex\ processing and synchronization of |stderr| is currently verbose and may need to be improved in the future as well.  There is no support for encodings other than UTF-8.  Currently, executables always use the |.exe| extension, even under non-Windows systems.
 %
 % When using |\rust| and |\rs|, keep in mind that these wrap code in |rstex.formatter()|.  Because |rstex| is mutable, accessing its fields within |rstex.formatter()| will require |&rstex.|\meta{field}|.to_string()| or similar.
 %
@@ -1663,6 +1666,8 @@
 %
 % Thanks to Øystein Bjørndal for many suggestions and for help with OS X compatibility.
 %
+% Thanks to Alexander Altman for suggesting Rust support and providing template code.
+%
 %
 % \PrintChangelog
 %
@@ -1686,10 +1691,9 @@
 %    \end{macrocode}
 %
 % \subsection{Required packages}
-% A number of packages are required.  |fancyvrb| is used to typeset all code that is not inline, and its internals are used to format inline code as well.  |etex| provides extra registers, to avoid the (probably unlikely) possibility that the many counters required by \pytex\ will exhaust the supply. |etoolbox| is used for string comparison and boolean flags.  |xstring| provides string manipulation.  |pgfopts| is used to process package options, via the |pgfkeys| package.   |newfloat| allows the creation of a floating environment for code listings.  |currfile| is needed to allow errors and warnings to be synchronized with content brought in via |\input|, |\include|, etc.  |xcolor| or |color| is needed for syntax highlighting with Pygments.
+% A number of packages are required.  |fvextra|, which loads and extends |fancyvrb|, is used to typeset all code that is not inline.  |fancyvrb| internals are used to format inline code.  |etoolbox| is used for string comparison and boolean flags.  |xstring| provides string manipulation.  |pgfopts| is used to process package options, via the |pgfkeys| package.   |newfloat| allows the creation of a floating environment for code listings.  |currfile| is needed to allow errors and warnings to be synchronized with content brought in via |\input|, |\include|, etc.  |xcolor| or |color| is needed for syntax highlighting with Pygments.
 %    \begin{macrocode}
-\RequirePackage{fancyvrb}
-\RequirePackage{etex}
+\RequirePackage{fvextra}
 \RequirePackage{etoolbox}
 \RequirePackage{xstring}
 \RequirePackage{pgfopts}
@@ -3491,9 +3495,9 @@
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
-    \pytx@EnvAutoprint
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
+    \pytx@EnvAutoprint
     }%
 }%
 %    \end{macrocode}
@@ -3559,6 +3563,47 @@
 }%
 %    \end{macrocode}
 % \end{macro}
+%
+%
+% \subsubsection{Format environment constructor}
+%
+% The |format| environment behaves exactly like a |code| environment on the \LaTeX\ side:  environment content is saved to the code file, and then the output is brought back in.  The difference is on the Python side, where the environment content is treated as a format string in which replacement fields are expressions.
+%
+% \begin{macro}{\pytx@MakeSubFV}
+% Create a |format| environment compatible with |fancyvrb|, reusing the |code| approach almost entirely, except for argument capturing, |\pytx@argsrun|, and the |\input| of output.
+%    \begin{macrocode}
+\newcommand{\pytx@MakeSubFV}[1]{%
+    \expandafter\newenvironment{#1sub}[2][]{%
+        \VerbatimEnvironment
+        \Depythontex{env:#1sub:om|:p}%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{sub}%
+        \pytx@SetContext
+        \pytx@SetGroup
+        \def\pytx@argsrun{##2}%
+        \pytx@BeginCodeEnv[##1][]%
+    }%
+    {\end{VerbatimOut}%
+    \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+    \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+       {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}%
+       {\textbf{??~\pytx@packagename~??}%
+        \PackageWarning{\pytx@packagename}{Non-existent substituted content}}%
+    }%
+}%
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\pytx@MakeSubPyg}
+% The Pygments-compatible version is the same.
+%    \begin{macrocode}
+\let\pytx@MakeSubPyg\pytx@MakeSubFV
+%    \end{macrocode}
+% \end{macro}
+%
+% 
 %
 %
 % \subsubsection{Console environment constructor}
@@ -3741,6 +3786,7 @@
     \expandafter\xdef\csname pytx@console@#2\endcsname{\pytx@tmp@console}
     \pytx@MakeInlinecFV{#2}
     \pytx@MakeCodeFV{#2}
+    \pytx@MakeSubFV{#2}
     \AtBeginDocument{%
         \ifcsstring{pytx@macroformatter@#2}{auto}{%
             \ifbool{pytx@opt@pygments}%

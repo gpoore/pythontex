@@ -17,7 +17,7 @@ document (script for execution).
 
 
 
-Copyright (c) 2012-2014, Geoffrey M. Poore
+Copyright (c) 2012-2016, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -28,6 +28,7 @@ Licensed under the BSD 3-Clause License:
 import os
 import sys
 import textwrap
+import re
 from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
@@ -61,13 +62,13 @@ class CodeEngine(object):
     synchronizing `stderr` with the document.
     '''
     def __init__(self, name, language, extension, commands, template, wrapper,
-                 formatter, errors=None, warnings=None,
+                 formatter, sub=None, errors=None, warnings=None,
                  linenumbers=None, lookbehind=False,
                  console=False, startup=None, created=None):
 
         # Save raw arguments so that they may be reused by subtypes
         self._rawargs = (name, language, extension, commands, template, wrapper,
-                         formatter, errors, warnings,
+                         formatter, sub, errors, warnings,
                          linenumbers, lookbehind, console, startup, created)
 
         # Type check all strings, and make sure everything is Unicode
@@ -77,7 +78,8 @@ class CodeEngine(object):
                     not isinstance(extension, basestring) or
                     not isinstance(template, basestring) or
                     not isinstance(wrapper, basestring) or
-                    not isinstance(formatter, basestring)):
+                    not isinstance(formatter, basestring) or
+                    not isinstance(sub, basestring)):
                 raise TypeError('CodeEngine needs string in initialization')
             self.name = unicode(name)
             self.language = unicode(language)
@@ -85,13 +87,15 @@ class CodeEngine(object):
             self.template = unicode(template)
             self.wrapper = unicode(wrapper)
             self.formatter = unicode(formatter)
+            self.sub = unicode(sub)
         else:
             if (not isinstance(name, str) or
                     not isinstance(language, str) or
                     not isinstance(extension, str) or
                     not isinstance(template, str) or
                     not isinstance(wrapper, str) or
-                    not isinstance(formatter, str)):
+                    not isinstance(formatter, str) or
+                    not isinstance(sub, str)):
                 raise TypeError('CodeEngine needs string in initialization')
             self.name = name
             self.language = language
@@ -99,6 +103,7 @@ class CodeEngine(object):
             self.template = template
             self.wrapper = wrapper
             self.formatter = formatter
+            self.sub = sub
         # Perform some additional formatting on some strings.
         self.extension = self.extension.lstrip('.')
         self.template = self._dedent(self.template)
@@ -254,6 +259,11 @@ class CodeEngine(object):
 
         # Each type needs to add itself to a dict, for later access by name
         self._register()
+
+        # Regex for working with `sub` commands and environments
+        # Generated if used
+        self.sub_field_re = None
+
 
     def _dedent(self, s):
         '''
@@ -527,15 +537,27 @@ class CodeEngine(object):
                                                line=c.line))
 
             # Actual code
-            lines_input = c.code.count('\n')
-            code_index[c.instance] = CodeIndex(c.input_file, c.command, c.line_int, lines_total, lines_user, lines_input, inline_count)
-            if c.command == 'i':
-                script.append(self.formatter.format(code=c.code.rstrip('\n')))
-                inline_count += 1
+            if c.command in ('s', 'sub'):
+                field_list = self.process_sub(c)
+                code = ''.join(self.sub.format(field_delim='=>PYTHONTEX:FIELD_DELIM#', field=field) for field in field_list)
+                lines_input = code.count('\n')
+                code_index[c.instance] = CodeIndex(c.input_file, c.command, c.line_int, lines_total, lines_user, lines_input, inline_count)
+                script.append(code)
+                # #### The traceback system will need to be redone to give
+                # better line numbers
+                lines_total += lines_input
+                lines_user += lines_input
             else:
-                script.append(c.code)
-            lines_total += lines_input
-            lines_user += lines_input
+                lines_input = c.code.count('\n')
+                code_index[c.instance] = CodeIndex(c.input_file, c.command, c.line_int, lines_total, lines_user, lines_input, inline_count)
+                if c.command == 'i':
+                    script.append(self.formatter.format(code=c.code.rstrip('\n')))
+                    inline_count += 1
+                    script.append(c.code)
+                else:
+                    script.append(c.code)
+                lines_total += lines_input
+                lines_user += lines_input
 
             # Wrapper after
             script.append(wrapper_end)
@@ -572,6 +594,79 @@ class CodeEngine(object):
         return script, code_index
 
 
+    def process_sub(self, pytxcode):
+        '''
+        Take the code part of a `sub` command or environment, which is
+        essentially an interpolation string, and extract the replacement
+        fields.  Process the replacement fields into a form suitable for
+        execution and process the string into a template into which the output
+        may be substituted.
+        '''
+        start = '!'
+        open_delim = '{'
+        close_delim = '}'
+        if self.sub_field_re is None:
+            field_pattern_list = []
+
+            # {s}: start, {o}: open_delim, {c}: close_delim
+            field_content_1_recursive = r'(?:[^{o}{c}\n]+|{o}R{c})*'
+            field_content_1_final_inner = r'[^{o}{c}\n]+'
+            field_1 = '{s}{o}(?!{o})' + field_content_1_recursive + '(?<!{c}){c}(?!{c})'
+            for n in range(4):  # Want 5 levels, starting with 1 level built in
+                field_1 = field_1.replace('R', field_content_1_recursive)
+            field_1 = field_1.replace('R', field_content_1_final_inner)
+            field_1 = field_1.format(s=re.escape(start), o=re.escape(open_delim), c=re.escape(close_delim))
+            field_pattern_list.append(field_1)
+
+            for n in range(2, 5+1):
+                field_n = '{s}' + '{o}'*n + '(?!{o})F(?<!{c})' + '{c}'*n + '(?!{c})'
+                field_n = field_n.replace('F', '(?:[^{o}{c}\n]+|{o}{{1,{n_minus}}}(?!{o})|{c}{{1,{n_minus}}}(?!{c}))+')
+                field_n = field_n.format(s=re.escape(start), o=re.escape(open_delim), c=re.escape(close_delim), n_minus=n-1)
+                field_pattern_list.append(field_n)
+
+            field = '|'.join(field_pattern_list)
+
+            escaped_start = '(?<!{s})(?:{s}{s})+(?={s}{o}|{o})'.format(s=re.escape(start), o=re.escape(open_delim))
+
+            pattern = '''
+                      (?P<escaped>{es}) |
+                      (?P<field>{f}) |
+                      (?P<invalid>{so}) |
+                      (?P<text_literal_start>{s}+) |
+                      (?P<text_general>[^{s}]+)
+                      '''.format(es=escaped_start, f=field, so=re.escape(start + open_delim), s=re.escape(start))
+            self.sub_field_re = re.compile(pattern, re.VERBOSE)
+
+        template_list = []
+        field_list = []
+        field_number = 0
+        for m in self.sub_field_re.finditer(pytxcode.code):
+            if m.lastgroup == 'escaped':
+                template_list.append(m.group().replace(start+start, start))
+            elif m.lastgroup == 'field':
+                template_list.append('{{{0}}}'.format(field_number))
+                field_list.append(m.group()[1:].lstrip(open_delim).rstrip(close_delim).strip())
+                field_number += 1
+            elif m.lastgroup.startswith('text'):
+                template_list.append(m.group().replace('{', '{{').replace('}', '}}'))
+            else:
+                msg = '''\
+                      * PythonTeX error:
+                          Invalid "sub" command or environment.  Invalid replacement fields.
+                            {0}line {1}
+                      '''.format(pytxcode.input_file + ': ' if pytxcode.input_file else '', pytxcode.line)
+                msg = textwrap.dedent(msg)
+                sys.exit(msg)
+
+        pytxcode.sub_template = ''.join(template_list)
+
+        return field_list
+
+
+
+
+
+
 
 
 class SubCodeEngine(CodeEngine):
@@ -579,12 +674,12 @@ class SubCodeEngine(CodeEngine):
     Create Engine instances that inherit from existing instances.
     '''
     def __init__(self, base, name, language=None, extension=None, commands=None,
-                 template=None, wrapper=None, formatter=None, errors=None,
-                 warnings=None, linenumbers=None, lookbehind=False,
+                 template=None, wrapper=None, formatter=None, sub=None,
+                 errors=None, warnings=None, linenumbers=None, lookbehind=False,
                  console=None, created=None, startup=None, extend=None):
 
         self._rawargs = (name, language, extension, commands, template, wrapper,
-                         formatter, errors, warnings,
+                         formatter, sub, errors, warnings,
                          linenumbers, lookbehind, console, startup, created)
 
         base_rawargs = engine_dict[base]._rawargs
@@ -626,7 +721,7 @@ class PythonConsoleEngine(CodeEngine):
     def __init__(self, name, startup=None):
         CodeEngine.__init__(self, name=name, language='python',
                             extension='', commands='', template='',
-                            wrapper='', formatter='', errors=None,
+                            wrapper='', formatter='', sub='', errors=None,
                             warnings=None, linenumbers=None, lookbehind=False,
                             console=True, startup=startup, created=None)
 
@@ -694,10 +789,12 @@ python_wrapper = '''
     pytex.after()
     '''
 
+python_sub = '''print('{field_delim}')\nprint({field})\n'''
+
 
 CodeEngine('python', 'python', '.py', '{python} {file}.py',
-              python_template, python_wrapper, 'print(pytex.formatter({code}))',
-              'Error:', 'Warning:', ['line {number}', ':{number}:'])
+           python_template, python_wrapper, 'print(pytex.formatter({code}))',
+           python_sub, 'Error:', 'Warning:', ['line {number}', ':{number}:'])
 
 SubCodeEngine('python', 'py')
 
@@ -838,8 +935,11 @@ ruby_wrapper = '''
     rbtex.after
     '''
 
+ruby_sub = '''puts '{field_delim}'\nputs {field}\n'''
+
+
 CodeEngine('ruby', 'ruby', '.rb', '{ruby} {file}.rb', ruby_template,
-           ruby_wrapper, 'puts rbtex.formatter({code})',
+           ruby_wrapper, 'puts rbtex.formatter({code})', ruby_sub,
            ['Error)', '(Errno', 'error'], 'warning:', ':{number}:')
 
 SubCodeEngine('ruby', 'rb')
@@ -1006,11 +1106,16 @@ julia_wrapper = '''
     jltex.after()
     '''
 
+julia_sub = '''println("{field_delim}")\nprintln({field})\n'''
+
+
 CodeEngine('julia', 'julia', '.jl', '{julia} "{file}.jl"', julia_template,
-              julia_wrapper, 'println(jltex.formatter({code}))',
+              julia_wrapper, 'println(jltex.formatter({code}))', julia_sub,
               'ERROR:', 'WARNING:', ':{number}', True)
 
 SubCodeEngine('julia', 'jl')
+
+
 
 
 octave_template = '''
@@ -1152,9 +1257,11 @@ octave_wrapper = '''
     octavetex.after()
     '''
 
+octave_sub = '''disp("{field_delim}")\ndisp({field})\n'''
+
 CodeEngine('octave', 'octave', '.m',
            '{octave} -q "{File}.m"',
-           octave_template, octave_wrapper, 'disp({code})',
+           octave_template, octave_wrapper, 'disp({code})', octave_sub,
            'error', 'warning', 'line {number}')
 
 bash_template = '''
@@ -1170,9 +1277,11 @@ bash_wrapper = '''
     {code}
     '''
 
+bash_sub = '''echo "{field_delim}"\necho {field}\n'''
+
 CodeEngine('bash', 'bash', '.sh',
            '{bash} "{file}.sh"',
-           bash_template, bash_wrapper, '{code}',
+           bash_template, bash_wrapper, '{code}', bash_sub,
            ['error', 'Error'], ['warning', 'Warning'],
            'line {number}')
 
@@ -1189,7 +1298,7 @@ rust_template = '''
         use std::io::prelude::*;
 
         pub struct RustTeXUtils {{
-            pub _formatter: Box<FnMut(&fmt::Display) -> String>,
+            _formatter: Box<FnMut(&fmt::Display) -> String>,
             _before: Box<FnMut()>,
             _after: Box<FnMut()>,
             pub family: &'static str,
@@ -1311,11 +1420,13 @@ rust_wrapper = '''
     rstex.after();
     '''
 
+rust_sub = '''println!("{field_delim}");\nprintln!({field})\n'''
+
 CodeEngine('rust', 'rust', '.rs',
            # The full script name has to be used in order to make Windows and Unix behave nicely
            # together when naming executables.  Despite appearances, using `.exe` works on Unix too.
            ['{rustc} --crate-type bin -o {File}.exe -L {workingdir} {file}.rs', '{File}.exe'],
-           rust_template, rust_wrapper, 'println!("{{}}", rstex.formatter({code}));',
+           rust_template, rust_wrapper, 'println!("{{}}", rstex.formatter({code}));', rust_sub,
            errors='error:', warnings='warning:', linenumbers='.rs:{number}',
            created='{File}.exe')
 

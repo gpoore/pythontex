@@ -20,12 +20,11 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2016/07/05 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/07 v0.15dev execute and typeset Python code and other languages]
 
 \newcommand{\pytx@packagename}{PythonTeX}
 \newcommand{\pytx@packageversion}{0.15dev}
-\RequirePackage{fancyvrb}
-\RequirePackage{etex}
+\RequirePackage{fvextra}
 \RequirePackage{etoolbox}
 \RequirePackage{xstring}
 \RequirePackage{pgfopts}
@@ -998,9 +997,9 @@
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
-    \pytx@EnvAutoprint
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
+    \pytx@EnvAutoprint
     }%
 }%
 \def\pytx@BeginCodeEnv[#1]{%
@@ -1036,6 +1035,28 @@
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
 }%
+\newcommand{\pytx@MakeSubFV}[1]{%
+    \expandafter\newenvironment{#1sub}[2][]{%
+        \VerbatimEnvironment
+        \Depythontex{env:#1sub:om|:p}%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{sub}%
+        \pytx@SetContext
+        \pytx@SetGroup
+        \def\pytx@argsrun{##2}%
+        \pytx@BeginCodeEnv[##1][]%
+    }%
+    {\end{VerbatimOut}%
+    \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+    \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+       {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}%
+       {\textbf{??~\pytx@packagename~??}%
+        \PackageWarning{\pytx@packagename}{Non-existent substituted content}}%
+    }%
+}%
+\let\pytx@MakeSubPyg\pytx@MakeSubFV
 \newcommand{\pytx@MakeConsFV}[2]{%
     \expandafter\newenvironment{#1#2}{%
         \VerbatimEnvironment
@@ -1181,6 +1202,7 @@
     \expandafter\xdef\csname pytx@console@#2\endcsname{\pytx@tmp@console}
     \pytx@MakeInlinecFV{#2}
     \pytx@MakeCodeFV{#2}
+    \pytx@MakeSubFV{#2}
     \AtBeginDocument{%
         \ifcsstring{pytx@macroformatter@#2}{auto}{%
             \ifbool{pytx@opt@pygments}%

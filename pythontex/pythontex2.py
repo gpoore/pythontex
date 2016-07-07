@@ -13,7 +13,7 @@ should be in the same directory.
 
 Licensed under the BSD 3-Clause License:
 
-Copyright (c) 2012-2014, Geoffrey M. Poore
+Copyright (c) 2012-2016, Geoffrey M. Poore
 
 All rights reserved.
 
@@ -121,6 +121,8 @@ class Pytxcode(object):
 
         if gobble == 'auto':
             self.code = textwrap.dedent(self.code)
+
+        self.sub_template = None
 
 
 
@@ -1613,8 +1615,8 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
             for block in out.split('=>PYTHONTEX:STDOUT#')[1:]:
                 if block:
                     delims, content = block.split('#\n', 1)
-                    if content:
-                        instance, command = delims.split('#')
+                    instance, command = delims.split('#')
+                    if content or command in ('s', 'sub'):
                         if instance.endswith('CC'):
                             messages.append('* PythonTeX warning')
                             messages.append('    Custom code for "' + family + '" attempted to print or write to stdout')
@@ -1629,6 +1631,13 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                         else:
                             fname = os.path.join(outputdir, basename + '_' + instance + '.stdout')
                             f = open(os.path.expanduser(os.path.normcase(fname)), 'w', encoding=encoding)
+                            if command in ('s', 'sub'):
+                                if content:
+                                    fields = [f.split('\n', 1)[1].rsplit('\n', 1)[0] for f in content.split('=>PYTHONTEX:FIELD_DELIM#')[1:]]
+                                    content = code_list[int(instance)].sub_template.format(*fields)
+                                else:
+                                    # If no replacement fields, de-templatize
+                                    content = code_list[int(instance)].sub_template.replace('{{', '{').replace('}}', '}')
                             f.write(content)
                             f.close()
                             files.append(fname)
