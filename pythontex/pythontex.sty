@@ -20,7 +20,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2016/07/07 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/08 v0.15dev execute and typeset Python code and other languages]
 
 \newcommand{\pytx@packagename}{PythonTeX}
 \newcommand{\pytx@packageversion}{0.15dev}
@@ -682,6 +682,11 @@
     }
     \ifbool{pytx@opt@stdout}{}{\let\pytx@InlineAutoprint\@empty}
 }
+\def\pytx@InlineAlwaysprint{%
+    \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+       {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}%
+       {\textbf{??}%
+        \PackageWarning{\pytx@packagename}{Missing sub content}}}
 \def\pytx@InlineMacroprint{%
     \edef\pytx@mcr{pytx@MCR@\pytx@type @\pytx@session @\pytx@group @\arabic{\pytx@counter}}%
     \ifcsname\pytx@mcr\endcsname
@@ -770,6 +775,20 @@
     }%
 }%
 \let\pytx@MakeInlinecPyg\pytx@MakeInlinecFV
+\newcommand{\pytx@MakeInlinesFV}[1]{%
+    \expandafter\newrobustcmd\expandafter{\csname #1s\endcsname}{%
+        \Depythontex{cmd:#1s:ov:p}%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{s}%
+        \pytx@SetContext
+        \pytx@SetGroup
+        \let\pytx@InlineShow\@empty
+        \let\pytx@InlineSave\pytx@InlineSaveCode
+        \let\pytx@InlinePrint\pytx@InlineAlwaysprint
+        \pytx@Inline
+    }%
+}%
+\let\pytx@MakeInlinesPyg\pytx@MakeInlinesFV
 \newcommand{\pytx@MakeInlineFV}[1]{%
     \expandafter\newrobustcmd\expandafter{\csname #1\endcsname}{%
         \Depythontex{cmd:#1:ov:p}%
@@ -1036,15 +1055,16 @@
     \stepcounter{\pytx@counter}%
 }%
 \newcommand{\pytx@MakeSubFV}[1]{%
-    \expandafter\newenvironment{#1sub}[2][]{%
+    \expandafter\newenvironment{#1sub}{%
         \VerbatimEnvironment
         \Depythontex{env:#1sub:om|:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{sub}%
         \pytx@SetContext
         \pytx@SetGroup
-        \def\pytx@argsrun{##2}%
-        \pytx@BeginCodeEnv[##1][]%
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BeginCodeEnv}{\endgroup\pytx@BeginCodeEnv[]}%
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
@@ -1201,6 +1221,7 @@
     \expandafter\xdef\csname pytx@pygopt@#2\endcsname{\pytx@tmp@pygopt}
     \expandafter\xdef\csname pytx@console@#2\endcsname{\pytx@tmp@console}
     \pytx@MakeInlinecFV{#2}
+    \pytx@MakeInlinesFV{#2}
     \pytx@MakeCodeFV{#2}
     \pytx@MakeSubFV{#2}
     \AtBeginDocument{%

@@ -553,7 +553,6 @@ class CodeEngine(object):
                 if c.command == 'i':
                     script.append(self.formatter.format(code=c.code.rstrip('\n')))
                     inline_count += 1
-                    script.append(c.code)
                 else:
                     script.append(c.code)
                 lines_total += lines_input
@@ -609,16 +608,16 @@ class CodeEngine(object):
             field_pattern_list = []
 
             # {s}: start, {o}: open_delim, {c}: close_delim
-            field_content_1_recursive = r'(?:[^{o}{c}\n]+|{o}R{c})*'
+            field_content_1_recursive = r'(?:[^{o}{c}\n]+|{o}R{c})+'
             field_content_1_final_inner = r'[^{o}{c}\n]+'
             field_1 = '{s}{o}(?!{o})' + field_content_1_recursive + '(?<!{c}){c}(?!{c})'
-            for n in range(4):  # Want 5 levels, starting with 1 level built in
+            for n in range(5):  # Want to allow 5 levels inside
                 field_1 = field_1.replace('R', field_content_1_recursive)
             field_1 = field_1.replace('R', field_content_1_final_inner)
             field_1 = field_1.format(s=re.escape(start), o=re.escape(open_delim), c=re.escape(close_delim))
             field_pattern_list.append(field_1)
 
-            for n in range(2, 5+1):
+            for n in range(2, 6+1):  # Want to allow 5 levels inside
                 field_n = '{s}' + '{o}'*n + '(?!{o})F(?<!{c})' + '{c}'*n + '(?!{c})'
                 field_n = field_n.replace('F', '(?:[^{o}{c}\n]+|{o}{{1,{n_minus}}}(?!{o})|{c}{{1,{n_minus}}}(?!{c}))+')
                 field_n = field_n.format(s=re.escape(start), o=re.escape(open_delim), c=re.escape(close_delim), n_minus=n-1)
@@ -653,7 +652,7 @@ class CodeEngine(object):
                 msg = '''\
                       * PythonTeX error:
                           Invalid "sub" command or environment.  Invalid replacement fields.
-                            {0}line {1}
+                            {0}on or after line {1}
                       '''.format(pytxcode.input_file + ': ' if pytxcode.input_file else '', pytxcode.line)
                 msg = textwrap.dedent(msg)
                 sys.exit(msg)
@@ -1405,7 +1404,7 @@ rust_template = '''
 
         {body}
 
-        rstex.cleanup()
+        rstex.cleanup();
     }}
     '''
 
@@ -1420,7 +1419,7 @@ rust_wrapper = '''
     rstex.after();
     '''
 
-rust_sub = '''println!("{field_delim}");\nprintln!({field})\n'''
+rust_sub = '''println!("{field_delim}");\nprintln!("{{}}", {field});\n'''
 
 CodeEngine('rust', 'rust', '.rs',
            # The full script name has to be used in order to make Windows and Unix behave nicely

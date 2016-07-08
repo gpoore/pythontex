@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2016/07/07 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/08 v0.15dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -68,7 +68,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3067}
+% \CheckSum{3110}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -771,6 +771,25 @@
 %
 % This command is used for executing but not typesetting \meta{code}.  The suffix  |c| is an abbreviation of |code|.  If the |print| statement/function is used within \meta{code}, printed content will be included automatically so long as the package |autoprint| option is set to true (the default setting).
 %
+% \DescribeMacro{\pys\oarg{session}\meta{opening~delim}\meta{code}\meta{closing~delim}}
+%
+% This command performs variable and expression substitution, or string interpolation, on \meta{code}.  Fields of the form |!{|\meta{expr}|}| in \meta{code} are replaced with the evaluated and printed output of \meta{expr}.  The suffix |s| is an abbreviation of |sub|, for ``substitute.''  This command is useful for inserting Python-generated content in contexts where the normal |\py| and |\pyc| would not function or would be inconvenient due to the restrictions imposed by \LaTeX.  Since Python processes \meta{code} and performs substitutions before the result is passed to \LaTeX, substitution fields may be anywhere.
+%
+% Literal exclamation points |!| in \meta{code} only need to be escaped when they immediately preceed an opening curly brace |{|, or when they preceed exclamation points that preceed a brace.  Escaping is performed by doubling.  Thus, |!!{| would indicate a literal exclamation point followed by a literal curly brace (|!{|), not the beginning of a substitution field.  And |!!!{| would indicate a literal exclamation point (|!!|) followed by a substitution field (|!{...}|).  Because curly braces |{}| only have the meaning of field delimiters when immediately following a non-escaped exclamation point, curly braces never need to be escaped.
+%
+% The rules for delimiting \meta{expr} depend on the number of curly braces used.
+% \begin{description}
+% \item[1 pair] If \meta{expr} is delimited by a single pair of braces, then \meta{expr} may contain curly braces so long as the braces only appear in matched pairs and are nested no more than 5 levels deep.  This is essentially the same as standard \LaTeX\ tokenization rules except for the nesting limit.
+% \item[2--6 pairs] If \meta{expr} is delimited by 2--6 immediately adjacent curly braces (|!{{...}}| to |!{{{{{{...}}}}}}|), then \meta{expr} may contain any combination of braces, paired or unpaired, so long as the longest sequence of identical brace characters is shorter than the delimiters.  Thus, |!{{...}}| can only contain single braces |{| and |}| (paired or unpaired); |!{{{...}}}| can contain |{|, |}|, |{{|, or |}}|; and so forth.
+% \end{description}
+% In both cases, anything more than five identical, immediately adjacent braces will always trigger an error.  If a greater level of nesting is needed, then a function should be created within a |pycode| environment and afterward used to assemble the desired result.
+%
+% Curly braces used for delimiting \meta{expr} must not be immediately adjacent to braces that are part of \meta{expr}, because it would be impossible to distinguish them in the general case.  If \meta{expr} begins/ends with a literal curly brace, the brace should be preceeded/followed by a space or other whitespace character; leading and trailing whitespace in \meta{expr} is stripped, so this will not affect the output.
+%
+% Besides braces, \meta{expr} may contain any character except for literal newlines.  In some cases, it may be appropriate to represent newlines in escaped form (|\n|).  In other cases, it will be more appropriate to perform most calculations within a preceeding |pycode| environment, and then access them via a variable or function call.
+%
+% Because \meta{expr} is evaluated and printed, it must be suitable for insertion in a |print()| function (or the equivalent, for the |\|\meta{family}|s| commands for languages besides Python).  If string conversion as performed by |print()| is not desirable, then commands for explicit string conversion should be used.
+%
 % \DescribeMacro{\pyv\oarg{session}\meta{opening~delim}\meta{code}\meta{closing~delim}}
 %
 % This command is used for typesetting but not executing \meta{code}.  The suffix |v| is an abbreviation for |verb|.
@@ -785,6 +804,13 @@
 % \DescribeEnv{pycode~\oarg{session}\oarg{fancyvrb~settings}}
 %
 % This environment encloses code that is executed but not typeset.  The second optional argument \meta{fancyvrb~settings} is irrelevant since nothing is typeset, but it is accepted to maintain parallelism with the |verbatim| and |block| environments.  If the |print| statement/function is used within the environment, printed content will be included automatically so long as the package |autoprint| option is set to true (the default setting).
+%
+%
+% \DescribeEnv{pysub~\oarg{session}\oarg{fancyvrb~settings}}
+%
+% This environment performs variable and expression substitution, or string interpolation, on the enclosed code.  Fields of the form |!{|\meta{expr}|}| in \meta{code} are replaced with the evaluated and printed output of \meta{expr}.  See the description of the |\pys| command for details about substitution field syntax.
+%
+%
 %
 %
 % \DescribeEnv{pyverbatim~\oarg{session}\oarg{fancyvrb~settings}}
@@ -1456,7 +1482,9 @@
 %
 % \subsection{Rust}
 %
-% Support for Rust was added in v0.15.  Complete support is provided, except that |rstex.formatter()|, |rstex.before()|, and |rstex.after()| will likely need additional refinement in the future to make them more convenient to work with.  Because Rust typically gives a long sequence of errors, \pytex\ processing and synchronization of |stderr| is currently verbose and may need to be improved in the future as well.  There is no support for encodings other than UTF-8.  Currently, executables always use the |.exe| extension, even under non-Windows systems.
+% Support for Rust was added in v0.15, with the command/environment base names |rs| and |rust|.  Complete support is provided, except that the utilities struct |rstex| does not have an |open()| method.  Also |rstex.formatter()|, |rstex.before()|, and |rstex.after()| may need additional refinement in the future to make them more convenient to work with.  All user code is inserted within a template-generated |main()| function; |main()| should not be defined explicitly.  Future refinements of \pytex's template system may allow user code outside of |main()|.
+%
+% Because Rust typically gives a long sequence of errors, \pytex\ processing and synchronization of |stderr| is currently verbose and may need to be improved in the future as well.  There is no support for encodings other than UTF-8.  Currently, executables always use the |.exe| extension, even under non-Windows systems.
 %
 % When using |\rust| and |\rs|, keep in mind that these wrap code in |rstex.formatter()|.  Because |rstex| is mutable, accessing its fields within |rstex.formatter()| will require |&rstex.|\meta{field}|.to_string()| or similar.
 %
@@ -2983,6 +3011,18 @@
 % \end{macro}
 %
 %
+% \begin{macro}{\pytx@InlineAlwaysprint}
+% This is like |\pytx@InlineAutoprint|, except that it always prints rather than depending on |autoprint|.  It is used for the |s| commands, which are always expected to have output.
+%    \begin{macrocode}
+\def\pytx@InlineAlwaysprint{%
+    \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+       {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}%
+       {\textbf{??}%
+        \PackageWarning{\pytx@packagename}{Missing sub content}}}
+%    \end{macrocode}
+% \end{macro}
+%
+%
 % \begin{macro}{\pytx@InlineMacroprint}
 % This macro brings in ``printed'' content that is brought in via macros in the .pytxmcr file.  We must disable the macro in the event that the |debug| option is false.
 %    \begin{macrocode}
@@ -3104,6 +3144,27 @@
     }%
 }%
 \let\pytx@MakeInlinecPyg\pytx@MakeInlinecFV
+%    \end{macrocode}
+% \end{macro}\end{macro}
+%
+%
+% \begin{macro}{\pytx@MakeInlinesFV}\begin{macro}{\pytx@MakeInlinesPyg}
+% This macro behaves almost exactly like code commands on the \LaTeX\ side, but on the Python side, the argument is treated as a template in which fields are evaluated and replaced with the result.  Since no code is typeset, there is no difference between the |fancyvrb| and Pygments forms.
+%    \begin{macrocode}
+\newcommand{\pytx@MakeInlinesFV}[1]{%
+    \expandafter\newrobustcmd\expandafter{\csname #1s\endcsname}{%
+        \Depythontex{cmd:#1s:ov:p}%
+        \xdef\pytx@type{#1}%
+        \edef\pytx@cmd{s}%
+        \pytx@SetContext
+        \pytx@SetGroup
+        \let\pytx@InlineShow\@empty
+        \let\pytx@InlineSave\pytx@InlineSaveCode
+        \let\pytx@InlinePrint\pytx@InlineAlwaysprint
+        \pytx@Inline
+    }%
+}%
+\let\pytx@MakeInlinesPyg\pytx@MakeInlinesFV
 %    \end{macrocode}
 % \end{macro}\end{macro}
 %
@@ -3565,23 +3626,24 @@
 % \end{macro}
 %
 %
-% \subsubsection{Format environment constructor}
+% \subsubsection{Sub environment constructor}
 %
-% The |format| environment behaves exactly like a |code| environment on the \LaTeX\ side:  environment content is saved to the code file, and then the output is brought back in.  The difference is on the Python side, where the environment content is treated as a format string in which replacement fields are expressions.
+% The |sub| environment behaves exactly like a |code| environment on the \LaTeX\ side:  environment content is saved to the code file, and then the output is brought back in.  The difference is on the Python side, where the environment content is treated as a template in which fields are evaluated and replaced with the result.
 %
 % \begin{macro}{\pytx@MakeSubFV}
-% Create a |format| environment compatible with |fancyvrb|, reusing the |code| approach almost entirely, except for argument capturing, |\pytx@argsrun|, and the |\input| of output.
+% Create a |sub| environment compatible with |fancyvrb|, reusing the |code| approach almost entirely.
 %    \begin{macrocode}
 \newcommand{\pytx@MakeSubFV}[1]{%
-    \expandafter\newenvironment{#1sub}[2][]{%
+    \expandafter\newenvironment{#1sub}{%
         \VerbatimEnvironment
         \Depythontex{env:#1sub:om|:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{sub}%
         \pytx@SetContext
         \pytx@SetGroup
-        \def\pytx@argsrun{##2}%
-        \pytx@BeginCodeEnv[##1][]%
+        \begingroup
+        \obeylines
+        \@ifnextchar[{\endgroup\pytx@BeginCodeEnv}{\endgroup\pytx@BeginCodeEnv[]}%
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
@@ -3785,6 +3847,7 @@
     \expandafter\xdef\csname pytx@pygopt@#2\endcsname{\pytx@tmp@pygopt}
     \expandafter\xdef\csname pytx@console@#2\endcsname{\pytx@tmp@console}
     \pytx@MakeInlinecFV{#2}
+    \pytx@MakeInlinesFV{#2}
     \pytx@MakeCodeFV{#2}
     \pytx@MakeSubFV{#2}
     \AtBeginDocument{%

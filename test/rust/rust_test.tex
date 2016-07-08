@@ -21,6 +21,7 @@
 \usepackage{amssymb,amsmath}
 \usepackage{graphicx}
 \usepackage{fullpage}
+\usepackage{fvextra}
 \usepackage[keeptemps=all, makestderr, usefamily={rust, rs}]{pythontex}
 
 \begin{document}
@@ -28,7 +29,7 @@
 
 \section*{Rust (\texttt{rust})}
 
-Inline:  \rust{format!("$3 + 5 = {}$", 3+5)}.
+Inline:  \rust{format!("$3 + 5 = {}$", 3+5)}.  \rusts{$4 + 6 = !{4+6}$}.
 
 
 \begin{rustcode}
@@ -47,7 +48,7 @@ Printed output:  \printpythontex.
 
 \section*{Rust (\texttt{rs})}
 
-Inline:  \rs{format!("$3 + 5 = {}$", 3+5)}.
+Inline:  \rs{format!("$3 + 5 = {}$", 3+5)}.  \rss{$4 + 6 = !{4+6}$}.
 
 
 \begin{rscode}

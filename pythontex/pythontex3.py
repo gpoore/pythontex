@@ -1541,6 +1541,8 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 raise
 
         proc.wait()
+        if proc.returncode != 0:
+            break
     out_file.close()
     err_file.close()
 
@@ -1638,6 +1640,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                                 else:
                                     # If no replacement fields, de-templatize
                                     content = code_list[int(instance)].sub_template.replace('{{', '{').replace('}}', '}')
+                                if command == 's':
+                                    # Remove newline added by printing, prevent
+                                    # LaTeX from adding a space after content
+                                    content = content.rsplit('\n', 1)[0] + '\\endinput\n'
                             f.write(content)
                             f.close()
                             files.append(fname)
@@ -1833,6 +1839,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                                 else:
                                     codelinenum = '1'
                         else:
+                            errlinenum = '??'
                             codelinenum = '??'
                             messages.append('* PythonTeX error')
                             messages.append('    Line number ' + str(errlinenum) + ' could not be synced with the document')
