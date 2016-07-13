@@ -1566,7 +1566,7 @@
 %
 % Because Rust typically gives a long sequence of errors, \pytex\ processing and synchronization of |stderr| is currently verbose and may need to be improved in the future as well.  There is no support for encodings other than UTF-8.  Currently, executables always use the |.exe| extension, even under non-Windows systems.
 %
-% When using |\rust| and |\rs|, keep in mind that these wrap code in |rstex.formatter()|.  Because |rstex| is mutable, accessing its fields within |rstex.formatter()| will require |&rstex.|\meta{field}|.to_string()| or similar.
+% Because of the way |rstex| is used in template-generated code, it needs to remain a mutable local variable; this means that, while there should be no problem using it through either shared or mutable references, taking it by value requires that the ``altered" copy is reassigned to a new variable that shadows the old one: that is, code that needs to work with |rstex| by value should look like |let mut rstex = |\meta{code}|;|.  Additonally, when using |\rust| and |\rs|, keep in mind that these wrap code in a block, so you \emph{cannot} use |rstex| by value in these contexts (both shared and mutable references are still fine, though).
 %
 %
 % \subsection{Adding support for a new language}
