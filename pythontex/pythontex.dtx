@@ -1,6 +1,6 @@
 % \iffalse meta-comment
 %
-% Copyright (C) 2012-2015 by Geoffrey M. Poore <gpoore@gmail.com>
+% Copyright (C) 2012-2016 by Geoffrey M. Poore <gpoore@gmail.com>
 % ---------------------------------------------------------------------------
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2016/07/08 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/16 v0.15dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -42,7 +42,15 @@
 \usepackage{fvextra}
 \usepackage{pythontex}
 \usepackage{hyperref}
-\hypersetup{colorlinks=true,urlcolor=Green,linkcolor=blue}
+\hypersetup{
+  pdftitle=The PythonTeX package,
+  pdfauthor=Geoffrey M. Poore,
+  pdfsubject={PythonTeX LaTeX package manual},
+  colorlinks=true,
+  allcolors=ForestGreen,
+}
+\usepackage{cleveref}
+
 \newcommand{\pytxtodo}[1]{}
 %\newcommand{\pytxtodo}[1]{\textcolor{red}{TO~DO: \scantokens{#1}}}
 \newcommand{\changestext}{}
@@ -56,6 +64,64 @@
     \section*{Version History}%
     \changestext
 }
+
+% Create a short verbatim pipe that handles quotation marks properly
+\begingroup
+\catcode`\|=\active
+\gdef\pipe@active@verbatim{%
+  \begingroup
+  \let\do\@makeother\dospecials
+  \catcode`\|=\active
+  \catcode`\`=\active
+  \catcode`\'=\active
+  \catcode`\<=\active
+  \catcode`\>=\active
+  \catcode`\-=\active
+  \catcode`\,=\active
+  \catcode`\ =\active
+  \pipe@active@verbatim@i}
+\gdef\pipe@active@verbatim@i#1|{%
+  \endgroup
+  \begingroup
+  \def\FV@SV@pipe@active@verbatim{%
+    \FV@Gobble
+    \expandafter\FV@ProcessLine\expandafter{#1}}%
+  %\let\FV@BeginVBox\relax
+  %\let\FV@EndVBox\relax
+  %\def\FV@BProcessLine##1{\FancyVerbFormatLine{##1}}%
+  \BUseVerbatim{pipe@active@verbatim}%
+  \endgroup}
+\AtBeginDocument{\let|\pipe@active@verbatim}
+\endgroup
+
+\def\MacroFont{%
+  \fontencoding\encodingdefault%
+  \fontfamily\ttdefault%
+  \fontseries\mddefault%
+  \fontshape\updefault%
+  \small}
+
+\def\PrintMacroName#1{{\strut\MacroFont\color{DarkGreen}\footnotesize\string #1\ }}
+
+\def\PrintDescribeMacro#1{\strut\MacroFont\textcolor{DarkGreen}{\string #1\ }}
+\let\PrintDescribeEnv\PrintDescribeMacro
+%\let\PrintMacroName\PrintDescribeMacro
+\let\PrintEnvName\PrintDescribeEnv
+
+\def\theCodelineNo{\textcolor{DarkGreen}{\sffamily\scriptsize{\arabic{CodelineNo}}}}
+
+\let\orig@footnote\footnote
+\renewcommand{\footnote}{%
+  \begingroup
+  \let\do\@makeother
+  \dospecials
+  \catcode`\{=1
+  \catcode`\}=2
+  \new@footnote}
+\newcommand{\new@footnote}[1]{%
+  \endgroup
+  \orig@footnote{\scantokens{#1}}}
+
 %\EnableCrossrefs
 %\CodelineIndex
 %\RecordChanges
@@ -775,7 +841,7 @@
 %
 % This command performs variable and expression substitution, or string interpolation, on \meta{code}.  Fields of the form |!{|\meta{expr}|}| in \meta{code} are replaced with the evaluated and printed output of \meta{expr}.  The suffix |s| is an abbreviation of |sub|, for ``substitute.''  This command is useful for inserting Python-generated content in contexts where the normal |\py| and |\pyc| would not function or would be inconvenient due to the restrictions imposed by \LaTeX.  Since Python processes \meta{code} and performs substitutions before the result is passed to \LaTeX, substitution fields may be anywhere.
 %
-% Literal exclamation points |!| in \meta{code} only need to be escaped when they immediately preceed an opening curly brace |{|, or when they preceed exclamation points that preceed a brace.  Escaping is performed by doubling.  Thus, |!!{| would indicate a literal exclamation point followed by a literal curly brace (|!{|), not the beginning of a substitution field.  And |!!!{| would indicate a literal exclamation point (|!!|) followed by a substitution field (|!{...}|).  Because curly braces |{}| only have the meaning of field delimiters when immediately following a non-escaped exclamation point, curly braces never need to be escaped.
+% Literal exclamation points |!| in \meta{code} only need to be escaped when they immediately precede an opening curly brace |{|, or when they precede exclamation points that precede a brace.  Escaping is performed by doubling.  Thus, |!!{| would indicate a literal exclamation point followed by a literal curly brace (|!{|), not the beginning of a substitution field.  And |!!!{| would indicate a literal exclamation point (|!!|) followed by a substitution field (|!{...}|).  Because curly braces |{}| only have the meaning of field delimiters when immediately following a non-escaped exclamation point, curly braces never need to be escaped.
 %
 % The rules for delimiting \meta{expr} depend on the number of curly braces used.
 % \begin{description}
@@ -784,11 +850,11 @@
 % \end{description}
 % In both cases, anything more than five identical, immediately adjacent braces will always trigger an error.  If a greater level of nesting is needed, then a function should be created within a |pycode| environment and afterward used to assemble the desired result.
 %
-% Curly braces used for delimiting \meta{expr} must not be immediately adjacent to braces that are part of \meta{expr}, because it would be impossible to distinguish them in the general case.  If \meta{expr} begins/ends with a literal curly brace, the brace should be preceeded/followed by a space or other whitespace character; leading and trailing whitespace in \meta{expr} is stripped, so this will not affect the output.
+% Curly braces used for delimiting \meta{expr} must not be immediately adjacent to braces that are part of \meta{expr}, because it would be impossible to distinguish them in the general case.  If \meta{expr} begins/ends with a literal curly brace, the brace should be preceded/followed by a space or other whitespace character; leading and trailing whitespace in \meta{expr} is stripped, so this will not affect the output.
 %
-% Besides braces, \meta{expr} may contain any character except for literal newlines.  In some cases, it may be appropriate to represent newlines in escaped form (|\n|).  In other cases, it will be more appropriate to perform most calculations within a preceeding |pycode| environment, and then access them via a variable or function call.
+% Besides braces, \meta{expr} may contain any character except for literal newlines.  In some cases, it may be appropriate to represent newlines in escaped form (|\n|).  In other cases, it will be more appropriate to perform most calculations within a preceding |pycode| environment, and then access them via a variable or function call.
 %
-% Because \meta{expr} is evaluated and printed, it must be suitable for insertion in a |print()| function (or the equivalent, for the |\|\meta{family}|s| commands for languages besides Python).  If string conversion as performed by |print()| is not desirable, then commands for explicit string conversion should be used.
+% Because \meta{expr} is evaluated and printed, it must be suitable for insertion in a |print()| function (or the equivalent, for languages besides Python).  If string conversion as performed by |print()| is not desirable, then commands for explicit string conversion should be used.
 %
 % \DescribeMacro{\pyv\oarg{session}\meta{opening~delim}\meta{code}\meta{closing~delim}}
 %
