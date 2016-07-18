@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2016/07/16 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/17 v0.15dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3110}
+% \CheckSum{3211}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -156,6 +156,7 @@
 % \begin{changelog}{v0.15}{2016/07/??}
 % \textbf{New features}
 % \begin{itemize}
+% \item The \texttt{fvextra} package is now required.  This provides line breaking with fine-grained control over break locations, the ability to highlight specific lines or ranges of lines, improved handling of tabs, and several additional features.
 % \item Added \texttt{sub} commands and environments (\texttt{\string\pys}, \texttt{pysub}, ...).  These commands and environments perform string interpolation on text.  Fields delimited by \texttt{!\{...\}} are replaced by the result of evaluating and then printing their content.  This works for all families of commands and environments, not just Python.  See the documentation for details about field delimiters and escaping.
 % \item Added \texttt{rust} and \texttt{rs} families of commands and environments.  These provide complete support for Rust, except that \texttt{rstex.formatter()}, \texttt{rstex.before()}, and \texttt{rstex.after()} will likely need additional refinement (\#90).
 % \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash (no utilities class or equivalent).  Bash works with Windows if it is installed.
@@ -773,7 +774,7 @@
 %
 % \DescribeMacro{pygopt=\marg{pygments~options} default:\meta{none}} 
 %
-% This allows Pygments options to be set at the document level.  The options must be enclosed in curly braces |{}|.  Currently, three options may be passed in this manner:  |style=|\meta{style~name}, which sets the formatting style; |texcomments|, which allows \LaTeX\ in code comments to be rendered; and |mathescape|, which allows \LaTeX\ math mode (|$...$|) in comments.  The |texcomments| and |mathescape| options may be used with an argument (for example, |texcomments=True/False|); if an argument is not supplied, |True| is assumed.  Example:   |pygopt={style=colorful, texcomments=True, mathescape=False}|.
+% This allows Pygments options to be set at the document level.  The options must be enclosed in curly braces |{}|.  Currently, three options may be passed in this manner:  |style=|\meta{style~name}, which sets the formatting style; |texcomments|, which allows \LaTeX\ in code comments to be rendered; and |mathescape|, which allows \LaTeX\ math mode (|$...$|) in comments.  The |texcomments| and |mathescape| options may be used with an argument (for example, |texcomments=true/false|); if an argument is not supplied, |true| is assumed.  Example:   |pygopt={style=colorful, texcomments=true, mathescape=false}|.
 %
 % Pygments options for individual command and environment families may be set with the |\setpythontexpygopt| macro; for Pygments content, there is |\setpygmentspygopt|.  These individual settings are always overridden by the package option.
 %
@@ -1126,6 +1127,8 @@
 %
 % \DescribeMacro{\stdoutpythontex\oarg{mode}\oarg{options}}
 %
+% ~\par
+%
 % Unless the package option |autoprint| is true, printed content from |code| commands and environments will not be automatically included.  Even when the |autoprint| option is turned on, |block| commands and environments do not automatically include printed content, since we will generally not want printed content immediately after typeset code.  This macro brings in any printed content from the \textbf{last} command or environment.  It is reset after each command/environment, so its scope for accessing particular printed content is very limited.  It will return an error if no printed content exists.
 %
 % \meta{mode} determines how printed content is handled.  It may be |raw| (interpreted as \LaTeX), |verb| (inline verbatim), or |verbatim|; |raw| is the default.  Verbatim content is brought in via |fancyvrb|. \meta{options} consists of |fancyvrb| settings.
@@ -1138,6 +1141,8 @@
 % \DescribeMacro{\useprintpythontex\oarg{verbatim~options}\oarg{fancyvrb~options}\marg{name}}
 %
 % \DescribeMacro{\usestdoutpythontex\oarg{verbatim~options}\oarg{fancyvrb~options}\marg{name}}
+%
+% ~\par~\par
 %
 % We may wish to be able to access the printed content from a command or environment at any point after the code that prints it, not just before any additional commands or environments are used.  In that case, we may save access to the content under \meta{name}, and access it later via |\useprintpythontex|\marg{name}.  \meta{mode} must be |raw|, |verb|, or |verbatim|.  If content is brought in verbatim, then \meta{fancyvrb~options} are applied.
 %
@@ -1158,12 +1163,15 @@
 %
 %  \DescribeMacro{\usestderrpythontex\oarg{mode}\oarg{fancyvrb~options}\marg{name}}
 %
+% ~\par
 %
 % Content written to |stderr| may be saved and accessed anywhere later in the document, just as |stdout| content may be.  These commands should be used with care.  Using Python-generated content at multiple locations within a document may often be appropriate.  But an error message will usually be most meaningful in its context, next to the code that produced it.
 %
 % \DescribeMacro{\setpythontexautoprint\marg{boolean}}
 %
 % \DescribeMacro{\setpythontexautostdout\marg{boolean}}
+%
+% ~\par
 %
 % This allows autoprint behavior to be modified at various points within the document.  The package-level |autoprint| option is also available for setting autoprint at the document level, but it is overridden by |\setpythontexautoprint|.  \meta{boolean} should be |true| or |false|.
 % 
@@ -2088,14 +2096,29 @@
 %
 % Currently, three options may be passed in this manner:  |style=|\meta{style}, which sets the formatting style; |texcomments|, which allows \LaTeX\ in code comments to be rendered; and |mathescape|, which allows \LaTeX\ math mode (|$...$|) in comments.  The |texcomments| and |mathescape| options may be used with a boolean argument; if an argument is not supplied, true is assumed.  As an example of |pygopt| usage, consider the following:
 % \begin{verbatim}
-% pygopt={style=colorful, texcomments=True, mathescape=False}
+% pygopt={style=colorful, texcomments=true, mathescape=false}
 % \end{verbatim}
-% The usage of capitalized |True| and |False| is more pythonic, but is not strictly require.
 %
-% While the package-level |pygments| option may be overridden by individual commands and environments (though it is not by default), the package-level Pygments options cannot be overridden by individual commands and environments.
+% While the package-level |pygments| option may be overridden by individual commands and environments (though it is not by default), the package-level Pygments options cannot be overridden by individual commands and environments.  While we're defining storage for |pygopt|, go ahead and define parsing to extract |style| for later use under all cicumstances.  This should be reorganized during the next refactoring.
 %    \begin{macrocode}
 \def\pytx@pygopt{}
-\pgfkeys{/PYTX/pkgopt/pygopt/.code=\def\pytx@pygopt{#1}}
+\pgfkeys{/PYTX/pkgopt/pygopt/.code=\def\pytx@pygopt{#1}\pgfkeys{/PYTX/gopt/pygopt/.cd, #1}}
+\pgfkeys{/PYTX/gopt/pygopt/.is choice}
+\pgfkeys{/PYTX/gopt/pygopt/texcomments/.code=\relax}
+\pgfkeys{/PYTX/gopt/pygopt/mathescape/.code=\relax}
+\pgfkeys{/PYTX/gopt/pygopt/style/.code=\ifstrempty{#1}{}{\def\pytx@style{#1}}}
+\pgfkeys{/PYTX/lopt/pygopt/.is choice}
+\pgfkeys{/PYTX/lopt/pygopt/name/.code=\def\pytx@tmp@name{#1}}
+\pgfkeys{/PYTX/lopt/pygopt/texcomments/.code=\relax}
+\pgfkeys{/PYTX/lopt/pygopt/mathescape/.code=\relax}
+\pgfkeys{/PYTX/lopt/pygopt/style/.code=\ifstrempty{#1}{}{%
+  \expandafter\def\csname pytx@style@\pytx@tmp@name\endcsname{#1}}}
+\pgfkeys{/PYTX/popt/pygopt/.is choice}
+\pgfkeys{/PYTX/popt/pygopt/name/.code=\def\pytx@tmp@name{#1}}
+\pgfkeys{/PYTX/popt/pygopt/texcomments/.code=\relax}
+\pgfkeys{/PYTX/popt/pygopt/mathescape/.code=\relax}
+\pgfkeys{/PYTX/popt/pygopt/style/.code=\ifstrempty{#1}{}{%
+  \expandafter\def\csname pytx@style@PYG\pytx@tmp@name\endcsname{#1}}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2393,12 +2416,20 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% Now we can conditionally bring in the Pygments content.  Note that we must use the |etoolbox| macro |\AfterEndPreamble|.  This is because commands and environments are created using |\AtBeginDocument|, so that the user can change their properties in the preamble before they are created.  And since the commands and environments must be created before we know the final state of |pytx@usedpygments|, we must bring in Pygments content after that.
+% Now we can conditionally bring in the Pygments content.  Note that we must use the |etoolbox| macro |\AfterEndPreamble|.  This is because commands and environments are created using |\AtBeginDocument|, so that the user can change their properties in the preamble before they are created.  And since the commands and environments must be created before we know the final state of |pytx@usedpygments|, we must bring in Pygments content after that.  We typically need to patch the Pygments single quote macro so that it cooperates with |upquote|.
 %    \begin{macrocode}
 \AfterEndPreamble{%
-    \ifbool{pytx@usedpygments}%
-        {\InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxpyg}{}{}}{}%
+  \ifbool{pytx@usedpygments}%
+   {\InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxpyg}{}{}%
+    \ifcsname PYGZsq\endcsname
+      \ifdefstring{\PYGZsq}{\char`\'}{\pytx@patch@PYGZsq}{}%
+    \fi}%
+   {}%
 }
+\begingroup
+\catcode`\'=\active
+\gdef\pytx@patch@PYGZsq{\gdef\PYGZsq{'}}
+\endgroup
 %    \end{macrocode}
 %
 % % While we are pulling in content, we also pull in the file of macros that stores some inline ``printed'' content, if the file exists.  Since we need this file in general, and since it will not typically invole a noticeable speed penalty, we bring it in at the beginning of the document without any special conditions.
@@ -2527,6 +2558,7 @@
 %
 % \begin{macro}{\pytx@FVSet}
 % Once the |fancyvrb| settings for \pytex\ are stored in macros, we need a way to actually invoke them.  |\pytx@FVSet| applies family-specific settings first, then \pytex-wide settings second, so that \pytex-wide settings have precedence and will override family-specific settings.  Note that by using |\fvset|, we are overwriting |fancyvrb|'s settings.  Thus, to keep the settings local to the \pytex\ code, |\pytx@FVSet| must always be used within a |\begingroup ... \endgroup| block.
+%
 %    \begin{macrocode}
 \def\pytx@FVSet{%
     \expandafter\let\expandafter\pytx@fvsettings@@%
@@ -2576,6 +2608,27 @@
 \let\FVE@SaveVerbatim\pytx@FVE@SaveVerbatim
 %    \end{macrocode}
 % \end{macro}\end{macro}
+%
+%
+%
+% \subsubsection{Enabling \texttt{fvextra} support for Pygments macros}
+%
+% \begin{macro}{\pytx@ConfigPygments}
+% The |fvextra| package provides Pygments support.  We need a macro that can be used to turn this on at the appropriate points.
+%    \begin{macrocode}
+\def\pytx@ConfigPygments{%
+  \def\pytx@currentstyle{default}%
+  \ifcsname pytx@style\endcsname
+    \let\pytx@currentstyle\pytx@style
+  \else
+    \ifcsname pytx@style@\pytx@type\endcsname
+      \expandafter\let\expandafter\pytx@currentstyle\csname pytx@style@\pytx@type\endcsname
+    \fi
+  \fi
+  \expandafter\let\expandafter\PYG@style\csname PYG\pytx@currentstyle\endcsname
+  \VerbatimPygments{\PYG}{\PYG@style}}
+%    \end{macrocode}
+% \end{macro}
 %
 %
 % \subsubsection{Access to printed content (stdout)}
@@ -3035,6 +3088,7 @@
 \def\pytx@InlineShowPyg{%
     \begingroup
     \pytx@FVSet
+    \pytx@ConfigPygments
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \BUseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
@@ -3491,6 +3545,7 @@
     \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
     \pytx@FVSet
     \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+    \pytx@ConfigPygments
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
     \else
@@ -3828,6 +3883,7 @@
     \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
     \pytx@FVSet
     \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+    \pytx@ConfigPygments
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
         \DepyMacro{c:\pytx@counter @\arabic{\pytx@counter}}%
@@ -3857,9 +3913,10 @@
 \pgfkeys{
     /PYTX/family/.is family,
     /PYTX/family,
+    name/.estore in = \pytx@tmp@name,
     prettyprinter/.estore in = \pytx@tmp@pprinter,
     pyglexer/.estore in = \pytx@tmp@pyglexer,
-    pygopt/.estore in = \pytx@tmp@pygopt,
+    pygopt/.code = \def\pytx@tmp@pygopt{#1}\pgfkeys{/PYTX/lopt/pygopt/.cd, #1},
     console/.estore in = \pytx@tmp@console,
     default/.style = {prettyprinter=auto, pyglexer=text, pygopt={}, console=false}
 }
@@ -3906,7 +3963,7 @@
     \IfBeginWith{#2}{PYG}%
         {\PackageError{\pytx@packagename}%
             {Attempt to create macros with reserved prefix PYG}{}}{}%
-    \pgfkeys{/PYTX/family, default, #1}
+    \pgfkeys{/PYTX/family, name=#2, default, #1}
     \expandafter\xdef\csname pytx@macroformatter@#2\endcsname{\pytx@tmp@pprinter}
     \expandafter\gdef\csname pytx@fvsettings@#2\endcsname{}
     \expandafter\xdef\csname pytx@pyglexer@#2\endcsname{\pytx@tmp@pyglexer}
@@ -3962,14 +4019,15 @@
 %    \begin{macrocode}
 \newcommand{\setpythontexpygopt}[2][]{%
     \Depythontex{cmd:setpythontexpygopt:om:n}%
-    \ifstrempty{#1}{\def\pytx@pygopt{#2}}{%
-    \ifcsname pytx@pygopt@#1\endcsname
+    \ifstrempty{#1}%
+     {\def\pytx@pygopt{#2}\pgfkeys{/PYTX/gopt/pygopt/.cd, #2}}%
+     {\ifcsname pytx@pygopt@#1\endcsname
         \expandafter\xdef\csname pytx@pygopt@#1\endcsname{#2}%
-    \else
+        \pgfkeys{/PYTX/lopt/pygopt/.cd, name=#1, #2}
+      \else
         \PackageError{\pytx@packagename}%
-            {Cannot modify Pygments options for a non-existent family}{}%
-    \fi
-    }%
+         {Cannot modify Pygments options for a non-existent family}{}%
+      \fi}%
 }
 \@onlypreamble\setpythontexpygopt
 %    \end{macrocode}
@@ -4213,6 +4271,7 @@
         \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
         \pytx@FVSet
         \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+        \pytx@ConfigPygments
         \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
             \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
         \else
@@ -4323,6 +4382,7 @@
         \begingroup
         \pytx@FVSet
         \fvset{firstnumber=auto}%
+        \pytx@ConfigPygments
         \ifcsname FV@SV@pytx@\pytx@type @\pytx@session @\pytx@group 
                     @\arabic{\pytx@counter}\endcsname
             \UseVerbatim[##1]{pytx@\pytx@type @\pytx@session @\pytx@group 
@@ -4366,8 +4426,10 @@
 %    \begin{macrocode}
 \newcommand{\setpygmentspygopt}[2][]{%
     \Depythontex{cmd:setpygmentspygopt:om:n}%
-    \ifstrempty{#1}{\def\pytx@pygopt{#2}}{%
-        \expandafter\gdef\csname pytx@pygopt@PYG#1\endcsname{#2}}%
+    \ifstrempty{#1}%
+     {\def\pytx@pygopt{#2}\pgfkeys{/PYTX/gopt/pygopt/.cd, #2}}%
+     {\expandafter\gdef\csname pytx@pygopt@PYG#1\endcsname{#2}%
+      \pgfkeys{/PYTX/popt/pygopt/.cd, name=#1, #2}}%
 }
 \@onlypreamble\setpygmentspygopt
 %    \end{macrocode}

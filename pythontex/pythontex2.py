@@ -1443,6 +1443,11 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         pygments_macro_file = open(os.path.expanduser(os.path.normcase(os.path.join(outputdir, jobname + '.pytxpyg'))), 'w', encoding=encoding)
         # Only save Pygments styles that are used
         style_set = set([pygments_settings[k]['formatter_options']['style'] for k in pygments_settings if k != ':GLOBAL'])
+        if style_set:
+            from pygments.formatters import LatexFormatter
+            formatter = LatexFormatter(style='default', commandprefix='PYG')
+            PYG_style_defs = formatter.get_style_defs()
+            pygments_macro_file.write(PYG_style_defs)
         for key in pygments_style_defs:
             if key in style_set:
                 pygments_macro_file.write(''.join(pygments_style_defs[key]))
@@ -2252,9 +2257,10 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
     lexer = dict()
     for codetype in pygments_settings:
         if codetype != ':GLOBAL':
-            formatter[codetype] = LatexFormatter(**pygments_settings[codetype]['formatter_options'])
-            lexer[codetype] = get_lexer_by_name(pygments_settings[codetype]['lexer'],
-                                                **pygments_settings[codetype]['lexer_options'])
+            p = pygments_settings[codetype]['formatter_options'].copy()
+            p['commandprefix'] = 'PYG'
+            formatter[codetype] = LatexFormatter(**p)
+            lexer[codetype] = get_lexer_by_name(pygments_settings[codetype]['lexer'], **p)
 
     # Actually parse and highlight the code.
     for c in pygments_list:

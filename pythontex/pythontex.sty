@@ -20,7 +20,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2016/07/16 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/17 v0.15dev execute and typeset Python code and other languages]
 
 \newcommand{\pytx@packagename}{PythonTeX}
 \newcommand{\pytx@packageversion}{0.15dev}
@@ -170,7 +170,23 @@
 \def\pytx@pyglexer{}
 \pgfkeys{/PYTX/pkgopt/pyglexer/.code=\def\pytx@pyglexer{#1}}
 \def\pytx@pygopt{}
-\pgfkeys{/PYTX/pkgopt/pygopt/.code=\def\pytx@pygopt{#1}}
+\pgfkeys{/PYTX/pkgopt/pygopt/.code=\def\pytx@pygopt{#1}\pgfkeys{/PYTX/gopt/pygopt/.cd, #1}}
+\pgfkeys{/PYTX/gopt/pygopt/.is choice}
+\pgfkeys{/PYTX/gopt/pygopt/texcomments/.code=\relax}
+\pgfkeys{/PYTX/gopt/pygopt/mathescape/.code=\relax}
+\pgfkeys{/PYTX/gopt/pygopt/style/.code=\ifstrempty{#1}{}{\def\pytx@style{#1}}}
+\pgfkeys{/PYTX/lopt/pygopt/.is choice}
+\pgfkeys{/PYTX/lopt/pygopt/name/.code=\def\pytx@tmp@name{#1}}
+\pgfkeys{/PYTX/lopt/pygopt/texcomments/.code=\relax}
+\pgfkeys{/PYTX/lopt/pygopt/mathescape/.code=\relax}
+\pgfkeys{/PYTX/lopt/pygopt/style/.code=\ifstrempty{#1}{}{%
+  \expandafter\def\csname pytx@style@\pytx@tmp@name\endcsname{#1}}}
+\pgfkeys{/PYTX/popt/pygopt/.is choice}
+\pgfkeys{/PYTX/popt/pygopt/name/.code=\def\pytx@tmp@name{#1}}
+\pgfkeys{/PYTX/popt/pygopt/texcomments/.code=\relax}
+\pgfkeys{/PYTX/popt/pygopt/mathescape/.code=\relax}
+\pgfkeys{/PYTX/popt/pygopt/style/.code=\ifstrempty{#1}{}{%
+  \expandafter\def\csname pytx@style@PYG\pytx@tmp@name\endcsname{#1}}}
 \def\pytx@fvextfile{-1}
 \pgfkeys{/PYTX/pkgopt/fvextfile/.default=25}
 \pgfkeys{/PYTX/pkgopt/fvextfile/.code=\IfInteger{#1}{%
@@ -311,9 +327,17 @@
 }
 \newbool{pytx@usedpygments}
 \AfterEndPreamble{%
-    \ifbool{pytx@usedpygments}%
-        {\InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxpyg}{}{}}{}%
+  \ifbool{pytx@usedpygments}%
+   {\InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxpyg}{}{}%
+    \ifcsname PYGZsq\endcsname
+      \ifdefstring{\PYGZsq}{\char`\'}{\pytx@patch@PYGZsq}{}%
+    \fi}%
+   {}%
 }
+\begingroup
+\catcode`\'=\active
+\gdef\pytx@patch@PYGZsq{\gdef\PYGZsq{'}}
+\endgroup
 \AtBeginDocument{%
     \makeatletter
     \InputIfFileExists{\pytx@outputdir/\pytx@jobname.pytxmcr}{}%
@@ -414,6 +438,17 @@
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}}
 \let\FVB@SaveVerbatim\pytx@FVB@SaveVerbatim
 \let\FVE@SaveVerbatim\pytx@FVE@SaveVerbatim
+\def\pytx@ConfigPygments{%
+  \def\pytx@currentstyle{default}%
+  \ifcsname pytx@style\endcsname
+    \let\pytx@currentstyle\pytx@style
+  \else
+    \ifcsname pytx@style@\pytx@type\endcsname
+      \expandafter\let\expandafter\pytx@currentstyle\csname pytx@style@\pytx@type\endcsname
+    \fi
+  \fi
+  \expandafter\let\expandafter\PYG@style\csname PYG\pytx@currentstyle\endcsname
+  \VerbatimPygments{\PYG}{\PYG@style}}
 \def\pytx@stdfile{}
 \def\pytx@stdout@warntext{}
 \def\pytx@FetchStdoutfile[#1][#2]#3{%
@@ -659,6 +694,7 @@
 \def\pytx@InlineShowPyg{%
     \begingroup
     \pytx@FVSet
+    \pytx@ConfigPygments
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
         \BUseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
@@ -950,6 +986,7 @@
     \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
     \pytx@FVSet
     \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+    \pytx@ConfigPygments
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
     \else
@@ -1148,6 +1185,7 @@
     \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
     \pytx@FVSet
     \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+    \pytx@ConfigPygments
     \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
         \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
         \DepyMacro{c:\pytx@counter @\arabic{\pytx@counter}}%
@@ -1165,9 +1203,10 @@
 \pgfkeys{
     /PYTX/family/.is family,
     /PYTX/family,
+    name/.estore in = \pytx@tmp@name,
     prettyprinter/.estore in = \pytx@tmp@pprinter,
     pyglexer/.estore in = \pytx@tmp@pyglexer,
-    pygopt/.estore in = \pytx@tmp@pygopt,
+    pygopt/.code = \def\pytx@tmp@pygopt{#1}\pgfkeys{/PYTX/lopt/pygopt/.cd, #1},
     console/.estore in = \pytx@tmp@console,
     default/.style = {prettyprinter=auto, pyglexer=text, pygopt={}, console=false}
 }
@@ -1214,7 +1253,7 @@
     \IfBeginWith{#2}{PYG}%
         {\PackageError{\pytx@packagename}%
             {Attempt to create macros with reserved prefix PYG}{}}{}%
-    \pgfkeys{/PYTX/family, default, #1}
+    \pgfkeys{/PYTX/family, name=#2, default, #1}
     \expandafter\xdef\csname pytx@macroformatter@#2\endcsname{\pytx@tmp@pprinter}
     \expandafter\gdef\csname pytx@fvsettings@#2\endcsname{}
     \expandafter\xdef\csname pytx@pyglexer@#2\endcsname{\pytx@tmp@pyglexer}
@@ -1256,14 +1295,15 @@
 \@onlypreamble\setpythontexpyglexer
 \newcommand{\setpythontexpygopt}[2][]{%
     \Depythontex{cmd:setpythontexpygopt:om:n}%
-    \ifstrempty{#1}{\def\pytx@pygopt{#2}}{%
-    \ifcsname pytx@pygopt@#1\endcsname
+    \ifstrempty{#1}%
+     {\def\pytx@pygopt{#2}\pgfkeys{/PYTX/gopt/pygopt/.cd, #2}}%
+     {\ifcsname pytx@pygopt@#1\endcsname
         \expandafter\xdef\csname pytx@pygopt@#1\endcsname{#2}%
-    \else
+        \pgfkeys{/PYTX/lopt/pygopt/.cd, name=#1, #2}
+      \else
         \PackageError{\pytx@packagename}%
-            {Cannot modify Pygments options for a non-existent family}{}%
-    \fi
-    }%
+         {Cannot modify Pygments options for a non-existent family}{}%
+      \fi}%
 }
 \@onlypreamble\setpythontexpygopt
 \newcommand{\setpythontexprettyprinter}[2][]{%
@@ -1407,6 +1447,7 @@
         \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
         \pytx@FVSet
         \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+        \pytx@ConfigPygments
         \ifcsname FV@SV@\pytx@counter @\arabic{\pytx@counter}\endcsname
             \UseVerbatim{\pytx@counter @\arabic{\pytx@counter}}%
         \else
@@ -1487,6 +1528,7 @@
         \begingroup
         \pytx@FVSet
         \fvset{firstnumber=auto}%
+        \pytx@ConfigPygments
         \ifcsname FV@SV@pytx@\pytx@type @\pytx@session @\pytx@group
                     @\arabic{\pytx@counter}\endcsname
             \UseVerbatim[##1]{pytx@\pytx@type @\pytx@session @\pytx@group
@@ -1511,8 +1553,10 @@
 }%
 \newcommand{\setpygmentspygopt}[2][]{%
     \Depythontex{cmd:setpygmentspygopt:om:n}%
-    \ifstrempty{#1}{\def\pytx@pygopt{#2}}{%
-        \expandafter\gdef\csname pytx@pygopt@PYG#1\endcsname{#2}}%
+    \ifstrempty{#1}%
+     {\def\pytx@pygopt{#2}\pgfkeys{/PYTX/gopt/pygopt/.cd, #2}}%
+     {\expandafter\gdef\csname pytx@pygopt@PYG#1\endcsname{#2}%
+      \pgfkeys{/PYTX/popt/pygopt/.cd, name=#1, #2}}%
 }
 \@onlypreamble\setpygmentspygopt
 \newcommand{\setpygmentsprettyprinter}[1]{%
