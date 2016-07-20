@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2016/07/17 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/20 v0.15dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -159,6 +159,7 @@
 % \item The \texttt{fvextra} package is now required.  This provides line breaking with fine-grained control over break locations, the ability to highlight specific lines or ranges of lines, improved handling of tabs, and several additional features.
 % \item Added \texttt{sub} commands and environments (\texttt{\string\pys}, \texttt{pysub}, ...).  These commands and environments perform string interpolation on text.  Fields delimited by \texttt{!\{...\}} are replaced by the result of evaluating and then printing their content.  This works for all families of commands and environments, not just Python.  See the documentation for details about field delimiters and escaping.
 % \item Added \texttt{rust} and \texttt{rs} families of commands and environments.  These provide complete support for Rust, except that \texttt{rstex.formatter()}, \texttt{rstex.before()}, and \texttt{rstex.after()} will likely need additional refinement (\#90).
+% \item Added the \texttt{sage} family of commands and environments, which provide support for Sage (\#63).
 % \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash (no utilities class or equivalent).  Bash works with Windows if it is installed.
 % \item Improved \texttt{console} compatibility under Linux with Python 3 (\#70).
 % \item Counters for default sessions are now created automatically.  This prevents counter errors under some circumstances when working with \texttt{\string\includeonly}.

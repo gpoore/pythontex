@@ -803,9 +803,7 @@ SubCodeEngine('python', 'pylab', extend='from pylab import *')
 SubCodeEngine('python', 'sage', language='sage', extension='.sage',
               template=python_template.replace('{future}', ''),
               extend = 'pytex.formatter = latex',
-              commands=['{sage} --preparse {file}.sage',
-                        '{sage} {file}.sage.py'],
-              created = '{file}.sage.py')
+              commands='{sage} {file}.sage')
 
 
 sympy_extend = '''
