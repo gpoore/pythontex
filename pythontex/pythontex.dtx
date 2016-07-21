@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3211}
+% \CheckSum{3212}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -1801,8 +1801,8 @@
 \RequirePackage{xstring}
 \RequirePackage{pgfopts}
 \RequirePackage{newfloat}
-\RequirePackage{currfile}
-\AtBeginDocument{\@ifpackageloaded{color}{}{\RequirePackage{xcolor}}}
+\@ifpackageloaded{currfile}{}{\RequirePackage{currfile}}
+\AtEndPreamble{\@ifpackageloaded{color}{}{\RequirePackage{xcolor}}}
 %    \end{macrocode}
 %
 % \subsection{Package options}

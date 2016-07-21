@@ -29,8 +29,8 @@
 \RequirePackage{xstring}
 \RequirePackage{pgfopts}
 \RequirePackage{newfloat}
-\RequirePackage{currfile}
-\AtBeginDocument{\@ifpackageloaded{color}{}{\RequirePackage{xcolor}}}
+\@ifpackageloaded{currfile}{}{\RequirePackage{currfile}}
+\AtEndPreamble{\@ifpackageloaded{color}{}{\RequirePackage{xcolor}}}
 \def\pytx@families{}
 \pgfkeys{/PYTX/pkgopt/usefamily/.estore in=\pytx@families}
 \def\pytx@opt@gobble{none}
