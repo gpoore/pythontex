@@ -28,20 +28,31 @@
 
 \section*{Bash}
 
-Inline:  \bash{echo "Hello from bash!"}.
+Inline:  \bash{echo "Hello from bash!"}
 
-
+Code environment:
 \begin{bashcode}
 echo "More from bash."
 \end{bashcode}
 
-
+Block environment:
 \begin{bashblock}
-ls
+ls -a
 \end{bashblock}
+Printed output:
+\printpythontex[verbatim]
 
-Printed output:  \printpythontex[verbatim].
+Verbatim:
+\begin{bashverbatim}
+echo "More from bash."
+\end{bashverbatim}
 
 
+Sub environment:
+\begin{bashsub}
+Some text \textcolor{blue}{!{"followed by things from bash"}} and then more text.
+\end{bashsub}
+
+Again, with command:  \bashs{Some text \textcolor{blue}{!{"followed by more things from bash"}} and then more text.}
 
 \end{document}

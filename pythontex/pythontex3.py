@@ -2135,6 +2135,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                             instance = last_instance
                         else:
                             codelinenum = '??'
+                            errlinenum = '??'
                             messages.append('* PythonTeX notice')
                             messages.append('    Line number ' + str(errlinenum) + ' could not be synced with the document')
 

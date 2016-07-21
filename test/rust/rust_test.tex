@@ -21,7 +21,6 @@
 \usepackage{amssymb,amsmath}
 \usepackage{graphicx}
 \usepackage{fullpage}
-\usepackage{fvextra}
 \usepackage[keeptemps=all, makestderr, usefamily={rust, rs}]{pythontex}
 
 \begin{document}
@@ -45,6 +44,13 @@ println!("{}\\endinput", 2.0_f64.powf(8.0_f64));
 
 Printed output:  \printpythontex.
 
+\begin{rustsub}
+\color{blue}
+\begin{Verbatim}
+2.0_f64.powf(8.0_f64) = !{2.0_f64.powf(8.0_f64)}
+\end{Verbatim}
+\end{rustsub}
+
 
 \section*{Rust (\texttt{rs})}
 
@@ -63,6 +69,13 @@ println!("{}\\endinput", 2.0_f64.powf(8.0_f64));
 \end{rsblock}
 
 Printed output:  \printpythontex.
+
+\begin{rssub}
+\color{blue}
+\begin{Verbatim}
+2.0_f64.powf(8.0_f64) = !{2.0_f64.powf(8.0_f64)}
+\end{Verbatim}
+\end{rssub}
 
 
 

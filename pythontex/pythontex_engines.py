@@ -608,9 +608,9 @@ class CodeEngine(object):
             field_pattern_list = []
 
             # {s}: start, {o}: open_delim, {c}: close_delim
-            field_content_1_recursive = r'(?:[^{o}{c}\n]+|{o}R{c})+'
-            field_content_1_final_inner = r'[^{o}{c}\n]+'
-            field_1 = '{s}{o}(?!{o})' + field_content_1_recursive + '(?<!{c}){c}(?!{c})'
+            field_content_1_recursive = r'(?:[^{o}{c}\n]*|{o}R{c})+'
+            field_content_1_final_inner = r'[^{o}{c}\n]*'
+            field_1 = '{s}{o}(?!{o})' + field_content_1_recursive + '(?<!{c}){c}'
             for n in range(5):  # Want to allow 5 levels inside
                 field_1 = field_1.replace('R', field_content_1_recursive)
             field_1 = field_1.replace('R', field_content_1_final_inner)
@@ -618,8 +618,8 @@ class CodeEngine(object):
             field_pattern_list.append(field_1)
 
             for n in range(2, 6+1):  # Want to allow 5 levels inside
-                field_n = '{s}' + '{o}'*n + '(?!{o})F(?<!{c})' + '{c}'*n + '(?!{c})'
-                field_n = field_n.replace('F', '(?:[^{o}{c}\n]+|{o}{{1,{n_minus}}}(?!{o})|{c}{{1,{n_minus}}}(?!{c}))+')
+                field_n = '{s}' + '{o}'*n + '(?!{o})F(?<!{c})' + '{c}'*n
+                field_n = field_n.replace('F', '(?:[^{o}{c}\n]*|{o}{{1,{n_minus}}}(?!{o})|{c}{{1,{n_minus}}}(?!{c}))+')
                 field_n = field_n.format(s=re.escape(start), o=re.escape(open_delim), c=re.escape(close_delim), n_minus=n-1)
                 field_pattern_list.append(field_n)
 
@@ -951,20 +951,20 @@ julia_template = '''
     # So can't set stdout and stderr encoding
 
     type JuliaTeXUtils
-        id::String
-        family::String
-        session::String
-        restart::String
-        command::String
+        id::AbstractString
+        family::AbstractString
+        session::AbstractString
+        restart::AbstractString
+        command::AbstractString
         context::Dict
-        args::String
-        instance::String
-        line::String
+        args::AbstractString
+        instance::AbstractString
+        line::AbstractString
 
-        _dependencies::Array{{String}}
-        _created::Array{{String}}
-        docdir::String
-        _context_raw::String
+        _dependencies::Array{{AbstractString}}
+        _created::Array{{AbstractString}}
+        docdir::AbstractString
+        _context_raw::AbstractString
 
         formatter::Function
         before::Function
@@ -983,8 +983,8 @@ julia_template = '''
         function JuliaTeXUtils()
             self = new()
             self.self = self
-            self._dependencies = Array(String, 0)
-            self._created = Array(String, 0)
+            self._dependencies = Array(AbstractString, 0)
+            self._created = Array(AbstractString, 0)
             self._context_raw = ""
 
             function formatter(expr)
@@ -1012,14 +1012,14 @@ julia_template = '''
 
             function set_context(expr)
                 if expr != "" && expr != self._context_raw
-                    self.context = {{strip(x[1]) => strip(x[2]) for x in map(x -> split(x, "="), split(expr, ","))}}
+                    self.context = Dict{{Any, Any}}([ strip(x[1]) => strip(x[2]) for x in map(x -> split(x, "="), split(expr, ",")) ])
                     self._context_raw = expr
                 end
             end
             self.set_context = set_context
 
             function pt_to_in(expr)
-                if isa(expr, String)
+                if isa(expr, AbstractString)
                     if sizeof(expr) > 2 && expr[end-1:end] == "pt"
                         expr = expr[1:end-2]
                     end
@@ -1130,7 +1130,7 @@ octave_template = '''
             error("Could not find directory {workingdir}");
         end
     end
-    if find_dir_in_path(octavetex.docdir)
+    if dir_in_loadpath(octavetex.docdir)
     else
         addpath(octavetex.docdir);
     end

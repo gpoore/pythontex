@@ -1,0 +1,119 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={ruby, rb}]{pythontex}
+
+\begin{document}
+
+
+\section*{Ruby (\texttt{ruby})}
+
+\ruby{33*33}
+
+Code:
+\begin{rubycode}
+puts "Hello from Ruby!"
+\end{rubycode}
+
+Block:
+\begin{rubyblock}
+puts "ABC"
+\end{rubyblock}
+Printed output:  \printpythontex
+
+Verbatim:
+\begin{rubyverbatim}
+puts "Hello from Ruby!
+\end{rubyverbatim}
+
+Sub:
+\begin{rubysub}
+In \LaTeX\textcolor{blue}{!{"...then Ruby..."}}and back in \LaTeX!
+\end{rubysub}
+
+
+
+\section*{Ruby (\texttt{rb})}
+
+\rb{33*33}
+
+Code:
+\begin{rbcode}
+puts "Hello from Ruby!"
+\end{rbcode}
+
+Block:
+\begin{rbblock}
+puts "ABC"
+\end{rbblock}
+Printed output:  \printpythontex
+
+Verbatim:
+\begin{rbverbatim}
+puts "Hello from Ruby!
+\end{rbverbatim}
+
+Sub:
+\begin{rbsub}
+In \LaTeX\textcolor{blue}{!{"...then Ruby..."}}and back in \LaTeX!
+\end{rbsub}
+
+
+
+\subsection*{Errors}
+
+\setpythontexfv{numbers=left, firstnumber=last}
+
+\begin{rubyblock}[err1]
+# Comment
+s = <<-QQ Python a
+\end{rubyblock}
+
+Should get no STDERR following this, because the sync system isn't yet sophisticated enough:  \stderrpythontex
+
+\begin{rubyblock}[err1]
+# Comment
+#s = 'Python a
+\end{rubyblock}
+
+\stderrpythontex
+
+
+\begin{rubyblock}[err2][numbers=left]
+1+
+\end{rubyblock}
+
+\stderrpythontex
+
+
+\begin{rubyblock}[err3][numbers=left]
+# Hmm
+# Ah
+1+'ab'
+\end{rubyblock}
+
+\stderrpythontex
+
+
+\end{document}
+

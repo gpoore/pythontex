@@ -1,0 +1,104 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={julia}]{pythontex}
+
+
+\begin{document}
+
+
+
+\section*{Julia}
+
+\subsection*{Commands}
+
+\julia{2^8}
+
+\juliac{println(2^16)}
+
+\juliab{println(2^32)}
+
+\printpythontex
+
+\juliav{println(2^32)}
+
+\julias{\LaTeX\ and then \textcolor{blue}{!{"Julia"}} and back to \LaTeX.}
+
+
+\subsection*{Environments}
+
+Code:
+\begin{juliacode}
+println("A string.")
+println(2^8)
+\end{juliacode}
+
+Block:
+\begin{juliablock}
+println("A string.")
+println(2^8)
+\end{juliablock}
+
+\printpythontex
+
+Verbatim:
+\begin{juliaverbatim}
+println("A string.")
+println(2^8)
+\end{juliaverbatim}
+
+Sub:
+\begin{juliasub}
+\LaTeX\ and then \textcolor{blue}{!{"Julia"}} and back to \LaTeX.
+\end{juliasub}
+
+
+\section*{Julia stderr}
+
+
+\begin{juliablock}[err1][numbers=left]
+# Comment
+s = """
+    Julia a
+\end{juliablock}
+
+\stderrpythontex
+
+\begin{juliablock}[err2][numbers=left]
+1+
+\end{juliablock}
+
+\stderrpythontex
+
+\begin{juliablock}[err3][numbers=left]
+# Comment
+# Another comment
+1 + "ab"
+\end{juliablock}
+
+\stderrpythontex
+
+
+
+\end{document}
+

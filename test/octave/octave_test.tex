@@ -1,0 +1,102 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={octave}]{pythontex}
+
+\begin{document}
+
+
+
+\section*{Octave}
+
+\subsection*{Commands}
+
+\octave{strrep(strrep(pwd(), '\', '/'), '_', '\_')}
+
+\octavec{disp(num2str(2^8))}
+
+\octaveb{disp(num2str(2^16))}
+
+\printpythontex
+
+\octavev{disp(num2str(2^32))}
+
+
+
+\subsection*{Environments}
+
+Code:
+\begin{octavecode}
+disp("Octave!")
+disp(2^8)
+\end{octavecode}
+
+Block:
+\begin{octaveblock}
+disp("Octave!")
+disp(2^8)
+\end{octaveblock}
+
+\printpythontex
+
+Verbatim:
+\begin{octaveverbatim}
+disp("Octave!")
+disp(2^8)
+\end{octaveverbatim}
+
+Sub:
+\begin{octavesub}
+In \LaTeX\ and then \textcolor{blue}{!{strcat(["Octave calculations $2^8=", num2str(2^8), "$"])}} and then back in \LaTeX.
+\end{octavesub}
+
+
+
+\section*{Octave stderr}
+
+
+\begin{octaveblock}[err1][numbers=left]
+% Comment
+s = "Octave a
+\end{octaveblock}
+
+\stderrpythontex
+
+\begin{octaveblock}[err2][numbers=left]
+1+
+\end{octaveblock}
+
+\stderrpythontex
+
+\begin{octaveblock}[err3][numbers=left]
+% Comment
+% Another comment
+1 + qrst
+\end{octaveblock}
+
+\stderrpythontex
+
+
+
+\end{document}
+
