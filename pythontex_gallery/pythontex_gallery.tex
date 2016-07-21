@@ -69,15 +69,17 @@ Or we could access the printed content verbatim (it might contain special charac
 \printpythontex[verb]
 \end{quote}
 
-Python interaction can also be more complex.  \pyb{print(str(2**2**2) + r'\endinput')} returns \printpythontex.  In this case, the printed results include \LaTeX\ code, which is correctly interpreted by \LaTeX\ to ensure that there is not an extra space after the 16.  Printed output is saved to a file and brought back in via \verb|\input|, and the \verb|\endinput| command stops input immediately, before \LaTeX\ gets to the end of the line and inserts a space character there, after the 16.
+Python interaction can also be more complex.  \pyb{print(str(2**2**2) + r'\endinput')} returns \printpythontex.  In this case, the printed result includes \LaTeX\ code, which is correctly interpreted by \LaTeX\ to ensure that there is not an extra space after the 16.  Printed output is saved to a file and brought back in via \verb|\input|, and the \verb|\endinput| command stops input immediately, before \LaTeX\ gets to the end of the line and inserts a space character there, after the 16.
 
 Printing works, but as the last example demonstrates, you have to be careful about spacing if you have text immediately after the printed content.  In that case, it's usually best to assemble text within a \pytex\ environment and store the text in a variable.  Then you can bring in the text later, using the \pygment{latex}{\py} command.  The \pygment{latex}{\py} command brings in a string representation of its argument.  First we create the text.
 \begin{pyblock}
 mytext = '$1 + 1 = {0}$'.format(1 + 1)
 \end{pyblock}
-Then we bring it in:  \py{mytext}.  The \pygment{latex}{\py} command can even bring in verbatim content, as long as you are using the pdfTeX or XeTeX engines.  (Unfortunately, verbatim does not work with LuaTeX, due to a bug.\footnote{\url{http://tracker.luatex.org/view.php?id=733}})
+Then we bring it in:  \py{mytext}.  The \pygment{latex}{\py} command can even bring in verbatim content.
 
 We don't have to typeset the code we're executing.  It can be hidden.\pyc{mystring=r'\textbf{This is a message from Python}'} And then we can access it later:  \py{mystring}.
+
+It is also possible to perform variable substitution or string interpolation.  The earlier result could be recreated:  \pys{$1 + 1 = !{1+1}$}.
 
 
 \section{Pygments highlighting}

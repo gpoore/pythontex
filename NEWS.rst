@@ -7,33 +7,79 @@ Version History
 ===============
 
 
+v0.15 (2016/07/21)
+------------------
+
+New features
+~~~~~~~~~~~~
+
+*  The ``fvextra`` package is now required.  This provides line breaking with
+   fine-grained control over break locations, the ability to highlight
+   specific lines or ranges of lines, improved handling of tabs, and several
+   additional features.
+
+*  Added ``sub`` commands and environments (``\pys``, ``pysub``, ...).  These
+   commands and environments perform string interpolation on text.  Fields
+   delimited by ``!{...}`` are replaced by the result of evaluating and then
+   printing their content.  This works for all families of commands and
+   environments, not just Python.  See the documentation for details about
+   field delimiters and escaping.
+
+*  Added ``rust`` and ``rs`` families of commands and environments.  These
+   provide essentially complete support for Rust, except that
+   ``rstex.formatter()``, ``rstex.before()``, and ``rstex.after()`` will
+   likely need additional refinement (#90).
+
+*  Added the ``sage`` family of commands and environments, which provide
+   support for Sage (#63).
+
+*  Added ``bash`` family of commands and environments.  This provides basic
+   support for bash (no utilities class or equivalent).  Bash works with
+   Windows if it is installed.
+
+*  Improved ``console`` compatibility under Linux with Python 3 (#70).
+
+*  Counters for default sessions are now created automatically.  This prevents
+   counter errors under some circumstances when working with ``\includeonly``.
+
+*  Commands like ``\py`` can now output verbatim content under LuaTeX.
+
+Bugfixes
+~~~~~~~~
+
+*  Fixed a bug that could cause an endless loop when a ``code`` command or
+   environment printed a ``code`` command or environment of the same family
+   with ``autoprint=true``.
+
+
+
 v0.14 (2014/07/17)
 ------------------
 
 New features
 ~~~~~~~~~~~~
 
-*  All commands for working with code inline are now robust, via 
-   ``etoolbox``'s ``\newrobustcmd``.  Among other things, this allows 
-   commands like ``\py`` to work in standard captions that have not been 
+*  All commands for working with code inline are now robust, via
+   ``etoolbox``'s ``\newrobustcmd``.  Among other things, this allows
+   commands like ``\py`` to work in standard captions that have not been
    redefined to avoid protection issues.
 *  Upgraded ``syncpdb`` to v0.2, which provides better list formatting.
 
 Backward-incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  The default working directory is now the main document directory instead 
-   of the output directory.  Using the output directory was a common source 
-   of confusion for new users and was incompatible with plans for future 
-   development.  Old documents in which the working directory was not 
-   specified will continue to use the output directory, but PythonTeX will 
-   print an upgrade message; new documents will use the new setting.  The 
-   output directory may be selected as the working directory manually, or 
-   with the shorthand 
+*  The default working directory is now the main document directory instead
+   of the output directory.  Using the output directory was a common source
+   of confusion for new users and was incompatible with plans for future
+   development.  Old documents in which the working directory was not
+   specified will continue to use the output directory, but PythonTeX will
+   print an upgrade message; new documents will use the new setting.  The
+   output directory may be selected as the working directory manually, or
+   with the shorthand
    "``\setpythontexworkingdir{<outputdir>}``".
 
-*  Standardized version numbering by removing the "v" prefix from the stored 
-   version numbers in Python variables and LaTeX macros.  Standardized the 
+*  Standardized version numbering by removing the "v" prefix from the stored
+   version numbers in Python variables and LaTeX macros.  Standardized the
    PythonTeX scripts by renaming ``version`` to ``__version__``.
 
 
@@ -83,12 +129,12 @@ New features
 
 *  Added Python version checking to all numbered scripts.
 
-*  Under Python, the type of data passed via ``\setpythontexcontext`` may 
-   now be set using YAML-style tags (``!!str``, ``!!int``, ``!!float``). For 
+*  Under Python, the type of data passed via ``\setpythontexcontext`` may
+   now be set using YAML-style tags (``!!str``, ``!!int``, ``!!float``). For
    example, ``{myint=!!int 123}``.
 
 *  The ``fancyvrb`` options ``firstline`` and ``lastline`` now work with
-   the ``pygments`` environment and ``\inputpygments`` command. This required 
+   the ``pygments`` environment and ``\inputpygments`` command. This required
    some additional patching of ``fancyvrb``.
 
 *  The ``pytx@Verbatim`` and ``pytx@SaveVerbatim`` environments are now
@@ -100,7 +146,7 @@ New features
    ``latexmk`` usage to documentation.
 
 *  Tildes ``~`` may now be used in ``outputdir`` and ``workingdir`` to
-   refer to the user’s home directory, even under Windows.
+   refer to the userï¿½s home directory, even under Windows.
 
 Bugfixes
 ~~~~~~~~
@@ -122,78 +168,78 @@ New features
 
 *  Switching to GitHub's Releases for downloads.
 
-*  TeX information such as page dimensions may now be easily passed to the 
-   programming-language side, using the new ``\setpythontexcontext`` command.  
-   Contextual information is stored in the ``context`` attribute of the 
+*  TeX information such as page dimensions may now be easily passed to the
+   programming-language side, using the new ``\setpythontexcontext`` command.
+   Contextual information is stored in the ``context`` attribute of the
    utilities class, which is a dictionary (and also has attributes in Python).
 
-*  The utilities class now has ``pt_to_in()``, ``pt_to_cm()``, and 
-   ``pt_to_mm()`` methods for converting units of TeX points into inches, 
-   centimeters, and millimeters.  These work with integers and floats, as 
-   well as strings that consist of numbers and optionally end in "pt".  There 
-   is also a ``pt_to_bp()`` for converting TeX points (1/72.27 inch) into big 
+*  The utilities class now has ``pt_to_in()``, ``pt_to_cm()``, and
+   ``pt_to_mm()`` methods for converting units of TeX points into inches,
+   centimeters, and millimeters.  These work with integers and floats, as
+   well as strings that consist of numbers and optionally end in "pt".  There
+   is also a ``pt_to_bp()`` for converting TeX points (1/72.27 inch) into big
    (DTP or PostScript) points (1/72 inch).
-   
-*  Expanded Quickstart.  Quickstart is now compatible with all LaTeX engines.  
+
+*  Expanded Quickstart.  Quickstart is now compatible with all LaTeX engines.
    Quickstart now avoids ``microtype`` issues on some systems (#32).
-   
+
 *  Added information on citing PythonTeX (#28).
 
-*  Utilities class has a new attribute ``id``, which is a string that joins 
-   the command family name, session name, and session restart parameters with 
-   underscores.  This may be used in creating files that need a name that 
-   contains a unique, session-based identifier (for example, names for 
+*  Utilities class has a new attribute ``id``, which is a string that joins
+   the command family name, session name, and session restart parameters with
+   underscores.  This may be used in creating files that need a name that
+   contains a unique, session-based identifier (for example, names for
    figures that are saved automatically).
 
 Backward-incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  All utilities-class attributes with names of the form ``input_*`` have 
-   been renamed with the "``input_``" removed.  Among other things, this 
-   makes it easier to access the ``context`` attribute (``pytex.context`` 
+*  All utilities-class attributes with names of the form ``input_*`` have
+   been renamed with the "``input_``" removed.  Among other things, this
+   makes it easier to access the ``context`` attribute (``pytex.context``
    vs. ``pytex.input_context``).
-   
-*  ``depythontex`` now has ``-o`` and ``--output`` command-line options for 
-   specifying the name of the output file.  If an output file is not 
-   specified, then output is written to ``stdout``.  This allows 
+
+*  ``depythontex`` now has ``-o`` and ``--output`` command-line options for
+   specifying the name of the output file.  If an output file is not
+   specified, then output is written to ``stdout``.  This allows
    ``depythontex`` output to be piped to another program.
-   
-*  All scripts ``*2.py`` now have shebangs with ``env python2``, and all 
-   scripts ``*3.py`` now have shebangs with ``env python3``.  This allows the 
-   wrapper scripts (``env python`` shebang) to be used with the default 
-   Python installation, and the numbered scripts to be used with specific 
-   versions.  Remember that except for console content, the ``--interpreter`` 
-   option is what determines the Python version that actually executes code.  
-   The version of Python used to launch ``pythontex.py`` merely determines 
-   the version that manages code execution.  (``--interpreter`` support for 
+
+*  All scripts ``*2.py`` now have shebangs with ``env python2``, and all
+   scripts ``*3.py`` now have shebangs with ``env python3``.  This allows the
+   wrapper scripts (``env python`` shebang) to be used with the default
+   Python installation, and the numbered scripts to be used with specific
+   versions.  Remember that except for console content, the ``--interpreter``
+   option is what determines the Python version that actually executes code.
+   The version of Python used to launch ``pythontex.py`` merely determines
+   the version that manages code execution.  (``--interpreter`` support for
    console content is coming.)
-   
-*  Changed the template style used in the ``CodeEngine`` class.  Replacement 
-   fields are now surrounded by single curly braces (as in Python's format 
-   string syntax), rather than double curly braces.  Literal curly braces are 
-   obtained by doubling braces.  This allows the use of literal adjacent 
+
+*  Changed the template style used in the ``CodeEngine`` class.  Replacement
+   fields are now surrounded by single curly braces (as in Python's format
+   string syntax), rather than double curly braces.  Literal curly braces are
+   obtained by doubling braces.  This allows the use of literal adjacent
    double braces in templates, which was not possible previously.
-   
-*  The Julia template now uses the new ``in()`` function, replacing 
+
+*  The Julia template now uses the new ``in()`` function, replacing
    ``contains()``.  This requires Julia v0.2.0+.
 
 Bugfixes
 ~~~~~~~~
 
-*  Modified test for LuaTeX, so that ``\directlua`` is not ``\let`` to 
-   ``\relax`` if it does not exist.  This was causing incompatibility with 
+*  Modified test for LuaTeX, so that ``\directlua`` is not ``\let`` to
+   ``\relax`` if it does not exist.  This was causing incompatibility with
    ``babel`` under pdfTeX and XeTeX (#33).
-   
-*  Added missing shebangs to ``depythontex*.py``.  Handling of ``utilspath`` 
-   is now more forgiving, so that ``pythontex_utils.py`` can be installed in 
+
+*  Added missing shebangs to ``depythontex*.py``.  Handling of ``utilspath``
+   is now more forgiving, so that ``pythontex_utils.py`` can be installed in
    alternate locations (#23).
-   
-*  ``depythontex`` no longer leaves a blank line where 
+
+*  ``depythontex`` no longer leaves a blank line where
    ``\usepackage{pythontex}`` was removed.
-   
-*  Console environments typeset with ``fancyvrb`` no longer end with an 
+
+*  Console environments typeset with ``fancyvrb`` no longer end with an
    unnecessary empty line.
-   
+
 *  Fixed bug in installer when ``kpsewhich`` was not found (#21).
 
 
@@ -201,53 +247,53 @@ Bugfixes
 v0.12 (2013/08/26)
 ------------------
 
-*  Added support for the Julia language, with the ``julia`` and ``jl`` 
-   families of commands and environments.  (Note that Pygments only added 
+*  Added support for the Julia language, with the ``julia`` and ``jl``
+   families of commands and environments.  (Note that Pygments only added
    Julia support in version 1.6.)
-   
-*  Warnings and errors are now synchronized with the line numbers of files 
-   brought in via ``\input``, ``\include``, etc.  This is accomplished using 
+
+*  Warnings and errors are now synchronized with the line numbers of files
+   brought in via ``\input``, ``\include``, etc.  This is accomplished using
    the ``currfile`` package.
-   
-*  Added package option ``gobble``.  When ``gobble=auto``, all code is 
-   dedented before being executed and/or typeset.  The current 
-   implementation is functional but basic; it will be improved and extended 
+
+*  Added package option ``gobble``.  When ``gobble=auto``, all code is
+   dedented before being executed and/or typeset.  The current
+   implementation is functional but basic; it will be improved and extended
    in the future.
-   
-*  The document root directory is now always added to ``sys.path`` (or its 
-   equivalent), even when it is not the working directory. (The working 
-   directory has been added to ``sys.path`` since v0.12beta.)  The document 
-   directory is added after the working directory, so that the working 
+
+*  The document root directory is now always added to ``sys.path`` (or its
+   equivalent), even when it is not the working directory. (The working
+   directory has been added to ``sys.path`` since v0.12beta.)  The document
+   directory is added after the working directory, so that the working
    directory has precedence.
-   
-*  Fixed a bug in ``console`` commands and environments; ``sys.path`` now 
-   contains the working and document directories, and the working directory 
-   is now the output directory by default.  This parallels the behavior of 
+
+*  Fixed a bug in ``console`` commands and environments; ``sys.path`` now
+   contains the working and document directories, and the working directory
+   is now the output directory by default.  This parallels the behavior of
    non-``console`` commands and environments.
-   
-*  Added command-line option ``--interpreter`` that allows an interpreter to 
-   be invoked via a specific command.  This allows, for example, a specific 
+
+*  Added command-line option ``--interpreter`` that allows an interpreter to
+   be invoked via a specific command.  This allows, for example, a specific
    version of Python to be invoked.
-   
-*  Improved synchronization of stderr in cases when an error is triggered 
-   far after its origin (for example, an error caused by a multiline string 
-   that is lacking a closing quote/delimiter, and thus may span several 
+
+*  Improved synchronization of stderr in cases when an error is triggered
+   far after its origin (for example, an error caused by a multiline string
+   that is lacking a closing quote/delimiter, and thus may span several
    chunks of user code).
-   
-*  Modified usage of the ``shlex`` module to work around its lack of Unicode 
+
+*  Modified usage of the ``shlex`` module to work around its lack of Unicode
    support in Python versions prior to 2.7.3.
-   
-*  Fixed a bug from v0.12beta that prevented ``\inputpygments`` from working 
+
+*  Fixed a bug from v0.12beta that prevented ``\inputpygments`` from working
    when ``pygments=true``.
-   
-*  Fixed a bug with counters that caused errors when content spanning 
+
+*  Fixed a bug with counters that caused errors when content spanning
    multiple columns was created within a ``tabular`` environment.
-   
+
 *  Added checking for compatible Python versions in ``pythontex.py``.
 
-*  Improved execution of ``*.bat`` and ``*.cmd`` files under Windows.  The 
-   solution from v0.12beta allowed ``*.bat`` and ``*.cmd`` to be found and 
-   executed when the extension was not given, but did not give correct 
+*  Improved execution of ``*.bat`` and ``*.cmd`` files under Windows.  The
+   solution from v0.12beta allowed ``*.bat`` and ``*.cmd`` to be found and
+   executed when the extension was not given, but did not give correct
    return codes.
 
 
@@ -341,8 +387,8 @@ v0.12beta (2013/06/24)
    new hash, triggering another document compile.
 
 *  Improved the way in which the PythonTeX ``outputdir`` is added to the
-   graphics path. This had been done with ``\graphicspath``, but that 
-   overwrites any graphics path previously specified by the user. Now the 
+   graphics path. This had been done with ``\graphicspath``, but that
+   overwrites any graphics path previously specified by the user. Now the
    ``outputdir`` is appended to any pre-existing path.
 
 *  Added the ``depythontex`` option ``--graphicspath``. This adds the
@@ -357,7 +403,7 @@ v0.12beta (2013/06/24)
 *  Under Windows, ``subprocess.Popen()`` is now invoked with
    ``shell=True`` if ``shell=False`` results in a WindowsError. This
    allows commands involving ``*.bat`` and ``*.cmd`` files to be
-   executed when the extension is not specified; otherwise, only ``*.exe`` 
+   executed when the extension is not specified; otherwise, only ``*.exe``
    can be found and run.
 
 *  The path to utils is now found in ``pythontex.py`` via
@@ -374,7 +420,7 @@ v0.12beta (2013/06/24)
    one. All macros for commands like ``\py`` are now returned within
    stdout, rather than in their own file.
 
-*  Fixed a bug with ``\stderrpythontex``; it was defaulting to ``verb`` 
+*  Fixed a bug with ``\stderrpythontex``; it was defaulting to ``verb``
    rather than ``verbatim`` mode.
 
 
@@ -382,7 +428,7 @@ v0.11 (2013/04/21)
 ------------------
 
 * As the first non-beta release, this version adds several features and introduces several changes.  You should read these release notes carefully, since some changes are not backwards-compatible.  Changes are based on a thorough review of all current and planned features.  PythonTeX's capabilities have already grown beyond what was originally intended, and a long list of features still remains to be implemented.  As a result, some changes are needed to ensure consistent syntax and naming in the future.  Insofar as possible, all command names and syntax will be frozen after this release.
-* Added the ``pythontex.py`` and ``depythontex.py`` wrapper scripts.  When run, these detect the current version of Python and import the correct PythonTeX code.  It is still possible to run ``pythontex*.py`` and ``depythontex*.py`` directly, but the new wrapper scripts should be used instead for simplicity.  There is now only a single ``pythontex_utils.py``, which works with both Python 2 and Python 3.  
+* Added the ``pythontex.py`` and ``depythontex.py`` wrapper scripts.  When run, these detect the current version of Python and import the correct PythonTeX code.  It is still possible to run ``pythontex*.py`` and ``depythontex*.py`` directly, but the new wrapper scripts should be used instead for simplicity.  There is now only a single ``pythontex_utils.py``, which works with both Python 2 and Python 3.
 * Added the ``beta`` package option.  This makes the current version behave like v0.11beta, for compatibility.  This option is temporary and will probably only be retained for a few releases.
 * Backward-incompatible changes (require the ``beta`` option to restore old behavior)
 
@@ -432,92 +478,92 @@ v0.10beta2 (2013/01/23)
 v0.10beta (2013/01/09)
 ----------------------
 
-* Backward-incompatible: Redid treatment of command-line options for 
-  ``pythontex*.py``, using Python's ``argparse`` module.  Run 
+* Backward-incompatible: Redid treatment of command-line options for
+  ``pythontex*.py``, using Python's ``argparse`` module.  Run
   ``pythontex*.py`` with option ``-h`` to see new command line options.
-* Deprecated: ``\setpythontexcustomcode`` is deprecated in favor of the 
-  ``\pythontexcustomc`` command and ``pythontexcustomcode`` 
-  environment.  These allow entry of pure code, unlike 
-  ``\setpythontexcustomcode``.  These also allow custom code to be 
+* Deprecated: ``\setpythontexcustomcode`` is deprecated in favor of the
+  ``\pythontexcustomc`` command and ``pythontexcustomcode``
+  environment.  These allow entry of pure code, unlike
+  ``\setpythontexcustomcode``.  These also allow custom code to be
   added to the beginning or end of a session, via an optional argument.
-  Improved treatment of errors and warnings associated with custom 
+  Improved treatment of errors and warnings associated with custom
   code.
-* The summary of errors and warnings now correctly differentiates 
-  errors and warnings produced by user code, rather than treating all 
-  of them as errors.  By default, ``pythontex*.py`` now returns an 
+* The summary of errors and warnings now correctly differentiates
+  errors and warnings produced by user code, rather than treating all
+  of them as errors.  By default, ``pythontex*.py`` now returns an
   exit code of 1 if there were errors.
-* The PythonTeX utilities class now allows external file dependencies 
-  to be specified via ``pytex.add_dependencies()``, so that sessions 
-  are automatically re-executed when external dependencies are 
-  modified (modification is determined via either hash or mtime; this 
+* The PythonTeX utilities class now allows external file dependencies
+  to be specified via ``pytex.add_dependencies()``, so that sessions
+  are automatically re-executed when external dependencies are
+  modified (modification is determined via either hash or mtime; this
   is governed by the new ``hashdependencies`` option).
-* The PythonTeX utilities class now allows created files to be 
-  specified via ``pytex.add_created()``, so that created files may be 
-  automatically cleaned up (deleted) when the code that created them 
+* The PythonTeX utilities class now allows created files to be
+  specified via ``pytex.add_created()``, so that created files may be
+  automatically cleaned up (deleted) when the code that created them
   is modified (for example, name change for a saved plot).
 * Added the following package options.
 
-  - ``stdout`` (or ``print``): Allows input of stdout to be disabled.  
+  - ``stdout`` (or ``print``): Allows input of stdout to be disabled.
     Useful for debugging.
-  - ``runall``: Executes everything.  Useful when code depends on 
+  - ``runall``: Executes everything.  Useful when code depends on
     external data.
-  - ``rerun``: Determines when code is re-executed.  Code may be set 
-    to always run (same as ``runall`` option), or only run when it is 
-    modified or when it produces errors or warnings.  By default, 
-    code is always re-executed if there are errors or modifications, 
+  - ``rerun``: Determines when code is re-executed.  Code may be set
+    to always run (same as ``runall`` option), or only run when it is
+    modified or when it produces errors or warnings.  By default,
+    code is always re-executed if there are errors or modifications,
     but not re-executed if there are warnings.
-  - ``hashdependencies``: Determines whether external dependencies 
-    (data, external code files highlighted with Pygments, etc.) are 
-    checked for modification via hashing or modification time.  
+  - ``hashdependencies``: Determines whether external dependencies
+    (data, external code files highlighted with Pygments, etc.) are
+    checked for modification via hashing or modification time.
     Modification time is default for performance reasons.
 
-* Added the following new command line options.  The options that are 
-  equivalent to package options are overridden by the package options 
+* Added the following new command line options.  The options that are
+  equivalent to package options are overridden by the package options
   when present.
 
-  - ``--error-exit-code``:  Determines whether an exit code of 1 is 
-    returned if there were errors.  On by default, but can be turned 
+  - ``--error-exit-code``:  Determines whether an exit code of 1 is
+    returned if there were errors.  On by default, but can be turned
     off since it is undesirable when working with some editors.
   - ``--runall``: Equivalent to new package option.
   - ``--rerun``:  Equivalent to new package option.
   - ``--hashdependencies``:  Equivalent to new package option.
 
-* Modified the ``fixlr`` option, so that it only patches commands if 
+* Modified the ``fixlr`` option, so that it only patches commands if
   they have not already been patched (avoids package conflicts).
-* Added ``\setpythontexautoprint`` command for toggling autoprint 
+* Added ``\setpythontexautoprint`` command for toggling autoprint
   on/off within the body of the document.
-* Installer now attempts to create symlinks under OS X and Linux with 
+* Installer now attempts to create symlinks under OS X and Linux with
   TeX Live, and under OS X with MacPorts Tex Live.
-* Performed compatibility testing under lualatex and xelatex 
-  (previously, had only tested with pdflatex).  Added documentation 
-  for using these TeX engines; at most, slightly different preambles 
-  are needed.  Modified the PythonTeX gallery to support all three 
+* Performed compatibility testing under lualatex and xelatex
+  (previously, had only tested with pdflatex).  Added documentation
+  for using these TeX engines; at most, slightly different preambles
+  are needed.  Modified the PythonTeX gallery to support all three
   engines.
-* Code commands and environments may now be used in the preamble.  
-  This, combined with the new treatment of custom code, allows 
+* Code commands and environments may now be used in the preamble.
+  This, combined with the new treatment of custom code, allows
   PythonTeX to be used in creating LaTeX packages.
 * Added documentation for using PythonTeX in LaTeX programming.
-* Fixed a bug that sometimes caused incorrect line numbers with 
+* Fixed a bug that sometimes caused incorrect line numbers with
   ``stderr`` content.  Improved processing of stderr.
-* Fixed a bug in automatic detection of pre-existing listings 
+* Fixed a bug in automatic detection of pre-existing listings
   environment.
-* Improved the detection of imports from ``__future__``.  Detection 
+* Improved the detection of imports from ``__future__``.  Detection
   should now be stricter, faster, and more accurate.
 
 
 v0.9beta3 (2012/07/17)
 ----------------------
 
-*  Added Unicode support, which required the Python code to be split into 
+*  Added Unicode support, which required the Python code to be split into
    one set for Python 2 and another set for Python 3.  This will require
    any old installation to be completely removed, and a new installation
    created from scratch.
-*  Refactoring of Python code.  Documents should automatically re-execute 
+*  Refactoring of Python code.  Documents should automatically re-execute
    all code after updating to the new version.  Otherwise, you should delete
    the PythonTeX directory and run PythonTeX.
 *  Improved installation script.
-*  Added package options:  ``pyfuture``, ``stderr``, ``upquote``, 
-   ``pyglexer``, ``pyginline``.  Renamed the ``pygextfile`` option to 
+*  Added package options:  ``pyfuture``, ``stderr``, ``upquote``,
+   ``pyglexer``, ``pyginline``.  Renamed the ``pygextfile`` option to
    ``fvextfile``.
 *  Added custom code and workingdir commands.
 *  Added the ``console`` environment and associated options.
@@ -538,4 +584,3 @@ v0.9beta (2012/04/27)
 ---------------------
 
 *  Initial public beta release.
-

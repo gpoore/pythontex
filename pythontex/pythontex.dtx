@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2016/07/20 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/21 v0.15 execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3212}
+% \CheckSum{3174}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -153,19 +153,24 @@
 %   Right brace   \}     Tilde         \~}
 %
 %
-% \begin{changelog}{v0.15}{2016/07/??}
+% \begin{changelog}{v0.15}{2016/07/21}
 % \textbf{New features}
 % \begin{itemize}
 % \item The \texttt{fvextra} package is now required.  This provides line breaking with fine-grained control over break locations, the ability to highlight specific lines or ranges of lines, improved handling of tabs, and several additional features.
 % \item Added \texttt{sub} commands and environments (\texttt{\string\pys}, \texttt{pysub}, ...).  These commands and environments perform string interpolation on text.  Fields delimited by \texttt{!\{...\}} are replaced by the result of evaluating and then printing their content.  This works for all families of commands and environments, not just Python.  See the documentation for details about field delimiters and escaping.
-% \item Added \texttt{rust} and \texttt{rs} families of commands and environments.  These provide complete support for Rust, except that \texttt{rstex.formatter()}, \texttt{rstex.before()}, and \texttt{rstex.after()} will likely need additional refinement (\#90).
+% \item Added \texttt{rust} and \texttt{rs} families of commands and environments.  These provide essentially complete support for Rust, except that \texttt{rstex.formatter()}, \texttt{rstex.before()}, and \texttt{rstex.after()} will likely need additional refinement (\#90).
 % \item Added the \texttt{sage} family of commands and environments, which provide support for Sage (\#63).
 % \item Added \texttt{bash} family of commands and environments.  This provides basic support for bash (no utilities class or equivalent).  Bash works with Windows if it is installed.
 % \item Improved \texttt{console} compatibility under Linux with Python 3 (\#70).
 % \item Counters for default sessions are now created automatically.  This prevents counter errors under some circumstances when working with \texttt{\string\includeonly}.
+% \item Commands like \texttt{\string\py} can now output verbatim content under LuaTeX.
+% \end{itemize}
+% \textbf{Bugfixes}
+% \begin{itemize}
 % \item Fixed a bug that could cause an endless loop when a \texttt{code} command or environment printed a \texttt{code} command or environment of the same family with \texttt{autoprint=true}.
 % \end{itemize}
 % \end{changelog}
+%
 %
 % \begin{changelog}{v0.14}{2014/07/17}
 % \textbf{New features}
@@ -833,7 +838,7 @@
 %
 % Assignment is \textbf{not} allowed using |\py|.  For example, |\py{a=1}| is \textbf{not} valid.  This is because assignment cannot be converted to a string.\footnote{It would be simple to allow any code within |\textbackslash py|, including assignment, by using a |try/except| statement.  In this way, the functionality of |\textbackslash py| and |\textbackslash pyc| could be merged.  While that would be simpler to use, it also has serious drawbacks.  If |\textbackslash py| is not exclusively used to typeset string representations of \meta{code}, then it is no longer possible on the \LaTeX\ side to determine whether a command should return a string.  Thus, it is harder to determine, from within a \TeX\ editor, whether |pythontex.py| needs to be run; warnings for missing Python content could not be issued, because the system wouldn't know (on the \LaTeX\ side) whether content was indeed missing.}
 %
-% The text returned by Python must be valid \LaTeX\ code.  Verbatim and other special content is allowed under the pdfTeX and XeTeX engines (a known bug prevents it from working with LuaTeX).  The primary reasons for using |\py| rather than |print| are (1) |\py| is more compact and (2) |print| requires an external file to be created for every command or environment in which it is used, while |\py| and equivalents for other families share a single external file.  Thus, use of |\py| minimizes the creation of external files, which is a key design goal for \pytex.\footnote{For |\textbackslash py|, the text returned by Python is stored in macros and thus must be valid \LaTeX\ code, because \LaTeX\ interprets the returned content.  The use of macros for storing returned content means that an external file need not be created for each use of |\textbackslash py|.  Rather, all macros created by |\textbackslash py| and equivalent commands from other families are stored in a single file that is inputted.  Note that even though the content is stored in macros, verbatim content is allowed, through the use of special macro definitions combined with \texttt{\string\scantokens}.}  The main reason for using |print| rather than |\py| is if you need to include a very large amount of material; |print|'s use of external files won't use up \TeX's memory, and may give noticeably better performance once the material is sufficiently long.
+% The text returned by Python must be valid \LaTeX\ code.  Verbatim and other special content is allowed.  The primary reasons for using |\py| rather than |print| are (1) |\py| is more compact and (2) |print| requires an external file to be created for every command or environment in which it is used, while |\py| and equivalents for other families share a single external file.  Thus, use of |\py| minimizes the creation of external files, which is a key design goal for \pytex.\footnote{For |\textbackslash py|, the text returned by Python is stored in macros and thus must be valid \LaTeX\ code, because \LaTeX\ interprets the returned content.  The use of macros for storing returned content means that an external file need not be created for each use of |\textbackslash py|.  Rather, all macros created by |\textbackslash py| and equivalent commands from other families are stored in a single file that is inputted.  Note that even though the content is stored in macros, verbatim content is allowed, through the use of special macro definitions combined with \texttt{\string\scantokens}.}  The main reason for using |print| rather than |\py| is if you need to include a very large amount of material; |print|'s use of external files won't use up \TeX's memory, and may give noticeably better performance once the material is sufficiently long.
 %
 % \DescribeMacro{\pyc\oarg{session}\meta{opening~delim}\meta{code}\meta{closing~delim}}
 %
@@ -1790,7 +1795,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.15dev}
+\newcommand{\pytx@packageversion}{0.15}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
@@ -2238,8 +2243,6 @@
 %
 % This prevents the creation of unnecessary files, but it also has a significant drawback:  only some content can be saved in a standard macro.  In particular, verbatim content using |\verb| and |verbatim| will not work.  So we need a way to save anything in a macro.  The solution is to create a special macro that captures its argument verbatim.  The argument is then tokenized when it is used via |\scantokens|.  All of this requires a certain amount of catcode trickery.
 %
-% While this approach works with the XeTeX and pdfTeX engines, it does not work with the LuaTeX engine, which has a known bug in its implementation of |\scantokens|.\footnote{\url{http://tracker.luatex.org/view.php?id=733}}  So we provide a separate version for Lua\TeX\ that does not support verbatim.  The space after the |#1| is intentional, so that the newline at the beginning of the macro definition is gobbled, and the macro content will start with text rather than leading whitespace.  Two separate tests for LuaTeX are performed:  comparison with an undefined macro |\pytx@undefined|, which will work under most circumstances, and comparison with |\relax|, which serves as a backup in case a test for LuaTeX by another package |\let|'s |\directlua| to |\relax| (for example, an |\expandafter\ifx\csname directlua\endcsname\relax| test).
-%
 %    \begin{macrocode}
 \def\pytx@SVMCR#1{%
     \edef\pytx@tmp{\csname #1\endcsname}%
@@ -2256,22 +2259,6 @@
         !expandafter!scantokens!expandafter{#1!empty}}%
 }%
 !endgroup
-\ifx\directlua\pytx@undefined\else
-\def\pytx@SVMCR#1 {%
-    \edef\pytx@tmp{\csname #1\endcsname}%
-    \pytx@SVMCR@i}
-\long\def\pytx@SVMCR@i#1\endpytx@SVMCR{%
-    \expandafter\gdef\pytx@tmp{#1}%
-}
-\fi
-\ifx\directlua\relax\else
-\def\pytx@SVMCR#1 {%
-    \edef\pytx@tmp{\csname #1\endcsname}%
-    \pytx@SVMCR@i}
-\long\def\pytx@SVMCR@i#1\endpytx@SVMCR{%
-    \expandafter\gdef\pytx@tmp{#1}%
-}
-\fi
 %    \end{macrocode}\end{macro}
 %
 % \begin{macro}{pytx@Verbatim}

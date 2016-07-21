@@ -77,7 +77,7 @@ else:
 
 # Script parameters
 # Version
-__version__ = '0.15dev'
+__version__ = '0.15'
 
 
 
@@ -1640,7 +1640,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                             f = open(os.path.expanduser(os.path.normcase(fname)), 'w', encoding=encoding)
                             if command in ('s', 'sub'):
                                 if content:
-                                    fields = [f.split('\n', 1)[1].rsplit('\n', 1)[0] for f in content.split('=>PYTHONTEX:FIELD_DELIM#')[1:]]
+                                    fields = [x.split('\n', 1)[1].rsplit('\n', 1)[0] for x in content.split('=>PYTHONTEX:FIELD_DELIM#')[1:]]
                                     content = code_list[int(instance)].sub_template.format(*fields)
                                 else:
                                     # If no replacement fields, de-templatize
@@ -2461,9 +2461,10 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
         from pygments import highlight
         from pygments.lexers import get_lexer_by_name
         from pygments.formatters import LatexFormatter
-        formatter = LatexFormatter(**pygments_settings['formatter_options'])
-        lexer = get_lexer_by_name(pygments_settings['lexer'],
-                                  **pygments_settings['lexer_options'])
+        p = pygments_settings['formatter_options'].copy()
+        p['commandprefix'] = 'PYG'
+        formatter = LatexFormatter(**p)
+        lexer = get_lexer_by_name(pygments_settings['lexer'], **p)
     else:
         pygmentize = False
 

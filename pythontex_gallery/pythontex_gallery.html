@@ -4,34 +4,53 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="pandoc" />
+  <meta name="author" content="Geoffrey M. Poore" />
   <title>PythonTeX Gallery</title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
+div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
 table.sourceCode { width: 100%; line-height: 100%; }
 td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
 td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; }
-code > span.dt { color: #902000; }
-code > span.dv { color: #40a070; }
-code > span.bn { color: #40a070; }
-code > span.fl { color: #40a070; }
-code > span.ch { color: #4070a0; }
-code > span.st { color: #4070a0; }
-code > span.co { color: #60a0b0; font-style: italic; }
-code > span.ot { color: #007020; }
-code > span.al { color: #ff0000; font-weight: bold; }
-code > span.fu { color: #06287e; }
-code > span.er { color: #ff0000; font-weight: bold; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
   </style>
-  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 </head>
 <body>
 <div id="header">
 <h1 class="title"><span>PythonTeX</span> Gallery</h1>
+<h2 class="author">Geoffrey M. Poore</h2>
 </div>
-<p><span>PythonTeX</span> allows you to run Python code from within LaTeX documents and automatically include the output. This document serves as an example of what is possible with <span>PythonTeX</span>.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
 <h1 id="general-python-interaction">General Python interaction</h1>
 <p>We can typeset code that is passed to Python, and bring back the results.</p>
 <p>This can be simple. For example, <code>print('Python says hi!')</code> returns the following:</p>
@@ -42,11 +61,12 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <blockquote>
 <p><code>Python says hi!</code></p>
 </blockquote>
-<p>Python interaction can also be more complex. <code>print(str(2**2**2) + r'\endinput')</code> returns 16. In this case, the printed results include LaTeX code, which is correctly interpreted by LaTeX to ensure that there is not an extra space after the 16. Printed output is saved to a file and brought back in via <code>\input</code>, and the <code>\endinput</code> command stops input immediately, before LaTeX gets to the end of the line and inserts a space character there, after the 16.</p>
+<p>Python interaction can also be more complex. <code>print(str(2**2**2) + r'\endinput')</code> returns 16. In this case, the printed result includes LaTeX code, which is correctly interpreted by LaTeX to ensure that there is not an extra space after the 16. Printed output is saved to a file and brought back in via <code>\input</code>, and the <code>\endinput</code> command stops input immediately, before LaTeX gets to the end of the line and inserts a space character there, after the 16.</p>
 <p>Printing works, but as the last example demonstrates, you have to be careful about spacing if you have text immediately after the printed content. In that case, it’s usually best to assemble text within a <span>PythonTeX</span> environment and store the text in a variable. Then you can bring in the text later, using the <code>\py</code> command. The <code>\py</code> command brings in a string representation of its argument. First we create the text.</p>
-<pre class="sourceCode python"><code class="sourceCode python">mytext = <span class="st">&#39;$1 + 1 = </span><span class="ot">{0}</span><span class="st">$&#39;</span>.<span class="dt">format</span>(<span class="dv">1</span> + <span class="dv">1</span>)</code></pre>
-<p>Then we bring it in: <span class="math">\(1 + 1 = 2\)</span>. The <code>\py</code> command can even bring in verbatim content, as long as you are using the pdfTeX or XeTeX engines. (Unfortunately, verbatim does not work with LuaTeX, due to a bug.<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>)</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">mytext <span class="op">=</span> <span class="st">&#39;$1 + 1 = </span><span class="sc">{0}</span><span class="st">$&#39;</span>.<span class="bu">format</span>(<span class="dv">1</span> <span class="op">+</span> <span class="dv">1</span>)</code></pre></div>
+<p>Then we bring it in: <span class="math inline">\(1 + 1 = 2\)</span>. The <code>\py</code> command can even bring in verbatim content.</p>
 <p>We don’t have to typeset the code we’re executing. It can be hidden. And then we can access it later: <strong>This is a message from Python</strong>.</p>
+<p>It is also possible to perform variable substitution or string interpolation. The earlier result could be recreated: <span class="math inline">\(1 + 1 = 2\)</span>.</p>
 <h1 id="pygments-highlighting">Pygments highlighting</h1>
 <p><span>PythonTeX</span> supports syntax highlighting via Pygments. Any language supported by Pygments can be highlighted. Unicode is supported. Consider this snippet copied and pasted from a Python 3 interactive session. (Using random strings of Unicode for variable names is probably not a good idea, but <span>PythonTeX</span> will happily highlight it for you.)</p>
 <pre class="pycon"><code>&gt;&gt;&gt; âæéöø = 123
@@ -68,69 +88,69 @@ code > span.er { color: #ff0000; font-weight: bold; }
 228886641
 &gt;&gt;&gt; print(&#39;Python says hi from the console!&#39;)
 Python says hi from the console!</code></pre>
-<p>It is possible to refer to the values of console variables later on in inline contexts, using the <code>\pycon</code> command. For example, the value of <span class="math">\(z\)</span> was <code>468</code>.</p>
+<p>It is possible to refer to the values of console variables later on in inline contexts, using the <code>\pycon</code> command. For example, the value of <span class="math inline">\(z\)</span> was <code>468</code>.</p>
 <h1 id="basic-sympy-interaction">Basic SymPy interaction</h1>
 <p><span>PythonTeX</span> allows us to perform algebraic manipulations with SymPy and then properly typeset the results.</p>
-<p>We create three variables, and define <span class="math">\(z\)</span> in terms of the other two.</p>
-<pre class="sourceCode python"><code class="sourceCode python">var(<span class="st">&#39;x, y, z&#39;</span>)
-z = x + y</code></pre>
-<p>Now we can access what <span class="math">\(z\)</span> is equal to:</p>
-<p><span class="math">\[z=x + y\]</span></p>
+<p>We create three variables, and define <span class="math inline">\(z\)</span> in terms of the other two.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">var(<span class="st">&#39;x, y, z&#39;</span>)
+z <span class="op">=</span> x <span class="op">+</span> y</code></pre></div>
+<p>Now we can access what <span class="math inline">\(z\)</span> is equal to:</p>
+<p><span class="math display">\[z=x + y\]</span></p>
 <p>Many things are possible, including some very nice calculus.</p>
-<pre class="sourceCode python"><code class="sourceCode python">f = x**<span class="dv">3</span> + cos(x)**<span class="dv">5</span>
-g = Integral(f, x)</code></pre>
-<p><span class="math">\[\int x^{3} + \cos^{5}{\left (x \right )}\, dx=\frac{x^{4}}{4} + \frac{1}{5} \sin^{5}{\left (x \right )} - \frac{2}{3} \sin^{3}{\left (x \right )} + \sin{\left (x \right )}\]</span></p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">f <span class="op">=</span> x<span class="op">**</span><span class="dv">3</span> <span class="op">+</span> cos(x)<span class="op">**</span><span class="dv">5</span>
+g <span class="op">=</span> Integral(f, x)</code></pre></div>
+<p><span class="math display">\[\int x^{3} + \cos^{5}{\left (x \right )}\, dx=\frac{x^{4}}{4} + \frac{1}{5} \sin^{5}{\left (x \right )} - \frac{2}{3} \sin^{3}{\left (x \right )} + \sin{\left (x \right )}\]</span></p>
 <p>It’s easy to use arbitrary symbols in equations.</p>
-<pre class="sourceCode python"><code class="sourceCode python">phi = Symbol(<span class="st">r&#39;\phi&#39;</span>)
-h = Integral(exp(-phi**<span class="dv">2</span>), (phi, <span class="dv">0</span>, oo))</code></pre>
-<p><span class="math">\[\int_{0}^{\infty} e^{- \phi^{2}}\, d\phi=\frac{\sqrt{\pi}}{2}\]</span></p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">phi <span class="op">=</span> Symbol(<span class="vs">r&#39;\phi&#39;</span>)
+h <span class="op">=</span> Integral(exp(<span class="op">-</span>phi<span class="op">**</span><span class="dv">2</span>), (phi, <span class="dv">0</span>, oo))</code></pre></div>
+<p><span class="math display">\[\int_{0}^{\infty} e^{- \phi^{2}}\, d\phi=\frac{\sqrt{\pi}}{2}\]</span></p>
 <h1 id="plots-with-matplotlib">Plots with matplotlib</h1>
 <p>We can create plots with matplotlib, perfectly matching the plot fonts with the document fonts. No more searching for the code that created a figure!</p>
 <p>It is possible to pass page dimensions and similar contextual information from the LaTeX side to the Python side. If you want your figures to be, for example, a particular fraction of the page width, you can pass the value of <code>\textwidth</code> to the Python side, and use it in creating your figures. See <code>\setpythontexcontext</code> in the main documentation for details.</p>
 <p>You may want to use matplotlib’s PGF backend when creating plots.</p>
-<pre class="sourceCode python"><code class="sourceCode python">rc(<span class="st">&#39;text&#39;</span>, usetex=<span class="ot">True</span>)
-rc(<span class="st">&#39;font&#39;</span>, family=<span class="st">&#39;serif&#39;</span>)
-rc(<span class="st">&#39;font&#39;</span>, size=<span class="fl">10.0</span>)
-rc(<span class="st">&#39;legend&#39;</span>, fontsize=<span class="fl">10.0</span>)
-rc(<span class="st">&#39;font&#39;</span>, weight=<span class="st">&#39;normal&#39;</span>)
-x = linspace(<span class="dv">0</span>, <span class="dv">10</span>)
-figure(figsize=(<span class="dv">4</span>, <span class="fl">2.5</span>))
-plot(x, sin(x), label=<span class="st">&#39;$\sin(x)$&#39;</span>)
-xlabel(<span class="st">r&#39;$x\mathrm{-axis}$&#39;</span>)
-ylabel(<span class="st">r&#39;$y\mathrm{-axis}$&#39;</span>)
-legend(loc=<span class="st">&#39;lower right&#39;</span>)
-savefig(<span class="st">&#39;myplot.png&#39;</span>, bbox_inches=<span class="st">&#39;tight&#39;</span>)</code></pre>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">rc(<span class="st">&#39;text&#39;</span>, usetex<span class="op">=</span><span class="va">True</span>)
+rc(<span class="st">&#39;font&#39;</span>, family<span class="op">=</span><span class="st">&#39;serif&#39;</span>)
+rc(<span class="st">&#39;font&#39;</span>, size<span class="op">=</span><span class="fl">10.0</span>)
+rc(<span class="st">&#39;legend&#39;</span>, fontsize<span class="op">=</span><span class="fl">10.0</span>)
+rc(<span class="st">&#39;font&#39;</span>, weight<span class="op">=</span><span class="st">&#39;normal&#39;</span>)
+x <span class="op">=</span> linspace(<span class="dv">0</span>, <span class="dv">10</span>)
+figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="fl">2.5</span>))
+plot(x, sin(x), label<span class="op">=</span><span class="st">&#39;$\sin(x)$&#39;</span>)
+xlabel(<span class="vs">r&#39;$x\mathrm{-axis}$&#39;</span>)
+ylabel(<span class="vs">r&#39;$y\mathrm{-axis}$&#39;</span>)
+legend(loc<span class="op">=</span><span class="st">&#39;lower right&#39;</span>)
+savefig(<span class="st">&#39;myplot.png&#39;</span>, bbox_inches<span class="op">=</span><span class="st">&#39;tight&#39;</span>)</code></pre></div>
 <p><img src="myplot.png" alt="image" /></p>
 <h1 id="basic-pylab-interaction">Basic pylab interaction</h1>
-<pre class="sourceCode python"><code class="sourceCode python"><span class="ch">from</span> scipy.integrate <span class="ch">import</span> quad
-myintegral = quad(<span class="kw">lambda</span> x: e**-x**<span class="dv">2</span>, <span class="dv">0</span>, inf)[<span class="dv">0</span>]</code></pre>
-<p><span class="math">\[\int_0^\infty e^{-x^2}\,dx = 0.886226925453\]</span></p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> scipy.integrate <span class="im">import</span> quad
+myintegral <span class="op">=</span> quad(<span class="kw">lambda</span> x: e<span class="op">**-</span>x<span class="op">**</span><span class="dv">2</span>, <span class="dv">0</span>, inf)[<span class="dv">0</span>]</code></pre></div>
+<p><span class="math display">\[\int_0^\infty e^{-x^2}\,dx = 0.886226925452758\]</span></p>
 <h1 id="an-automated-derivative-and-integral-table">An automated derivative and integral table</h1>
 <p><span>PythonTeX</span> allows some amazing document automation, such as this derivative and integral table. Try typing that by hand, fast!</p>
-<pre class="sourceCode python" linenos="" startFrom="1"><code class="sourceCode python"><span class="ch">from</span> re <span class="ch">import</span> sub
+<div class="sourceCode" linenos="" startFrom="1"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">from</span> re <span class="im">import</span> sub
 
 var(<span class="st">&#39;x&#39;</span>)
 
 <span class="co"># Create a list of functions to include in the table</span>
-funcs = [<span class="st">&#39;sin(x)&#39;</span>, <span class="st">&#39;cos(x)&#39;</span>, <span class="st">&#39;tan(x)&#39;</span>, 
+funcs <span class="op">=</span> [<span class="st">&#39;sin(x)&#39;</span>, <span class="st">&#39;cos(x)&#39;</span>, <span class="st">&#39;tan(x)&#39;</span>, 
          <span class="co">&#39;sin(x)**2&#39;</span>, <span class="st">&#39;cos(x)**2&#39;</span>, <span class="st">&#39;tan(x)**2&#39;</span>, 
          <span class="co">&#39;asin(x)&#39;</span>, <span class="st">&#39;acos(x)&#39;</span>, <span class="st">&#39;atan(x)&#39;</span>, 
          <span class="co">&#39;sinh(x)&#39;</span>, <span class="st">&#39;cosh(x)&#39;</span>, <span class="st">&#39;tanh(x)&#39;</span>]
 
-<span class="dt">print</span>(<span class="st">r&#39;\begin{align*}&#39;</span>)
+<span class="bu">print</span>(<span class="vs">r&#39;\begin{align*}&#39;</span>)
 
-<span class="kw">for</span> func in funcs:
+<span class="cf">for</span> func <span class="op">in</span> funcs:
     <span class="co"># Put in some vertical space when switching to arc and hyperbolic funcs</span>
-    <span class="kw">if</span> func == <span class="st">&#39;asin(x)&#39;</span> or func == <span class="st">&#39;sinh(x)&#39;</span>:
-        <span class="dt">print</span>(<span class="st">r&#39;&amp;\\&#39;</span>)
-    myderiv = <span class="st">&#39;Derivative(&#39;</span> + func + <span class="st">&#39;, x)&#39;</span>
-    myint = <span class="st">&#39;Integral(&#39;</span> + func + <span class="st">&#39;, x)&#39;</span>
-    <span class="dt">print</span>(latex(<span class="dt">eval</span>(myderiv)) + <span class="st">&#39;&amp;=&#39;</span> +
-            latex(<span class="dt">eval</span>(myderiv + <span class="st">&#39;.doit()&#39;</span>)) + <span class="st">r&#39;\quad &amp; \quad&#39;</span>)
-    <span class="dt">print</span>(latex(<span class="dt">eval</span>(myint)) + <span class="st">&#39;&amp;=&#39;</span> +
-            latex(<span class="dt">eval</span>(myint+<span class="st">&#39;.doit()&#39;</span>)) + <span class="st">r&#39;\\&#39;</span>)
-<span class="dt">print</span>(<span class="st">r&#39;\end{align*}&#39;</span>)</code></pre>
-<p><span class="math">\[\begin{aligned}
+    <span class="cf">if</span> func <span class="op">==</span> <span class="st">&#39;asin(x)&#39;</span> <span class="op">or</span> func <span class="op">==</span> <span class="st">&#39;sinh(x)&#39;</span>:
+        <span class="bu">print</span>(<span class="vs">r&#39;&amp;\\&#39;</span>)
+    myderiv <span class="op">=</span> <span class="st">&#39;Derivative(&#39;</span> <span class="op">+</span> func <span class="op">+</span> <span class="st">&#39;, x)&#39;</span>
+    myint <span class="op">=</span> <span class="st">&#39;Integral(&#39;</span> <span class="op">+</span> func <span class="op">+</span> <span class="st">&#39;, x)&#39;</span>
+    <span class="bu">print</span>(latex(<span class="bu">eval</span>(myderiv)) <span class="op">+</span> <span class="st">&#39;&amp;=&#39;</span> <span class="op">+</span>
+            latex(<span class="bu">eval</span>(myderiv <span class="op">+</span> <span class="st">&#39;.doit()&#39;</span>)) <span class="op">+</span> <span class="vs">r&#39;\quad &amp; \quad&#39;</span>)
+    <span class="bu">print</span>(latex(<span class="bu">eval</span>(myint)) <span class="op">+</span> <span class="st">&#39;&amp;=&#39;</span> <span class="op">+</span>
+            latex(<span class="bu">eval</span>(myint<span class="op">+</span><span class="st">&#39;.doit()&#39;</span>)) <span class="op">+</span> <span class="vs">r&#39;\\&#39;</span>)
+<span class="bu">print</span>(<span class="vs">r&#39;\end{align*}&#39;</span>)</code></pre></div>
+<p><span class="math display">\[\begin{aligned}
 \frac{d}{d x} \sin{\left (x \right )}&amp;=\cos{\left (x \right )}\quad &amp; \quad
 \int \sin{\left (x \right )}\, dx&amp;=- \cos{\left (x \right )}\\
 \frac{d}{d x} \cos{\left (x \right )}&amp;=- \sin{\left (x \right )}\quad &amp; \quad
@@ -156,46 +176,46 @@ funcs = [<span class="st">&#39;sin(x)&#39;</span>, <span class="st">&#39;cos(x)&
 \frac{d}{d x} \cosh{\left (x \right )}&amp;=\sinh{\left (x \right )}\quad &amp; \quad
 \int \cosh{\left (x \right )}\, dx&amp;=\sinh{\left (x \right )}\\
 \frac{d}{d x} \tanh{\left (x \right )}&amp;=- \tanh^{2}{\left (x \right )} + 1\quad &amp; \quad
-\int \tanh{\left (x \right )}\, dx&amp;=- x - \log{\left (\tanh{\left (x \right )} - 1 \right )}\\\end{aligned}\]</span></p>
+\int \tanh{\left (x \right )}\, dx&amp;=x - \log{\left (\tanh{\left (x \right )} + 1 \right )}\\\end{aligned}\]</span></p>
 <h1 id="step-by-step-solutions">Step-by-step solutions</h1>
 <p>Using SymPy, it is possible to typeset step-by-step solutions. In this particular case, we also use the <code>mdframed</code> package to place a colored background behind our code.</p>
-<pre class="sourceCode python" linenos="" startFrom="1"><code class="sourceCode python">x, y, z = symbols(<span class="st">&#39;x,y,z&#39;</span>)
-f = Symbol(<span class="st">&#39;f(x,y,z)&#39;</span>)
+<div class="sourceCode" linenos="" startFrom="1"><pre class="sourceCode python"><code class="sourceCode python">x, y, z <span class="op">=</span> symbols(<span class="st">&#39;x,y,z&#39;</span>)
+f <span class="op">=</span> Symbol(<span class="st">&#39;f(x,y,z)&#39;</span>)
 
 <span class="co"># Define limits of integration</span>
-x_llim = <span class="dv">0</span>
-x_ulim = <span class="dv">2</span>
-y_llim = <span class="dv">0</span>
-y_ulim = <span class="dv">3</span>
-z_llim = <span class="dv">0</span>
-z_ulim = <span class="dv">4</span>
+x_llim <span class="op">=</span> <span class="dv">0</span>
+x_ulim <span class="op">=</span> <span class="dv">2</span>
+y_llim <span class="op">=</span> <span class="dv">0</span>
+y_ulim <span class="op">=</span> <span class="dv">3</span>
+z_llim <span class="op">=</span> <span class="dv">0</span>
+z_ulim <span class="op">=</span> <span class="dv">4</span>
 
-<span class="dt">print</span>(<span class="st">r&#39;\begin{align*}&#39;</span>)
+<span class="bu">print</span>(<span class="vs">r&#39;\begin{align*}&#39;</span>)
 
 <span class="co"># Notice how I define f as a symbol, then later as an actual function</span>
-left = Integral(f, (x, x_llim, x_ulim), (y, y_llim, y_ulim), (z, z_llim, z_ulim))
-f = x*y + y*sin(z) + cos(x+y)
-right = Integral(f, (x, x_llim, x_ulim), (y, y_llim, y_ulim), (z, z_llim, z_ulim))
-<span class="dt">print</span>(latex(left) + <span class="st">&#39;&amp;=&#39;</span> + latex(right) + <span class="st">r&#39;\\&#39;</span>)
+left <span class="op">=</span> Integral(f, (x, x_llim, x_ulim), (y, y_llim, y_ulim), (z, z_llim, z_ulim))
+f <span class="op">=</span> x<span class="op">*</span>y <span class="op">+</span> y<span class="op">*</span>sin(z) <span class="op">+</span> cos(x<span class="op">+</span>y)
+right <span class="op">=</span> Integral(f, (x, x_llim, x_ulim), (y, y_llim, y_ulim), (z, z_llim, z_ulim))
+<span class="bu">print</span>(latex(left) <span class="op">+</span> <span class="st">&#39;&amp;=&#39;</span> <span class="op">+</span> latex(right) <span class="op">+</span> <span class="vs">r&#39;\\&#39;</span>)
 
 <span class="co"># For each step, I move limits from an outer integral to an inner, evaluated </span>
 <span class="co"># integral until the outer integral is no longer needed</span>
-right = Integral(Integral(f, (z, z_llim, z_ulim)).doit(), (x, x_llim, x_ulim),
+right <span class="op">=</span> Integral(Integral(f, (z, z_llim, z_ulim)).doit(), (x, x_llim, x_ulim),
                  (y, y_llim, y_ulim))
-<span class="dt">print</span>(<span class="st">&#39;&amp;=&#39;</span> + latex(right) + <span class="st">r&#39;\\&#39;</span>)
+<span class="bu">print</span>(<span class="st">&#39;&amp;=&#39;</span> <span class="op">+</span> latex(right) <span class="op">+</span> <span class="vs">r&#39;\\&#39;</span>)
 
-right = Integral(Integral(f, (z, z_llim, z_ulim), (y, y_llim, y_ulim)).doit(),
+right <span class="op">=</span> Integral(Integral(f, (z, z_llim, z_ulim), (y, y_llim, y_ulim)).doit(),
                  (x, x_llim, x_ulim))
-<span class="dt">print</span>(<span class="st">&#39;&amp;=&#39;</span> + latex(right) + <span class="st">r&#39;\\&#39;</span>)
+<span class="bu">print</span>(<span class="st">&#39;&amp;=&#39;</span> <span class="op">+</span> latex(right) <span class="op">+</span> <span class="vs">r&#39;\\&#39;</span>)
 
-right = Integral(f, (z, z_llim, z_ulim), (y, y_llim, y_ulim), 
+right <span class="op">=</span> Integral(f, (z, z_llim, z_ulim), (y, y_llim, y_ulim), 
                  (x, x_llim, x_ulim)).doit()
-<span class="dt">print</span>(<span class="st">&#39;&amp;=&#39;</span> + latex(right) + <span class="st">r&#39;\\&#39;</span>)
+<span class="bu">print</span>(<span class="st">&#39;&amp;=&#39;</span> <span class="op">+</span> latex(right) <span class="op">+</span> <span class="vs">r&#39;\\&#39;</span>)
 
-<span class="dt">print</span>(<span class="st">&#39;&amp;=&#39;</span> + latex(N(right)) + <span class="st">r&#39;\\&#39;</span>)
+<span class="bu">print</span>(<span class="st">&#39;&amp;=&#39;</span> <span class="op">+</span> latex(N(right)) <span class="op">+</span> <span class="vs">r&#39;\\&#39;</span>)
 
-<span class="dt">print</span>(<span class="st">r&#39;\end{align*}&#39;</span>)</code></pre>
-<p><span class="math">\[\begin{aligned}
+<span class="bu">print</span>(<span class="vs">r&#39;\end{align*}&#39;</span>)</code></pre></div>
+<p><span class="math display">\[\begin{aligned}
 \int_{0}^{4}\int_{0}^{3}\int_{0}^{2} f(x,y,z)\, dx\, dy\, dz&amp;=\int_{0}^{4}\int_{0}^{3}\int_{0}^{2} x y + y \sin{\left (z \right )} + \cos{\left (x + y \right )}\, dx\, dy\, dz\\
 &amp;=\int_{0}^{3}\int_{0}^{2} 4 x y - y \cos{\left (4 \right )} + y + 4 \cos{\left (x + y \right )}\, dx\, dy\\
 &amp;=\int_{0}^{2} 18 x - 4 \sin{\left (x \right )} + 4 \sin{\left (x + 3 \right )} - \frac{9}{2} \cos{\left (4 \right )} + \frac{9}{2}\, dx\\
@@ -203,9 +223,9 @@ right = Integral(f, (z, z_llim, z_ulim), (y, y_llim, y_ulim),
 &amp;=40.1235865133293\\\end{aligned}\]</span></p>
 <h1 id="including-stderr">Including stderr</h1>
 <p><span>PythonTeX</span> allows code to be typset next to the stderr it produces. This requires the package option <code>makestderr</code>.</p>
-<pre class="sourceCode python" linenos="" startFrom="1"><code class="sourceCode python">x = <span class="dv">123</span>
-y = <span class="dv">345</span>
-z = x + y +</code></pre>
+<div class="sourceCode" linenos="" startFrom="1"><pre class="sourceCode python"><code class="sourceCode python">x <span class="op">=</span> <span class="dv">123</span>
+y <span class="op">=</span> <span class="dv">345</span>
+z <span class="op">=</span> x <span class="op">+</span> y <span class="op">+</span></code></pre></div>
 <p>This code causes a syntax error:</p>
 <pre><code>  File &quot;py_errorsession_9.py&quot;, line 3
     z = x + y +
@@ -216,7 +236,6 @@ SyntaxError: invalid syntax</code></pre>
 <hr />
 <ol>
 <li id="fn1"><p>Since <span>PythonTeX</span> runs Python code (and potentially other code) on your computer, documents using <span>PythonTeX</span> have a greater potential for security risks than do standard LaTeX documents. You should only compile <span>PythonTeX</span> documents from sources you trust.<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p><a href="http://tracker.luatex.org/view.php?id=733">http://tracker.luatex.org/view.php?id=733</a><a href="#fnref2">↩</a></p></li>
 </ol>
 </div>
 </body>

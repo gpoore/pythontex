@@ -53,7 +53,7 @@
 
 \pytex\ requires Python 2.7 or 3.2+.  When using \pytex\ with LyX, be aware that LyX may try to use its own version of Python; you may need to reconfigure LyX to use other Python installations.
 
-\pytex\ is included in TeX Live 2013.  It may be installed via the package manager.
+\pytex\ is included in TeX Live and MiKTeX.  It may be installed via the package manager.
 
 A Python installation script is included with the package.  It should be able to install the package in most situations.  Depending on the configuration of your system, you may have to run the installation script with administrative priviliges.
 
@@ -61,7 +61,7 @@ Detailed installation information is available in the main documentation, \textt
 
 \section*{Compiling}
 
-Compiling a document that uses \pytex\ involves three steps:  run \LaTeX, run \texttt{pythontex.py}, and finally run \LaTeX\ again.  You may wish to create a symlink or launching wrapper for \texttt{pythontex.py}, if one was not created during installation.  \pytex\ is compatible with the pdfLaTeX, XeLaTeX, and LuaLaTeX engines, so you can use \texttt{latex}, \texttt{pdflatex}, \texttt{xelatex}, or \texttt{lualatex}.  There are minor engine-specific differences; see the main documentation for details.
+Compiling a document that uses \pytex\ involves three steps:  run \LaTeX, run \texttt{pythontex.py}, and finally run \LaTeX\ again.  You may wish to create a symlink or launching wrapper for \texttt{pythontex.py}, if one was not created during installation.  \pytex\ is compatible with the pdfTeX, XeTeX, and LuaTeX engines, so you can use \texttt{latex}, \texttt{pdflatex}, \texttt{xelatex}, or \texttt{lualatex}.
 
 The last two compile steps are \emph{only} necessary when code needs to be executed or highlighted.  Otherwise, the document may be compiled just like a normal \LaTeX\ document; all output is cached.
 
@@ -79,10 +79,12 @@ The last two compile steps are \emph{only} necessary when code needs to be execu
 
 \pygment{latex}{\pyv} only typesets code; nothing is executed.  For example, \pygment{latex}{\pyv{var = 2}} produces \pyv{var = 2}.
 
+\pygment{latex}{\pys} performs variable substitution or string interpolation on code.  Substitution fields are denoted by \verb|!{...}|; details about escaping are provided in the main documentation.  For example, using the pre-existing variable \pyv{var}, \pygment{latex}{\pys{\verb|var = !{var}|}} yields \pys{\verb|var = !{var}|}.
+
 
 \section*{Basic environments}
 
-There are \texttt{pycode}, \texttt{pyblock}, and \texttt{pyverbatim} environments, which are the environment equivalents of \pygment{latex}{\pyc}, \pygment{latex}{\pyb}, and \pygment{latex}{\pyv}.  For example,
+There are \texttt{pycode}, \texttt{pyblock}, \texttt{pyverbatim}, and \texttt{pysub} environments, which are the environment equivalents of \pygment{latex}{\pyc}, \pygment{latex}{\pyb}, \pygment{latex}{\pyv}, and \pygment{latex}{\pys}.  For example,
 \begin{pygments}{text}
 \begin{pycode}
 print(r'\begin{center}')
@@ -132,9 +134,9 @@ Console variable values may be accessed inline via the \pygment{latex}{\pycon} c
 
 \section*{Support for additional languages}
 
-\pytex\ also provides support for additional languages.  Currently, Ruby, Julia, and Octave support is included.  To enable commands and environments for these language, see the \texttt{usefamily} package option in the main documentation.
+\pytex\ also provides support for additional languages.  Currently, Ruby, Julia, Octave, Sage, Bash, and Rust support is included.  To enable commands and environments for these language, see the \texttt{usefamily} package option in the main documentation.
 
-Language support is provided via a template system; in most cases, a new language can be added with about 100 lines of template code.  If you would like support for a new language, please open an issue at \href{https://github.com/gpoore/pythontex}{GitHub}.  The main documentation also contains a summary of the process for adding languages.
+Language support is provided via a template system; in most cases, a new language can be added with about 100 lines of template code---and basic support can require less than 20 lines.  If you would like support for a new language, please open an issue at \href{https://github.com/gpoore/pythontex}{GitHub}.  The main documentation also contains a summary of the process for adding languages.
 
 \section*{Macro programming}
 
@@ -147,7 +149,13 @@ Language support is provided via a template system; in most cases, a new languag
 
 \pytex\ also provides the \texttt{depythontex} utility, which creates a copy of a document in which all \pytex\ commands and environments have been replaced by their output.  The resulting document is more suitable for journal submission, sharing, and conversion to other document formats.
 
-Code may be run in interactive mode via the \verb|--interactive| and \verb|--debug| command-line options.  This is primarily useful for working with interactive debuggers.
+Code may be run in interactive mode on the command line via the \verb|--interactive| and \verb|--debug| options.  This is primarily useful for working with interactive debuggers.
+
+
+\section*{Customizing typesetting}
+
+\pytex\ typesets code using the \texttt{fancyvrb} package and the \texttt{fvextra} package that extends \texttt{fancyvrb}.  There is a \pygment{latex}{\setpythontexfv} command for setting \pytex-specific \texttt{fancyvrb} and \texttt{fvextra} options.  The normal \pygment{latex}{\fvset} works as well for document-wide settings.  \pytex\ environments take a second optional argument that consists of \texttt{fancyvrb} and \texttt{fvextra} settings.  This can be used to customize automatic line breaking or line highlighting for a single environment.
+
 
 
 \section*{Unicode support}

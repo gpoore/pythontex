@@ -20,10 +20,10 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2016/07/20 v0.15dev execute and typeset Python code and other languages]
+    [2016/07/21 v0.15 execute and typeset Python code and other languages]
 
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.15dev}
+\newcommand{\pytx@packageversion}{0.15}
 \RequirePackage{fvextra}
 \RequirePackage{etoolbox}
 \RequirePackage{xstring}
@@ -245,22 +245,6 @@
         !expandafter!scantokens!expandafter{#1!empty}}%
 }%
 !endgroup
-\ifx\directlua\pytx@undefined\else
-\def\pytx@SVMCR#1 {%
-    \edef\pytx@tmp{\csname #1\endcsname}%
-    \pytx@SVMCR@i}
-\long\def\pytx@SVMCR@i#1\endpytx@SVMCR{%
-    \expandafter\gdef\pytx@tmp{#1}%
-}
-\fi
-\ifx\directlua\relax\else
-\def\pytx@SVMCR#1 {%
-    \edef\pytx@tmp{\csname #1\endcsname}%
-    \pytx@SVMCR@i}
-\long\def\pytx@SVMCR@i#1\endpytx@SVMCR{%
-    \expandafter\gdef\pytx@tmp{#1}%
-}
-\fi
 \DefineVerbatimEnvironment{pytx@Verbatim}{Verbatim}{}
 \DefineVerbatimEnvironment{pytx@SaveVerbatim}{SaveVerbatim}{}
 \newcommand{\setpythontexcontext}[1]{%
