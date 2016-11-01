@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2016/07/21 v0.15 execute and typeset Python code and other languages]
+    [2016/11/01 v0.16dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -151,6 +151,14 @@
 %   Right bracket \]     Circumflex    \^     Underscore    \_
 %   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
+%
+%
+
+% \begin{changelog}{v0.16}{2016/11/??}
+% \begin{itemize}
+% \item Improved Rust support, including tracking of created files and dependencies (\#91).
+% \end{itemize}
+% \end{changelog}
 %
 %
 % \begin{changelog}{v0.15}{2016/07/21}
@@ -1566,7 +1574,11 @@
 %
 % Because Rust typically gives a long sequence of errors, \pytex\ processing and synchronization of |stderr| is currently verbose and may need to be improved in the future as well.  There is no support for encodings other than UTF-8.  Currently, executables always use the |.exe| extension, even under non-Windows systems.
 %
-% When using |\rust| and |\rs|, keep in mind that these wrap code in |rstex.formatter()|.  Because |rstex| is mutable, accessing its fields within |rstex.formatter()| will require |&rstex.|\meta{field}|.to_string()| or similar.
+% Due to the way |rstex| is used in template-generated code, it needs to remain a mutable local variable.  This means that, while there should be no problem using it through either shared or mutable references, taking it by value requires that the ``altered'' copy is reassigned to a new variable that shadows the old one. That is, code that needs to work with |rstex| by value should look like
+% \begin{Verbatim}[commandchars=\\\{\}, gobble=2]
+% let mut rstex = \meta{code};
+% \end{Verbatim}
+% Additionally, when using |\rust| and |\rs|, keep in mind that these wrap code in a block, so you \emph{cannot} use |rstex| by value in these contexts (both shared and mutable references are still fine, though).
 %
 %
 % \subsection{Adding support for a new language}
@@ -1795,7 +1807,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.15}
+\newcommand{\pytx@packageversion}{0.16dev}
 %    \end{macrocode}
 %
 % \subsection{Required packages}

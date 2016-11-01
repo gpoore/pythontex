@@ -77,7 +77,7 @@ else:
 
 # Script parameters
 # Version
-__version__ = '0.15'
+__version__ = '0.16dev'
 
 
 

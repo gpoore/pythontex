@@ -1285,42 +1285,133 @@ CodeEngine('bash', 'bash', '.sh',
 
 rust_template = '''
     // -*- coding: utf-8 -*-
-    #![allow(dead_code)]
-    #![allow(unused_imports)]
-
-
+    #![allow(dead_code, unused_imports)]
+    #[warn(unused_imports)]
     mod rust_tex_utils {{
-        use std::fmt;
-        use std::collections;
-        use std::io::prelude::*;
-
-        pub struct RustTeXUtils {{
-            _formatter: Box<FnMut(&fmt::Display) -> String>,
-            _before: Box<FnMut()>,
-            _after: Box<FnMut()>,
-            pub family: &'static str,
-            pub session: &'static str,
-            pub restart: &'static str,
-            pub dependencies: Vec<String>,
-            pub created: Vec<String>,
-            pub command: &'static str,
-            pub context: collections::HashMap<&'static str, &'static str>,
-            pub args: collections::HashMap<&'static str, &'static str>,
-            pub instance: &'static str,
-            pub line: &'static str,
+        use std::{{borrow, collections, fmt, fs, io, iter, ops, path}};
+        use self::OpenMode::{{ReadMode, WriteMode, AppendMode, TruncateMode, CreateMode, CreateNewMode}};
+        pub struct UserAction<'u> {{
+            _act: Box<FnMut() + 'u>
         }}
-
-        impl RustTeXUtils {{
+        impl<'u> UserAction<'u> {{
+            pub fn new() -> Self {{
+                Self::from(|| {{}})
+            }}
+            pub fn act(&mut self) {{
+                (self._act)();
+            }}
+            pub fn set<F: FnMut() + 'u>(&mut self, f: F) {{
+                self._act = Box::new(f);
+            }}
+        }}
+        impl<'u> Default for UserAction<'u> {{
+            fn default() -> Self {{
+                Self::new()
+            }}
+        }}
+        impl<'u, F: FnMut() + 'u> From<F> for UserAction<'u> {{
+            fn from(f: F) -> Self {{
+                UserAction {{ _act: Box::new(f) }}
+            }}
+        }}
+        impl<'u, U: Into<UserAction<'u>> + 'u> ops::Add<U> for UserAction<'u> {{
+            type Output = UserAction<'u>;
+            fn add(self, f: U) -> Self::Output {{
+                let mut self_act: Box<FnMut() + 'u> = self._act;
+                let mut other_act: Box<FnMut() + 'u> = f.into()._act;
+                Self::from(move || {{ self_act.as_mut()(); other_act.as_mut()(); }})
+            }}
+        }}
+        impl<'u, F: Into<UserAction<'u>> + 'u> iter::FromIterator<F> for UserAction<'u> {{
+            fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item = F> {{
+                let mut others: Vec<Self> = iter.into_iter().map(F::into).collect();
+                Self::from(move || {{ for other in others.iter_mut() {{ other.act(); }} }})
+            }}
+        }}
+        impl<'u> ops::Deref for UserAction<'u> {{
+            type Target = FnMut() + 'u;
+            fn deref(&self) -> &Self::Target {{
+                &*self._act
+            }}
+        }}
+        impl<'u> ops::DerefMut for UserAction<'u> {{
+            fn deref_mut(&mut self) -> &mut Self::Target {{
+                &mut *self._act
+            }}
+        }}
+        pub struct RustTeXUtils<'u> {{
+            _formatter: Box<FnMut(&fmt::Display) -> String + 'u>,
+            pub before: UserAction<'u>,
+            pub after: UserAction<'u>,
+            pub family: &'u str,
+            pub session: &'u str,
+            pub restart: &'u str,
+            pub dependencies: collections::HashSet<borrow::Cow<'u, path::Path>>,
+            pub created: collections::HashSet<borrow::Cow<'u, path::Path>>,
+            pub command: &'u str,
+            pub context: collections::HashMap<&'u str, borrow::Cow<'u, str>>,
+            pub args: collections::HashMap<&'u str, borrow::Cow<'u, str>>,
+            pub instance: &'u str,
+            pub line: &'u str,
+        }}
+        #[derive(Clone,Copy,Debug,Hash,PartialEq,Eq)]
+        pub enum OpenMode {{
+            /// Open the file for reading
+            ReadMode,
+            /// Open the file for writing
+            WriteMode,
+            /// Open the file for appending
+            AppendMode,
+            /// Truncate the file before opening
+            TruncateMode,
+            /// Create the file before opening if necessary
+            CreateMode,
+            /// Always create the file before opening
+            CreateNewMode,
+        }}
+        pub mod open_mode {{
+            pub use super::OpenMode::{{self, ReadMode, WriteMode, AppendMode, TruncateMode, CreateMode, CreateNewMode}};
+            pub const R: &'static [OpenMode] = &[ReadMode];
+            pub const W: &'static [OpenMode] = &[WriteMode];
+            pub const A: &'static [OpenMode] = &[AppendMode];
+            pub const WC: &'static [OpenMode] = &[WriteMode, CreateMode];
+            pub const CW: &'static [OpenMode] = WC;
+            pub const AC: &'static [OpenMode] = &[AppendMode, CreateMode];
+            pub const CA: &'static [OpenMode] = AC;
+            pub const WT: &'static [OpenMode] = &[WriteMode, TruncateMode];
+            pub const TW: &'static [OpenMode] = WT;
+            pub const WCT: &'static [OpenMode] = &[WriteMode, CreateMode, TruncateMode];
+            pub const WTC: &'static [OpenMode] = WCT;
+            pub const CWT: &'static [OpenMode] = WCT;
+            pub const CTW: &'static [OpenMode] = WCT;
+            pub const TWC: &'static [OpenMode] = WCT;
+            pub const TCW: &'static [OpenMode] = WCT;
+            pub const WN: &'static [OpenMode] = &[WriteMode, CreateNewMode];
+            pub const NW: &'static [OpenMode] = WN;
+            pub const AN: &'static [OpenMode] = &[AppendMode, CreateNewMode];
+            pub const NA: &'static [OpenMode] = AN;
+        }}
+        impl OpenMode {{
+            /// The same options as `fs::File::open`.
+            pub fn open() -> &'static [OpenMode] {{
+                open_mode::R
+            }}
+            /// The same options as `fs::File::create`.
+            pub fn create() -> &'static [OpenMode] {{
+                open_mode::WCT
+            }}
+        }}
+        impl<'u> RustTeXUtils<'u> {{
             pub fn new() -> Self {{
                 RustTeXUtils {{
                     _formatter: Box::new(|x: &fmt::Display| format!("{{}}", x)),
-                    _before: Box::new(|| {{}}),
-                    _after: Box::new(|| {{}}),
+                    before: UserAction::new(),
+                    after: UserAction::new(),
                     family: "{family}",
                     session: "{session}",
                     restart: "{restart}",
-                    dependencies: Vec::new(),
-                    created: Vec::new(),
+                    dependencies: collections::HashSet::new(),
+                    created: collections::HashSet::new(),
                     command: "",
                     context: collections::HashMap::new(),
                     args: collections::HashMap::new(),
@@ -1328,53 +1419,69 @@ rust_template = '''
                     line: "",
                 }}
             }}
-
-
             pub fn formatter<A: fmt::Display>(&mut self, x: A) -> String {{
-                (*self._formatter)(&x)
+                (self._formatter)(&x)
             }}
-            pub fn set_formatter<F: FnMut(&fmt::Display) -> String + 'static>(&mut self, f: F) {{
+            pub fn set_formatter<F: FnMut(&fmt::Display) -> String + 'u>(&mut self, f: F) {{
                 self._formatter = Box::new(f);
             }}
-
-            pub fn before(&mut self) {{
-                (*self._before)();
+            pub fn add_dependencies<SS: IntoIterator>(&mut self, deps: SS)
+                where SS::Item: Into<borrow::Cow<'u, path::Path>>
+            {{
+                self.dependencies.extend(deps.into_iter().map(SS::Item::into));
             }}
-            pub fn set_before<F: FnMut() + 'static>(&mut self, f: F) {{
-                self._before = Box::new(f);
+            pub fn add_created<SS: IntoIterator>(&mut self, crts: SS)
+                where SS::Item: Into<borrow::Cow<'u, path::Path>>
+            {{
+                self.created.extend(crts.into_iter().map(SS::Item::into));
             }}
-
-            pub fn after(&mut self) {{
-                (*self._after)();
+            pub fn open<P: 'u, O>(&mut self, name: P, options: O) -> io::Result<fs::File>
+                where P: AsRef<path::Path>,
+                      O: IntoIterator,
+                      O::Item: borrow::Borrow<OpenMode>
+            {{
+                let opts = options.into_iter()
+                                  .map(|x| *<O::Item as borrow::Borrow<OpenMode>>::borrow(&x))
+                                  .collect::<collections::HashSet<OpenMode>>();
+                let mut options = fs::OpenOptions::new();
+                if opts.contains(&ReadMode) {{
+                    options.read(true);
+                    self.add_dependencies(iter::once(name.as_ref().to_owned()));
+                }}
+                if opts.contains(&WriteMode) {{
+                    options.write(true);
+                }}
+                if opts.contains(&AppendMode) {{
+                    options.append(true);
+                }}
+                if opts.contains(&TruncateMode) {{
+                    options.truncate(true);
+                }}
+                if opts.contains(&CreateMode) {{
+                    options.create(true);
+                    self.add_created(iter::once(name.as_ref().to_owned()));
+                }}
+                if opts.contains(&CreateNewMode) {{
+                    options.create_new(true);
+                    self.add_created(iter::once(name.as_ref().to_owned()));
+                }}
+                options.open(name)
             }}
-            pub fn set_after<F: FnMut() + 'static>(&mut self, f: F) {{
-                self._after = Box::new(f);
-            }}
-
-            pub fn add_dependencies<SS: IntoIterator>(&mut self, deps: SS) where SS::Item: Into<String> {{
-                self.dependencies.append(&mut deps.into_iter().map(|x| x.into()).collect());
-            }}
-
-            pub fn add_created<SS: IntoIterator>(&mut self, crts: SS) where SS::Item: Into<String> {{
-                self.created.append(&mut crts.into_iter().map(|x| x.into()).collect());
-            }}
-
             pub fn cleanup(self) {{
                 println!("{{}}", "{dependencies_delim}");
                 for x in self.dependencies {{
-                    println!("{{}}", x);
+                    println!("{{}}", x.to_str().expect(&format!("could not properly display path ({{:?}})", x)));
                 }}
                 println!("{{}}", "{created_delim}");
                 for x in self.created {{
-                    println!("{{}}", x);
+                    println!("{{}}", x.to_str().expect(&format!("could not properly display path ({{:?}})", x)));
                 }}
             }}
-
-            pub fn setup_wrapper(&mut self, cmd: &'static str, cxt: &'static str, ags: &'static str, ist: &'static str, lne: &'static str) {{
-                fn parse_map(kvs: &'static str) -> collections::HashMap<&'static str, &'static str> {{
+            pub fn setup_wrapper(&mut self, cmd: &'u str, cxt: &'u str, ags: &'u str, ist: &'u str, lne: &'u str) {{
+                fn parse_map<'w>(kvs: &'w str) -> collections::HashMap<&'w str, borrow::Cow<'w, str>> {{
                     kvs.split(',').filter(|s| !s.is_empty()).map(|kv| {{
                         let (k, v) = kv.split_at(kv.find('=').expect(&format!("Error parsing supposed key-value pair ({{}})", kv)));
-                        (k.trim(), v[1..].trim())
+                        (k.trim(), v[1..].trim().into())
                     }}).collect()
                 }}
                 self.command = cmd;
@@ -1384,24 +1491,23 @@ rust_template = '''
                 self.line = lne;
             }}
         }}
+        impl<'u> Default for RustTeXUtils<'u> {{
+            fn default() -> Self {{
+                Self::new()
+            }}
+        }}
     }}
-
-
-    use std::{{io, fmt, env, path, ffi, collections}};
+    use std::{{borrow, collections, env, ffi, fmt, fs, hash, io, iter, ops, path}};
     use std::io::prelude::*;
-
-
+    use rust_tex_utils::open_mode;
     #[allow(unused_mut)]
     fn main() {{
         let mut rstex = rust_tex_utils::RustTeXUtils::new();
         if env::set_current_dir(ffi::OsString::from("{workingdir}".to_string())).is_err() && env::args().all(|x| x != "--manual") {{
             panic!("Could not change to the specified working directory ({workingdir})");
         }}
-
         {extend}
-
         {body}
-
         rstex.cleanup();
     }}
     '''
@@ -1410,20 +1516,21 @@ rust_wrapper = '''
     rstex.setup_wrapper("{command}", "{context}", "{args}", "{instance}", "{line}");
     println!("{stdoutdelim}");
     writeln!(io::stderr(), "{stderrdelim}").unwrap();
-    rstex.before();
-
+    rstex.before.act();
     {code}
-
-    rstex.after();
+    rstex.after.act();
     '''
 
-rust_sub = '''println!("{field_delim}");\nprintln!("{{}}", {field});\n'''
+rust_sub = '''
+    println!("{field_delim}");
+    println!("{{}}", {field});
+    '''
 
 CodeEngine('rust', 'rust', '.rs',
            # The full script name has to be used in order to make Windows and Unix behave nicely
            # together when naming executables.  Despite appearances, using `.exe` works on Unix too.
            ['{rustc} --crate-type bin -o {File}.exe -L {workingdir} {file}.rs', '{File}.exe'],
-           rust_template, rust_wrapper, 'println!("{{}}", rstex.formatter({code}));', rust_sub,
+           rust_template, rust_wrapper, '{{ let val = {{ {code} }}; println!("{{}}", rstex.formatter(val)); }}', rust_sub,
            errors='error:', warnings='warning:', linenumbers='.rs:{number}',
            created='{File}.exe')
 
