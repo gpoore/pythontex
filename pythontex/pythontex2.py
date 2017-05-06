@@ -2408,7 +2408,10 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
             sys.excepthook = sys.__excepthook__
             old_stdout = sys.stdout
             sys.stdout = self.iostdout
-            self.interact(self.banner)
+            if sys.version_info.major == 3 and sys.version_info.minor >= 6:
+                self.interact(self.banner, exitmsg='')
+            else:
+                self.interact(self.banner)
             sys.stdout = old_stdout
             self.session_log = self.iostdout.getvalue()
 
