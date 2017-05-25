@@ -1526,7 +1526,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
             exec_cmd = shlex.split(bytes(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'), workingdir=workingdir.replace('\\', '\\\\'))))
             exec_cmd = [unicode(elem) for elem in exec_cmd]
         else:
-            exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'), workingdir=workingdir.replace('\\', '\\\\')))
+            if family != 'juliacon':
+                exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\'), workingdir=workingdir.replace('\\', '\\\\')))
+            else:
+                exec_cmd = shlex.split(command.format(file=script.replace('\\', '/'), File=script_full.replace('\\', '/'), workingdir=workingdir.replace('\\', '/')))
         # Add any created files due to the command
         # This needs to be done before attempts to execute, to prevent orphans
         try:
@@ -1563,6 +1566,22 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         messages.append('    Missing output file for ' + key_run.replace('#', ':'))
         errors += 1
     else:
+        if family == 'juliacon':
+            with open(out_file_name.rsplit('.', 1)[0] + '.tex', 'r', encoding=encoding) as f:
+                tex_data_lines = f.readlines()
+            inst = 0
+            for n, line in enumerate(tex_data_lines):
+                if line.rstrip() == '\\begin{juliaterm}':
+                    tex_data_lines[n] = '=>PYTHONTEX:STDOUT#{0}#code#\n'.format(inst) + '\\begin{Verbatim}\n'
+                    inst += 1
+                    if n != 0:
+                        tex_data_lines[n-1] = ''
+                if line.rstrip() == '\\end{juliaterm}':
+                    tex_data_lines[n] = '\\end{Verbatim}'
+            tex_data_lines.append('=>PYTHONTEX:DEPENDENCIES#\n=>PYTHONTEX:CREATED#\n')
+            with open(out_file_name, 'w', encoding=encoding) as f:
+                f.write(''.join(tex_data_lines))
+
         f = open(out_file_name, 'r', encoding=encoding)
         out = f.read()
         f.close()

@@ -1113,6 +1113,12 @@ CodeEngine('julia', 'julia', '.jl', '{julia} "{file}.jl"', julia_template,
 SubCodeEngine('julia', 'jl')
 
 
+CodeEngine('juliacon', 'julia', '.jl', '{julia} -e "using Weave; weave(\\"{File}.jl\\", \\"tex\\")"', '{body}\n',
+           '#+ term=true\n{code}\n', '', '',
+           'ERROR:', 'WARNING:', ':{number}', True, created='{File}.tex')
+
+
+
 
 
 octave_template = '''

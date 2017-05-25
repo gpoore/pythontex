@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2017/05/06 v0.16dev execute and typeset Python code and other languages]
+    [2017/05/25 v0.16dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3174}
+% \CheckSum{3182}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -156,6 +156,7 @@
 
 % \begin{changelog}{v0.16}{2017/06/??}
 % \begin{itemize}
+% \item Added preliminary console support for Julia (\#98).
 % \item Fixed Python console compatibility with Python 3.6 by setting the \texttt{code} module's new \texttt{exitmsg} argument to suppress the exit message  (\#100).
 % \item Improved Rust support, including tracking of created files and dependencies (\#91).
 % \end{itemize}
@@ -4076,6 +4077,11 @@
     \ifstrequal{#1}{ruby}{\makepythontexfamily[pyglexer=ruby]{ruby}}{}%
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
     \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
+    \ifstrequal{#1}{juliacon}{\pytx@MakeCodeFV{juliacon}%
+                              \newenvironment{juliaconsole}%
+                               {\VerbatimEnvironment\begin{juliaconcode}}%
+                               {\end{juliaconcode}%
+                               \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}}}{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%

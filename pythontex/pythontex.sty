@@ -20,7 +20,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2016/11/01 v0.16dev execute and typeset Python code and other languages]
+    [2017/05/25 v0.16dev execute and typeset Python code and other languages]
 
 
 \newcommand{\pytx@packagename}{PythonTeX}
@@ -1318,6 +1318,11 @@
     \ifstrequal{#1}{ruby}{\makepythontexfamily[pyglexer=ruby]{ruby}}{}%
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
     \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
+    \ifstrequal{#1}{juliacon}{\pytx@MakeCodeFV{juliacon}%
+                              \newenvironment{juliaconsole}%
+                               {\VerbatimEnvironment\begin{juliaconcode}}%
+                               {\end{juliaconcode}%
+                               \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}}}{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
