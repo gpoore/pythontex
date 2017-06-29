@@ -4077,11 +4077,24 @@
     \ifstrequal{#1}{ruby}{\makepythontexfamily[pyglexer=ruby]{ruby}}{}%
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
     \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
-    \ifstrequal{#1}{juliacon}{\pytx@MakeCodeFV{juliacon}%
+    \ifstrequal{#1}{juliacon}{\pgfkeys{/PYTX/family, name=juliacon, default, pyglexer=jlcon}%
+                              \expandafter\xdef\csname pytx@macroformatter@juliacon\endcsname{\pytx@tmp@pprinter}%
+                              \expandafter\gdef\csname pytx@fvsettings@juliacon\endcsname{}%
+                              \expandafter\xdef\csname pytx@pyglexer@juliacon\endcsname{\pytx@tmp@pyglexer}%
+                              \expandafter\xdef\csname pytx@pygopt@juliacon\endcsname{\pytx@tmp@pygopt}%
+                              \expandafter\xdef\csname pytx@console@juliacon\endcsname{\pytx@tmp@console}%
+                              \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=juliacon|%
+                                      \csname pytx@pyglexer@juliacon\endcsname|%
+                                      \csname pytx@pygopt@juliacon\endcsname}%
+                                  }%
+                              \pytx@MakeCodeFV{juliacon}%
                               \newenvironment{juliaconsole}%
-                               {\VerbatimEnvironment\begin{juliaconcode}}%
+                               {\VerbatimEnvironment
+                                \def\pytx@type{juliacon}%
+                                \pytx@ConfigPygments
+                                \begin{juliaconcode}}%
                                {\end{juliaconcode}%
-                               \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}}}{}%
+                                \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}}}{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
