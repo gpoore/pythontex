@@ -7,6 +7,20 @@ Version History
 ===============
 
 
+
+v0.16 (2017/07/20)
+------------------
+
+*  Added preliminary console support for Julia (#98).
+
+*  Fixed Python console compatibility with Python 3.6 by setting the ``code``
+   module's new ``exitmsg`` argument to suppress the exit message (#100).
+
+*  Improved Rust support, including tracking of created files and
+   dependencies (#91).
+
+
+
 v0.15 (2016/07/21)
 ------------------
 

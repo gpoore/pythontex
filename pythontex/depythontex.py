@@ -9,7 +9,7 @@ on your system.  If you wish to use a different version of Python, you could
 launch depythontex2.py or depythontex3.py directly.  The version of Python
 does not matter for depythontex, since no code is executed.
 
-Copyright (c) 2013-2016, Geoffrey M. Poore
+Copyright (c) 2013-2017, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause

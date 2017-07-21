@@ -44,7 +44,7 @@ code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Ann
 code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
 code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
   </style>
-  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
 </head>
 <body>
 <div id="header">
@@ -133,15 +133,15 @@ var(<span class="st">&#39;x&#39;</span>)
 
 <span class="co"># Create a list of functions to include in the table</span>
 funcs <span class="op">=</span> [<span class="st">&#39;sin(x)&#39;</span>, <span class="st">&#39;cos(x)&#39;</span>, <span class="st">&#39;tan(x)&#39;</span>, 
-         <span class="co">&#39;sin(x)**2&#39;</span>, <span class="st">&#39;cos(x)**2&#39;</span>, <span class="st">&#39;tan(x)**2&#39;</span>, 
-         <span class="co">&#39;asin(x)&#39;</span>, <span class="st">&#39;acos(x)&#39;</span>, <span class="st">&#39;atan(x)&#39;</span>, 
-         <span class="co">&#39;sinh(x)&#39;</span>, <span class="st">&#39;cosh(x)&#39;</span>, <span class="st">&#39;tanh(x)&#39;</span>]
+         <span class="st">&#39;sin(x)**2&#39;</span>, <span class="st">&#39;cos(x)**2&#39;</span>, <span class="st">&#39;tan(x)**2&#39;</span>, 
+         <span class="st">&#39;asin(x)&#39;</span>, <span class="st">&#39;acos(x)&#39;</span>, <span class="st">&#39;atan(x)&#39;</span>, 
+         <span class="st">&#39;sinh(x)&#39;</span>, <span class="st">&#39;cosh(x)&#39;</span>, <span class="st">&#39;tanh(x)&#39;</span>]
 
 <span class="bu">print</span>(<span class="vs">r&#39;\begin{align*}&#39;</span>)
 
-<span class="cf">for</span> func <span class="op">in</span> funcs:
+<span class="cf">for</span> func <span class="kw">in</span> funcs:
     <span class="co"># Put in some vertical space when switching to arc and hyperbolic funcs</span>
-    <span class="cf">if</span> func <span class="op">==</span> <span class="st">&#39;asin(x)&#39;</span> <span class="op">or</span> func <span class="op">==</span> <span class="st">&#39;sinh(x)&#39;</span>:
+    <span class="cf">if</span> func <span class="op">==</span> <span class="st">&#39;asin(x)&#39;</span> <span class="kw">or</span> func <span class="op">==</span> <span class="st">&#39;sinh(x)&#39;</span>:
         <span class="bu">print</span>(<span class="vs">r&#39;&amp;\\&#39;</span>)
     myderiv <span class="op">=</span> <span class="st">&#39;Derivative(&#39;</span> <span class="op">+</span> func <span class="op">+</span> <span class="st">&#39;, x)&#39;</span>
     myint <span class="op">=</span> <span class="st">&#39;Integral(&#39;</span> <span class="op">+</span> func <span class="op">+</span> <span class="st">&#39;, x)&#39;</span>

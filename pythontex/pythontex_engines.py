@@ -17,7 +17,7 @@ document (script for execution).
 
 
 
-Copyright (c) 2012-2016, Geoffrey M. Poore
+Copyright (c) 2012-2017, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause

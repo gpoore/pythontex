@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2017/05/25 v0.16dev execute and typeset Python code and other languages]
+    [2017/07/20 v0.16 execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3182}
+% \CheckSum{3218}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -154,10 +154,10 @@
 %
 %
 
-% \begin{changelog}{v0.16}{2017/06/??}
+% \begin{changelog}{v0.16}{2017/07/20}
 % \begin{itemize}
 % \item Added preliminary console support for Julia (\#98).
-% \item Fixed Python console compatibility with Python 3.6 by setting the \texttt{code} module's new \texttt{exitmsg} argument to suppress the exit message  (\#100).
+% \item Fixed Python console compatibility with Python 3.6 by setting the \texttt{code} module's new \texttt{exitmsg} argument to suppress the exit message (\#100).
 % \item Improved Rust support, including tracking of created files and dependencies (\#91).
 % \end{itemize}
 % \end{changelog}
@@ -1547,6 +1547,10 @@
 %
 % Julia exceptions are synchronized with the document, but the line numbering does not always correspond to the Python equivalent.  This is because Julia allows expressions to be continued on subsequent lines in ways that Python does not.
 %
+% \subsubsection*{Console}
+%
+% Preliminary Julia console support was added in v0.16, under the base name |juliacon|.  Unlike the Python console environments that allow invalid input, currently everything entered in a |juliaconsole| environment must be valid.  The Julia console uses \href{https://github.com/mpastell/Weave.jl}{\textsf{Weave.jl}} internally to evaluate code, and it currently does not support invalid input.
+%
 %
 % \subsection{Octave}
 %
@@ -1809,7 +1813,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.16dev}
+\newcommand{\pytx@packageversion}{0.16}
 %    \end{macrocode}
 %
 % \subsection{Required packages}

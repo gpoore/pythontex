@@ -1,19 +1,19 @@
 # -*- coding: utf8 -*-
 
 '''
-This script creates an HTML version of pythontex_gallery.tex, using 
+This script creates an HTML version of pythontex_gallery.tex, using
 depythontex.  This task could be accomplished manually with little effort,
-but that would involve directly modifying pythontex_gallery.tex, which is 
+but that would involve directly modifying pythontex_gallery.tex, which is
 undesirable.
 
 The conversion process involves a few tricks for dealing with image formats
-and paths.  These could be unnecessary in a document that is specifically 
-written with HTML conversion in mind.  For example, all images could be 
-saved in the main document directory (or have their full path specified 
-explicitly), all images could be saved in PNG format, and all images could 
+and paths.  These could be unnecessary in a document that is specifically
+written with HTML conversion in mind.  For example, all images could be
+saved in the main document directory (or have their full path specified
+explicitly), all images could be saved in PNG format, and all images could
 have their extension specified in the `\includegraphics` command.
 
-Pandoc doesn't currently deal with all the LaTeX in the gallery file 
+Pandoc doesn't currently deal with all the LaTeX in the gallery file
 correctly, so a few special tweaks are required.
 '''
 
@@ -52,7 +52,7 @@ for n, line in enumerate(gallery):
 for n, line in enumerate(gallery):
     if 'savefig' in line and re.search(r"savefig\('\w+\.pdf'", line):
         gallery[n] = re.sub(r"savefig\('(\w+)\.pdf'", r"savefig('\1.png'", line)
-    if r'\includegraphics' in line and re.search(r'\includegraphics(?:\[.*\])?\{\w+\.pdf\}', line):
+    if r'\includegraphics' in line and re.search(r'\\includegraphics(?:\[.*\])?\{\w+\.pdf\}', line):
         gallery[n] = re.sub(r'\\includegraphics(?:\[.*\])?\{(\w+)\.pdf\}', r'\includegraphics{\1.png}', line)
     if r'\begin{mdframed}' in line:
         gallery[n] = re.sub(r'\\begin\{mdframed\}(?:\[.*\])?', '', line)

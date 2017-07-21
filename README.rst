@@ -11,7 +11,7 @@
 
 :Author: Geoffrey Poore
 
-:Version: 0.15
+:Version: 0.16
 
 :License:  LPPL_ (LaTeX code) and `BSD 3-Clause`_ (Python code)
 
