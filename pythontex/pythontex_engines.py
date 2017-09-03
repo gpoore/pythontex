@@ -983,8 +983,8 @@ julia_template = '''
         function JuliaTeXUtils()
             self = new()
             self.self = self
-            self._dependencies = Array(AbstractString, 0)
-            self._created = Array(AbstractString, 0)
+            self._dependencies = Array{{AbstractString}}(0)
+            self._created = Array{{AbstractString}}(0)
             self._context_raw = ""
 
             function formatter(expr)

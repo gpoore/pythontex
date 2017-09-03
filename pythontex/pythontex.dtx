@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2017/07/20 v0.16 execute and typeset Python code and other languages]
+    [2017/09/03 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -153,7 +153,14 @@
 %   Right brace   \}     Tilde         \~}
 %
 %
-
+%
+% \begin{changelog}{v0.17}{2017/??/??}
+% \begin{itemize}
+% \item Updated Julia support for Julia version 0.6 (\#107).
+% \end{itemize}
+% \end{changelog}
+%
+%
 % \begin{changelog}{v0.16}{2017/07/20}
 % \begin{itemize}
 % \item Added preliminary console support for Julia (\#98).
@@ -1813,7 +1820,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.16}
+\newcommand{\pytx@packageversion}{0.17dev}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
