@@ -33,7 +33,7 @@ from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
 
-interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', 'sage', 'rustc')}
+interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', 'sage', 'rustc', 'maxima')}
 # The {file} field needs to be replaced by itself, since the actual
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is
@@ -41,6 +41,7 @@ interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', '
 interpreter_dict['file'] = '{file}'
 interpreter_dict['File'] = '{File}'
 interpreter_dict['workingdir'] = '{workingdir}'
+interpreter_dict['outputdir'] = '{outputdir}'
 
 
 engine_dict = {}
@@ -1541,3 +1542,33 @@ CodeEngine('rust', 'rust', '.rs',
            created='{File}.exe')
 
 SubCodeEngine('rust', 'rs')
+
+
+maxima_template = '''
+    :lisp (defun mgrind (x out))
+    :lisp (defmfun mtell (&rest l))
+    :lisp (defun tex-mlabel (x l r) (tex (caddr x) nil r 'mparen 'mparen))
+    :lisp (defun tex-string (x) "")
+    load("alt-display.mac")$
+    set_alt_display(2,tex_display)$
+    {body}
+    ?princ("{dependencies_delim}
+    {created_delim}
+    ")$
+    '''
+
+maxima_wrapper = '''
+    ?princ("{stdoutdelim}")$
+    {code}
+    '''
+
+maxima_sub = '''
+    ?princ("{field_delim}")$
+    {field};
+    '''
+
+CodeEngine('maxima', 'maxima', '.mac',
+           '{maxima} --very-quiet -b "{file}.mac"',
+           maxima_template, maxima_wrapper, '{code}', maxima_sub,
+           ['error', 'Error'], ['warning', 'Warning'],
+           'line {number}')

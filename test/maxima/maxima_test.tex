@@ -1,0 +1,57 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily=maxima]{pythontex}
+
+\begin{document}
+
+\section*{Maxima}
+
+Inline:  \maxima{factor(x^2-x-6);}
+
+Code environment:
+\begin{maximacode}
+integrate(x^(n-1)*exp(-x),x);
+\end{maximacode}
+
+Block environment:
+\begin{maximablock}
+solve(x^2+1,x);
+\end{maximablock}
+Printed output:
+\printpythontex[verbatim]
+
+Verbatim:
+\begin{maximaverbatim}
+solve(x^2-2,x);
+\end{maximaverbatim}
+
+
+Sub environment:
+\begin{maximasub}
+Some text \textcolor{blue}{!{x}} and then more text.
+\end{maximasub}
+
+Again, with command:  \maximas{Some text \textcolor{blue}{!{x}} and then more text.}
+
+\end{document}
