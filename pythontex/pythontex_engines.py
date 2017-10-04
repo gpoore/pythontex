@@ -1546,26 +1546,39 @@ SubCodeEngine('rust', 'rs')
 maxima_template = '''
     :lisp-quiet (defun linear-displa (form))
     :lisp-quiet (defmfun mtell (&rest l))
-    :lisp-quiet (defun tex-mlabel (x l r) (tex (caddr x) nil r 'mparen 'mparen))
+    :lisp-quiet (defun tex-mlabel (x l r) (tex (caddr x) l r 'mparen 'mparen))
     load("alt-display.mac")$
-    define_alt_display(ptex_display(x),block([alt_display1d:false,alt_display2d:false],printf(true,"~a~%",tex_displa(x))))$
-    set_alt_display(2,ptex_display)$
+    define_alt_display(
+        ptex_display(x),
+        block(
+            [alt_display1d:false, alt_display2d:false],
+            printf(true, "~a~%", tex_displa(x))))$
+    set_alt_display(2, ptex_display)$
     leftjust:true$
-    set_tex_environment_default("\\\\[","\\\\]")$
+    begin_inline():=block(
+        prev_tex:get_tex_environment_default(),
+        set_tex_environment_default("$", "$"))$
+    end_inline():=block(
+        set_tex_environment_default(prev_tex[1], prev_tex[2]))$
     {body}
-    printf(stdout,"~a~%~a~%", "{dependencies_delim}", "{created_delim}")$
+    printf(stdout, "~a~%~a~%", "{dependencies_delim}", "{created_delim}")$
     '''
 
 maxima_wrapper = '''
-    printf(stdout,"~a~%", "{stdoutdelim}")$
-    printf(stderr,"~a~%", "{stderrdelim}")$
+    printf(stdout, "~a~%", "{stdoutdelim}")$
+    printf(stderr, "~a~%", "{stderrdelim}")$
     {code}
     '''
 
-maxima_sub = '''printf(stdout,"~a~%", "{field_delim}")$ prevtex:get_tex_environment_default()$ set_tex_environment_default("$","$")$ {field}; set_tex_environment_default(prevtex[1],prevtex[2])$'''
+maxima_sub = '''
+    printf(stdout, "~a~%", "{field_delim}")$
+    begin_inline()$
+    {field};
+    end_inline()$
+    '''
 
 CodeEngine('maxima', 'maxima', '.mac',
-           '{maxima} --very-quiet "--batch-string=batch(\\"{file}.mac\\")$"',
+           '{maxima} --very-quiet --batch-string="batch(\\"{file}.mac\\")$"',
            maxima_template, maxima_wrapper, '{code}', maxima_sub,
            ['error', 'Error'], ['warning', 'Warning'],
            'line {number}')
