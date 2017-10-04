@@ -41,7 +41,6 @@ interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', '
 interpreter_dict['file'] = '{file}'
 interpreter_dict['File'] = '{File}'
 interpreter_dict['workingdir'] = '{workingdir}'
-interpreter_dict['outputdir'] = '{outputdir}'
 
 
 engine_dict = {}
