@@ -1547,6 +1547,7 @@ maxima_template = '''
     :lisp-quiet (defun linear-displa (form))
     :lisp-quiet (defmfun mtell (&rest l))
     :lisp-quiet (defun tex-mlabel (x l r) (tex (caddr x) l r 'mparen 'mparen))
+    :lisp-quiet (let ((gte #'get-tex-environment)) (defun get-tex-environment (&rest x) (if $ptex_inline '("$" . "$") (apply gte x))))
     load("alt-display.mac")$
     define_alt_display(
         ptex_display(x),
@@ -1555,26 +1556,23 @@ maxima_template = '''
             printf(true, "~a~%", tex_displa(x))))$
     set_alt_display(2, ptex_display)$
     leftjust:true$
-    begin_inline():=block(
-        prev_tex:get_tex_environment_default(),
-        set_tex_environment_default("$", "$"))$
-    end_inline():=block(
-        set_tex_environment_default(prev_tex[1], prev_tex[2]))$
+    if get_tex_environment_default()=["$$","$$"] then
+        set_tex_environment_default("\\\\[", "\\\\]")$
     {body}
     printf(stdout, "~a~%~a~%", "{dependencies_delim}", "{created_delim}")$
     '''
 
 maxima_wrapper = '''
+    ptex_inline:ev("{command}"="i",pred)$
     printf(stdout, "~a~%", "{stdoutdelim}")$
     printf(stderr, "~a~%", "{stderrdelim}")$
     {code}
     '''
 
 maxima_sub = '''
+    ptex_inline:true$
     printf(stdout, "~a~%", "{field_delim}")$
-    begin_inline()$
     {field};
-    end_inline()$
     '''
 
 CodeEngine('maxima', 'maxima', '.mac',
