@@ -1545,27 +1545,27 @@ SubCodeEngine('rust', 'rs')
 
 
 maxima_template = '''
-    :lisp (defun mgrind (x out))
-    :lisp (defmfun mtell (&rest l))
-    :lisp (defun tex-mlabel (x l r) (tex (caddr x) nil r 'mparen 'mparen))
-    :lisp (defun tex-string (x) "")
+    :lisp-quiet (defun linear-displa (form))
+    :lisp-quiet (defmfun mtell (&rest l))
+    :lisp-quiet (defun tex-mlabel (x l r) (tex (caddr x) nil r 'mparen 'mparen))
+    :lisp-quiet (defun tex-string (x) "")
+    :lisp-quiet (defun output (result w) (output-linear (nreverse result) 0)))
     load("alt-display.mac")$
-    set_alt_display(2,tex_display)$
+    define_alt_display(ptex_display(x),block([alt_display1d:false,alt_display2d:false],printf(true,"~a~%",tex_displa(x))))$
+    set_alt_display(2,ptex_display)$
+    leftjust:true$
+    set_tex_environment_default("\\\\[","\\\\]")$
     {body}
-    ?princ("{dependencies_delim}
-    {created_delim}
-    ")$
+    printf(stdout,"~a~%~a~%", "{dependencies_delim}", "{created_delim}")$
     '''
 
 maxima_wrapper = '''
-    ?princ("{stdoutdelim}")$
+    printf(stdout,"~a~%", "{stdoutdelim}")$
+    printf(stderr,"~a~%", "{stderrdelim}")$
     {code}
     '''
 
-maxima_sub = '''
-    ?princ("{field_delim}")$
-    {field};
-    '''
+maxima_sub = '''printf(stdout,"~a~%", "{field_delim}")$ prevtex:get_tex_environment_default()$ set_tex_environment_default("$","$")$ {field}; set_tex_environment_default(prevtex[1],prevtex[2])$'''
 
 CodeEngine('maxima', 'maxima', '.mac',
            '{maxima} --very-quiet -b "{file}.mac"',
