@@ -1548,6 +1548,7 @@ maxima_template = '''
     :lisp-quiet (defmfun mtell (&rest l))
     :lisp-quiet (defun tex-mlabel (x l r) (tex (caddr x) l r 'mparen 'mparen))
     :lisp-quiet (let ((gte #'get-tex-environment)) (defun get-tex-environment (&rest x) (if $ptex_inline '("$" . "$") (apply gte x))))
+    load("noninteractive.mac")$
     load("alt-display.mac")$
     define_alt_display(
         ptex_display(x),
