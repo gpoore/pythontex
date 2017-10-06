@@ -31,7 +31,8 @@ Inline:  \maxima{factor(x^2-x-6);}
 
 Code environment:
 \begin{maximacode}
-integrate(x^(n-1)*exp(-x),x);
+a:'integrate(x^(n-1)*exp(-x),x)$
+a=ev(a,nouns);
 \end{maximacode}
 
 Block environment:
@@ -39,19 +40,18 @@ Block environment:
 solve(x^2+1,x);
 \end{maximablock}
 Printed output:
-\printpythontex[verbatim]
+\printpythontex
 
 Verbatim:
 \begin{maximaverbatim}
 solve(x^2-2,x);
 \end{maximaverbatim}
 
-
 Sub environment:
 \begin{maximasub}
-Some text \textcolor{blue}{!{x}} and then more text.
+Some text \textcolor{blue}{!{x=743}} and then more text.
 \end{maximasub}
 
-Again, with command:  \maximas{Some text \textcolor{blue}{!{x}} and then more text.}
+Again, with command:  \maximas{Some text \textcolor{red}{!{phi=3^2-\%pi}} and then more text.}
 
 \end{document}
