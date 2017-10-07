@@ -1543,9 +1543,15 @@ CodeEngine('rust', 'rust', '.rs',
 SubCodeEngine('rust', 'rs')
 
 
+# The initialization code in this template does the following:
+# - Silence all echoing of input by defining linear-displa to noop.
+# - Silence output label printing by defining tex-mlatex to noop.
+# - Use ptex_inline variable to overide current TeX environment.
+# - Set the output display to TeX with minimal surrounding whitespace.
+# - If the user has called set_tex_environment_default yet, then use LaTeX styles
+#   display math (\[x=5\]) instead of TeX style ($$x=5$$).
 maxima_template = '''
     :lisp-quiet (defun linear-displa (form))
-    :lisp-quiet (defmfun mtell (&rest l))
     :lisp-quiet (defun tex-mlabel (x l r) (tex (caddr x) l r 'mparen 'mparen))
     :lisp-quiet (let ((gte #'get-tex-environment)) (defun get-tex-environment (&rest x) (if $ptex_inline '("$" . "$") (apply gte x))))
     load("noninteractive.mac")$
