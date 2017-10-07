@@ -11,7 +11,8 @@
 
 The PythonTeX package allows you to enter Python code within a LaTeX
 document, execute the code, and access its output in the original document.
-It also supports the Ruby, Julia, Octave, Sage, Bash, and Rust languages.
+It also supports the Ruby, Julia, Maxima, Octave, Sage, Bash, and Rust
+languages.
 
 PythonTeX provides fast, user-friendly access to Python from within LaTeX.
 Python code is only executed when it has been modified, or when it meets

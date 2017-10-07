@@ -33,7 +33,7 @@ from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
 
-interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', 'sage', 'rustc')}
+interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', 'sage', 'rustc', 'maxima')}
 # The {file} field needs to be replaced by itself, since the actual
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is
@@ -1541,3 +1541,49 @@ CodeEngine('rust', 'rust', '.rs',
            created='{File}.exe')
 
 SubCodeEngine('rust', 'rs')
+
+
+# The initialization code in this template does the following:
+# - Silence all echoing of input by defining linear-displa to noop.
+# - Silence output label printing by defining tex-mlatex to noop.
+# - Use ptex_inline variable to overide current TeX environment.
+# - Set the output display to TeX with minimal surrounding whitespace.
+# - If the user has called set_tex_environment_default yet, then use LaTeX styles
+#   display math (\[x=5\]) instead of TeX style ($$x=5$$).
+maxima_template = '''
+    :lisp-quiet (defun linear-displa (form))
+    :lisp-quiet (defun tex-mlabel (x l r) (tex (caddr x) l r 'mparen 'mparen))
+    :lisp-quiet (let ((gte #'get-tex-environment)) (defun get-tex-environment (&rest x) (if $ptex_inline '("$" . "$") (apply gte x))))
+    load("noninteractive.mac")$
+    load("alt-display.mac")$
+    define_alt_display(
+        ptex_display(x),
+        block(
+            [alt_display1d:false, alt_display2d:false],
+            printf(true, "~a~%", tex_displa(x))))$
+    set_alt_display(2, ptex_display)$
+    leftjust:true$
+    if get_tex_environment_default()=["$$","$$"] then
+        set_tex_environment_default("\\\\[", "\\\\]")$
+    {body}
+    printf(stdout, "~a~%~a~%", "{dependencies_delim}", "{created_delim}")$
+    '''
+
+maxima_wrapper = '''
+    ptex_inline:ev("{command}"="i",pred)$
+    printf(stdout, "~a~%", "{stdoutdelim}")$
+    printf(stderr, "~a~%", "{stderrdelim}")$
+    {code}
+    '''
+
+maxima_sub = '''
+    ptex_inline:true$
+    printf(stdout, "~a~%", "{field_delim}")$
+    {field};
+    '''
+
+CodeEngine('maxima', 'maxima', '.mac',
+           '{maxima} --very-quiet --batch-string="batch(\\"{file}.mac\\")$"',
+           maxima_template, maxima_wrapper, '{code}', maxima_sub,
+           ['error', 'Error'], ['warning', 'Warning'],
+           'line {number}')
