@@ -950,7 +950,7 @@ julia_template = '''
     # Currently, Julia only supports UTF-8
     # So can't set stdout and stderr encoding
 
-    type JuliaTeXUtils
+    mutable struct JuliaTeXUtils
         id::AbstractString
         family::AbstractString
         session::AbstractString
@@ -983,8 +983,8 @@ julia_template = '''
         function JuliaTeXUtils()
             self = new()
             self.self = self
-            self._dependencies = Array{{AbstractString}}(0)
-            self._created = Array{{AbstractString}}(0)
+            self._dependencies = Array{{AbstractString}}(undef,0)
+            self._created = Array{{AbstractString}}(undef,0)
             self._context_raw = ""
 
             function formatter(expr)
@@ -1095,7 +1095,7 @@ julia_wrapper = '''
     jltex.line = "{line}"
 
     println("{stdoutdelim}")
-    write(STDERR, "{stderrdelim}\\n")
+    write(stderr, "{stderrdelim}\\n")
     jltex.before()
 
     {code}
