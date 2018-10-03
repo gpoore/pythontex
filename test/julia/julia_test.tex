@@ -82,13 +82,13 @@ s = """
     Julia a
 \end{juliablock}
 
-\stderrpythontex
+\stderrpythontex[][breaklines, breakafter=\\/]
 
 \begin{juliablock}[err2][numbers=left]
 1+
 \end{juliablock}
 
-\stderrpythontex
+\stderrpythontex[][breaklines, breakafter=\\/]
 
 \begin{juliablock}[err3][numbers=left]
 # Comment
@@ -96,7 +96,7 @@ s = """
 1 + "ab"
 \end{juliablock}
 
-\stderrpythontex
+\stderrpythontex[][breaklines, breakafter=\\/]
 
 
 
