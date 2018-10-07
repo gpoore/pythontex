@@ -1567,6 +1567,12 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         messages.append('* PythonTeX error')
         messages.append('    Missing output file for ' + key_run.replace('#', ':'))
         errors += 1
+    elif family == 'juliacon' and proc.returncode == 1:
+        messages.append('* PythonTeX error')
+        messages.append('    Running code for Julia console failed')
+        with open(err_file_name, encoding='utf8') as f:
+            messages.append(f.read())
+        errors += 1
     else:
         if family == 'juliacon':
             with open(out_file_name.rsplit('.', 1)[0] + '.tex', 'r', encoding=encoding) as f:
