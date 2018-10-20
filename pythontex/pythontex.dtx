@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2018/10/07 v0.17dev execute and typeset Python code and other languages]
+    [2018/10/19 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3218}
+% \CheckSum{3216}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -158,6 +158,7 @@
 % \begin{itemize}
 % \item Updated Julia support for Julia versions 0.6 (\#107), and 0.7 and 1.0 (\#126, \#130).
 % \item There are now meaningful error messages for Julia console when Weave.jl is not installed or raises errors (\#131).
+% \item \texttt{pythontexcustomcode} and \texttt{\string\pythontexcustomc} now set \texttt{pytex.context} (\#65).
 % \end{itemize}
 % \end{changelog}
 %
@@ -3357,7 +3358,7 @@
     }%
     \xdef\pytx@type{CC:#2:#1}%
     \edef\pytx@cmd{c}%
-    \def\pytx@context{}%
+    \pytx@SetContext
     \def\pytx@group{none}%
     \let\pytx@InlineShow\@empty
     \let\pytx@InlineSave\pytx@InlineSaveCode
@@ -3750,7 +3751,7 @@
     }%
     \xdef\pytx@type{CC:#2:#1}%
     \edef\pytx@cmd{code}%
-    \def\pytx@context{}%
+    \pytx@SetContext
     \def\pytx@group{none}%
     \pytx@BeginCodeEnv[none]}%
 {\end{VerbatimOut}%
