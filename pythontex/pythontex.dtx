@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3216}
+% \CheckSum{3218}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -159,6 +159,7 @@
 % \item Updated Julia support for Julia versions 0.6 (\#107), and 0.7 and 1.0 (\#126, \#130).
 % \item There are now meaningful error messages for Julia console when Weave.jl is not installed or raises errors (\#131).
 % \item \texttt{pythontexcustomcode} and \texttt{\string\pythontexcustomc} now set \texttt{pytex.context} (\#65).
+% \item Added \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...) (\#121).  This provides basic support for R scripts (not console).  There is currently no utilities class or equivalent.
 % \end{itemize}
 % \end{changelog}
 %
@@ -1594,6 +1595,13 @@
 % let mut rstex = \meta{code};
 % \end{Verbatim}
 % Additionally, when using |\rust| and |\rs|, keep in mind that these wrap code in a block, so you \emph{cannot} use |rstex| by value in these contexts (both shared and mutable references are still fine, though).
+%
+%
+% \subsection{R}
+%
+% Support for R scripts was added in v0.17.  There is not yet an equivalent of the Python or Julia consoles.  Support for R is very basic; there is not currently a utilities class or any related features.
+%
+% R code is executed with |Rscript|.  The |methods| library is loaded automatically as part of the code template.  Expressions passed to the |\R| command are converted into strings via |toString()|.
 %
 %
 % \subsection{Adding support for a new language}
@@ -4115,6 +4123,7 @@
     \ifstrequal{#1}{sage}{\makepythontexfamily[pyglexer=sage]{sage}}{}%
     \ifstrequal{#1}{rust}{\makepythontexfamily[pyglexer=rust]{rust}}{}%
     \ifstrequal{#1}{rs}{\makepythontexfamily[pyglexer=rust]{rs}}{}%
+    \ifstrequal{#1}{R}{\makepythontexfamily[pyglexer=r]{R}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}

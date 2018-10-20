@@ -17,7 +17,7 @@ document (script for execution).
 
 
 
-Copyright (c) 2012-2017, Geoffrey M. Poore
+Copyright (c) 2012-2018, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -33,7 +33,8 @@ from hashlib import sha1
 from collections import OrderedDict, namedtuple
 
 
-interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash', 'sage', 'rustc')}
+interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash',
+                                  'sage', 'rustc', 'Rscript')}
 # The {file} field needs to be replaced by itself, since the actual
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is
@@ -1541,3 +1542,29 @@ CodeEngine('rust', 'rust', '.rs',
            created='{File}.exe')
 
 SubCodeEngine('rust', 'rs')
+
+
+r_template = '''
+    library(methods)
+    setwd("{workingdir}")
+    {body}
+    write("{dependencies_delim}", stdout())
+    write("{created_delim}", stdout())
+    '''
+
+r_wrapper = '''
+    write("{stdoutdelim}", stdout())
+    write("{stderrdelim}", stderr())
+    {code}
+    '''
+
+r_sub = '''
+    write("{field_delim}", stdout())
+    write(toString({field}), stdout())
+    '''
+
+CodeEngine('R', 'R', '.R',
+           '{Rscript} "{file}.R"',
+           r_template, r_wrapper, 'write(toString({code}), stdout())', r_sub,
+           ['error', 'Error'], ['warning', 'Warning'],
+           'line {number}')
