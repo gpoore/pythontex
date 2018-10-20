@@ -1,0 +1,103 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={R}]{pythontex}
+
+
+\begin{document}
+
+
+
+\section*{R}
+
+\subsection*{Commands}
+
+\R{2^8}
+
+\Rc{write(2^16, stdout())}
+
+\Rb{cat(2^32)}
+
+\printpythontex
+
+\Rv{cat(2^32)}
+
+\Rs{\LaTeX\ and then \textcolor{blue}{!{"R"}} and back to \LaTeX.}
+
+
+\subsection*{Environments}
+
+Code:
+\begin{Rcode}
+cat("A string.", " ")
+cat(2^8)
+\end{Rcode}
+
+Block:
+\begin{Rblock}
+cat("A string.", " ")
+cat(2^8)
+\end{Rblock}
+
+\printpythontex
+
+Verbatim:
+\begin{Rverbatim}
+cat("A string.", " ")
+cat(2^8)
+\end{Rverbatim}
+
+Sub:
+\begin{Rsub}
+\LaTeX\ and then \textcolor{blue}{!{"R"}} and back to \LaTeX.
+\end{Rsub}
+
+
+\section*{R stderr}
+
+
+\begin{Rblock}[err1][numbers=left]
+# Comment
+s <- "R a
+\end{Rblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+\begin{Rblock}[err2][numbers=left]
+1++
+\end{Rblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+\begin{Rblock}[err3][numbers=left]
+# Comment
+# Another comment
+1 + "ab"
+\end{Rblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+
+
+\end{document}
+
