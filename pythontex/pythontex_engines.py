@@ -1568,3 +1568,23 @@ CodeEngine('R', 'R', '.R',
            r_template, r_wrapper, 'write(toString({code}), stdout())', r_sub,
            ['error', 'Error'], ['warning', 'Warning'],
            'line {number}')
+
+
+rcon_template = '''
+    options(echo=TRUE, error=function(){{}})
+    pdf(file=NULL)
+    library(methods)
+    setwd("{workingdir}")
+    {body}
+    '''
+
+rcon_wrapper = '''
+    write("{stdoutdelim}", stdout())
+    {code}
+    '''
+
+CodeEngine('Rcon', 'R', '.R',
+           '{Rscript} "{file}.R"',
+           rcon_template, rcon_wrapper, '', '',
+           ['error', 'Error'], ['warning', 'Warning'],
+           '')

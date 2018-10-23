@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2018/10/19 v0.17dev execute and typeset Python code and other languages]
+    [2018/10/22 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3218}
+% \CheckSum{3276}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -159,7 +159,7 @@
 % \item Updated Julia support for Julia versions 0.6 (\#107), and 0.7 and 1.0 (\#126, \#130).
 % \item There are now meaningful error messages for Julia console when Weave.jl is not installed or raises errors (\#131).
 % \item \texttt{pythontexcustomcode} and \texttt{\string\pythontexcustomc} now set \texttt{pytex.context} (\#65).
-% \item Added \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...) (\#121).  This provides basic support for R scripts (not console).  There is currently no utilities class or equivalent.
+% \item Added support for R.  The \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...) executes code as a script.  There is currently no utilities class or equivalent.  The \texttt{Rcon} family (\texttt{Rconsole}) executes code to emulate an interactive R session (\#121).
 % \end{itemize}
 % \end{changelog}
 %
@@ -1599,9 +1599,14 @@
 %
 % \subsection{R}
 %
-% Support for R scripts was added in v0.17.  There is not yet an equivalent of the Python or Julia consoles.  Support for R is very basic; there is not currently a utilities class or any related features.
+% Support for R was added in v0.17.
 %
-% R code is executed with |Rscript|.  The |methods| library is loaded automatically as part of the code template.  Expressions passed to the |\R| command are converted into strings via |toString()|.
+% Loading \pytex\ with |usefamily=R| enables 
+the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...).  These execute code with |Rscript|.  The |methods| library is loaded automatically as part of the code template.  Expressions passed to the |\R| command are converted into strings via |toString()|.  There is currently no utilities class or related features. 
+%
+% \subsubsection*{Console}
+%
+% Loading \pytex\ with |usefamily=Rcon| enables the \texttt{Rconsole} environment, which executes code to emulate an interactive R session.  Code is executed with |Rscript|.  The option |echo=TRUE| is used to intersperse code with output, while |error=function(){}| is used to avoid halting on errors.  A null graphics device, |pdf(file=NULL)|, is created by default, so plots that are to be included in the document require explicit commands.  The |methods| library is loaded automatically as part of the code template.
 %
 %
 % \subsection{Adding support for a new language}
@@ -4098,24 +4103,30 @@
     \ifstrequal{#1}{ruby}{\makepythontexfamily[pyglexer=ruby]{ruby}}{}%
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
     \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
-    \ifstrequal{#1}{juliacon}{\pgfkeys{/PYTX/family, name=juliacon, default, pyglexer=jlcon}%
-                              \expandafter\xdef\csname pytx@macroformatter@juliacon\endcsname{\pytx@tmp@pprinter}%
-                              \expandafter\gdef\csname pytx@fvsettings@juliacon\endcsname{}%
-                              \expandafter\xdef\csname pytx@pyglexer@juliacon\endcsname{\pytx@tmp@pyglexer}%
-                              \expandafter\xdef\csname pytx@pygopt@juliacon\endcsname{\pytx@tmp@pygopt}%
-                              \expandafter\xdef\csname pytx@console@juliacon\endcsname{\pytx@tmp@console}%
-                              \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=juliacon|%
-                                      \csname pytx@pyglexer@juliacon\endcsname|%
-                                      \csname pytx@pygopt@juliacon\endcsname}%
-                                  }%
-                              \pytx@MakeCodeFV{juliacon}%
-                              \newenvironment{juliaconsole}%
-                               {\VerbatimEnvironment
-                                \def\pytx@type{juliacon}%
-                                \pytx@ConfigPygments
-                                \begin{juliaconcode}}%
-                               {\end{juliaconcode}%
-                                \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}}}{}%
+    \ifstrequal{#1}{juliacon}{%
+        \pgfkeys{/PYTX/family, name=juliacon, default, pyglexer=jlcon}%
+        \expandafter\xdef\csname pytx@macroformatter@juliacon\endcsname{\pytx@tmp@pprinter}%
+        \expandafter\gdef\csname pytx@fvsettings@juliacon\endcsname{}%
+        \expandafter\xdef\csname pytx@pyglexer@juliacon\endcsname{\pytx@tmp@pyglexer}%
+        \expandafter\xdef\csname pytx@pygopt@juliacon\endcsname{\pytx@tmp@pygopt}%
+        \expandafter\xdef\csname pytx@console@juliacon\endcsname{\pytx@tmp@console}%
+        \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=juliacon|%
+            \csname pytx@pyglexer@juliacon\endcsname|%
+            \csname pytx@pygopt@juliacon\endcsname}%
+        }%
+        \pytx@MakeCodeFV{juliacon}%
+        \newenvironment{juliaconsole}%
+           {\VerbatimEnvironment
+            \def\pytx@type{juliacon}%
+            \pytx@ConfigPygments
+            \begin{juliaconcode}}%
+           {\end{juliaconcode}%
+            \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}%
+            \IfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+               {}%
+               {\textbf{??~\pytx@packagename~??}}%
+                \PackageWarning{\pytx@packagename}{Non-existent console content}}
+    }{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
@@ -4124,6 +4135,30 @@
     \ifstrequal{#1}{rust}{\makepythontexfamily[pyglexer=rust]{rust}}{}%
     \ifstrequal{#1}{rs}{\makepythontexfamily[pyglexer=rust]{rs}}{}%
     \ifstrequal{#1}{R}{\makepythontexfamily[pyglexer=r]{R}}{}%
+    \ifstrequal{#1}{Rcon}{%
+        \pgfkeys{/PYTX/family, name=Rcon, default, pyglexer=rconsole}%
+        \expandafter\xdef\csname pytx@macroformatter@Rcon\endcsname{\pytx@tmp@pprinter}%
+        \expandafter\gdef\csname pytx@fvsettings@Rcon\endcsname{}%
+        \expandafter\xdef\csname pytx@pyglexer@Rcon\endcsname{\pytx@tmp@pyglexer}%
+        \expandafter\xdef\csname pytx@pygopt@Rcon\endcsname{\pytx@tmp@pygopt}%
+        \expandafter\xdef\csname pytx@console@Rcon\endcsname{\pytx@tmp@console}%
+        \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=Rcon|%
+            \csname pytx@pyglexer@Rcon\endcsname|%
+            \csname pytx@pygopt@Rcon\endcsname}%
+        }%
+        \pytx@MakeCodeFV{Rcon}%
+        \newenvironment{Rconsole}%
+           {\VerbatimEnvironment
+            \def\pytx@type{Rcon}%
+            \pytx@ConfigPygments
+            \begin{Rconcode}}%
+           {\end{Rconcode}%
+            \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}%
+            \IfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+               {}%
+               {\textbf{??~\pytx@packagename~??}%
+                \PackageWarning{\pytx@packagename}{Non-existent console content}}}
+    }{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}

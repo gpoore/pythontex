@@ -1535,7 +1535,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         # Add any created files due to the command
         # This needs to be done before attempts to execute, to prevent orphans
         try:
-            proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=err_file)
+            if family != 'Rcon':
+                proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=err_file)
+            else:
+                proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=subprocess.STDOUT)
         except WindowsError as e:
             if e.errno == 2:
                 # Batch files won't be found when called without extension. They
@@ -1546,7 +1549,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 # under Windows; a list is not required.
                 exec_cmd_string = ' '.join(exec_cmd)
                 exec_cmd_string = 'cmd /C "@echo off & call {0} & if errorlevel 1 exit 1"'.format(exec_cmd_string)
-                proc = subprocess.Popen(exec_cmd_string, stdout=out_file, stderr=err_file)
+                if family != 'Rcon':
+                    proc = subprocess.Popen(exec_cmd_string, stdout=out_file, stderr=err_file)
+                else:
+                    proc = subprocess.Popen(exec_cmd_string, stdout=out_file, stderr=subprocess.STDOUT)
             else:
                 raise
 
@@ -1589,6 +1595,19 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
             tex_data_lines.append('=>PYTHONTEX:DEPENDENCIES#\n=>PYTHONTEX:CREATED#\n')
             with open(out_file_name, 'w', encoding=encoding) as f:
                 f.write(''.join(tex_data_lines))
+        elif family == 'Rcon':
+            with open(out_file_name, 'r', encoding=encoding) as f:
+                stdout_lines = f.readlines()
+                for n, line in enumerate(stdout_lines):
+                    if line.startswith('> =>PYTHONTEX:'):
+                        stdout_lines[n] = line[2:]
+                    elif line.startswith('> write("=>PYTHONTEX:'):
+                        stdout_lines[n] = ''
+                while stdout_lines and not stdout_lines[-1].strip('> \n'):
+                    stdout_lines.pop()
+                stdout_lines.append('=>PYTHONTEX:DEPENDENCIES#\n=>PYTHONTEX:CREATED#\n')
+            with open(out_file_name, 'w', encoding=encoding) as f:
+                f.write(''.join(stdout_lines))
 
         f = open(out_file_name, 'r', encoding=encoding)
         out = f.read()
@@ -1646,7 +1665,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 else:
                     dependencies[dep] = (os.path.getmtime(dep_file), '')
 
-            if family == 'juliacon':
+            if family in ('juliacon', 'Rcon'):
                 from pygments import highlight
                 from pygments.lexers import get_lexer_by_name
                 from pygments.formatters import LatexFormatter
@@ -1664,13 +1683,14 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                     instance, command = delims.split('#')
                     if content or command in ('s', 'sub'):
                         if instance.endswith('CC'):
-                            messages.append('* PythonTeX warning')
-                            messages.append('    Custom code for "' + family + '" attempted to print or write to stdout')
-                            messages.append('    This is not supported; use a normal code command or environment')
-                            messages.append('    The following content was written:')
-                            messages.append('')
-                            messages.extend(['    ' + l for l in content.splitlines()])
-                            warnings += 1
+                            if family not in ('juliacon', 'Rcon'):
+                                messages.append('* PythonTeX warning')
+                                messages.append('    Custom code for "' + family + '" attempted to print or write to stdout')
+                                messages.append('    This is not supported; use a normal code command or environment')
+                                messages.append('    The following content was written:')
+                                messages.append('')
+                                messages.extend(['    ' + l for l in content.splitlines()])
+                                warnings += 1
                         elif command == 'i':
                             content = r'\pytx@SVMCR{pytx@MCR@' + key_run.replace('#', '@') + '@' + instance + '}\n' + content.rstrip('\n') + '\\endpytx@SVMCR\n\n'
                             macros.append(content)
@@ -1688,7 +1708,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                                     # Remove newline added by printing, prevent
                                     # LaTeX from adding a space after content
                                     content = content.rsplit('\n', 1)[0] + '\\endinput\n'
-                            if family == 'juliacon':
+                            if family in ('juliacon', 'Rcon'):
                                 content = highlight(content, lexer[family], formatter[family])
                             f.write(content)
                             f.close()
@@ -1699,7 +1719,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         messages.append('* PythonTeX error')
         messages.append('    Missing stderr file for ' + key_run.replace('#', ':'))
         errors += 1
-    elif family == 'juliacon':
+    elif family in ('juliacon', 'Rcon'):
         pass
     else:
         # Open error and code files.
