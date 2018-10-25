@@ -1601,9 +1601,19 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
                 for n, line in enumerate(stdout_lines):
                     if line.startswith('> =>PYTHONTEX:'):
                         stdout_lines[n] = line[2:]
-                    elif line.startswith('> write("=>PYTHONTEX:'):
-                        stdout_lines[n] = ''
-                while stdout_lines and not stdout_lines[-1].strip('> \n'):
+                    elif '> write("=>PYTHONTEX:' in line:
+                        if line.startswith('> write("=>PYTHONTEX:'):
+                            stdout_lines[n] = ''
+                        else:
+                            # cat() and similar functions can result in the
+                            # prompt not being at the start of a new line.  In
+                            # that case, preserve the prompt to accurately
+                            # emulate the console.  If there is a following
+                            # console environment, this effectively amounts
+                            # to adding an extra empty line (pressing ENTER)
+                            # between the two.
+                            stdout_lines[n] = line.split('write("=>PYTHONTEX:', 1)[0]
+                while stdout_lines and (stdout_lines[-1].startswith('>') and not stdout_lines[-1][1:].strip(' \n')):
                     stdout_lines.pop()
                 stdout_lines.append('=>PYTHONTEX:DEPENDENCIES#\n=>PYTHONTEX:CREATED#\n')
             with open(out_file_name, 'w', encoding=encoding) as f:
@@ -1680,6 +1690,10 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
             for block in out.split('=>PYTHONTEX:STDOUT#')[1:]:
                 if block:
                     delims, content = block.split('#\n', 1)
+                    if not content.endswith('\n'):
+                        # Content might not end with a newline.  For example,
+                        # Rcon with something like cat() as the last function.
+                        content += '\n'
                     instance, command = delims.split('#')
                     if content or command in ('s', 'sub'):
                         if instance.endswith('CC'):
