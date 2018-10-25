@@ -1,0 +1,76 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={juliacon,julia}]{pythontex}
+
+
+\begin{document}
+
+
+\section*{Julia Console}
+
+
+\subsection*{Basics}
+
+Console math and printing.
+
+\begin{juliaconsole}
+1+4
+println("Some text ...")
+\end{juliaconsole}
+
+Test code that generates output without a trailing newline \verb|\n|.  Since there is always a newline before the \verb|julia>| prompt, this should affect vertical layout, but not line breaks.
+\begin{juliaconsole}
+print("Some text ...")
+print("And some more ...")
+\end{juliaconsole}
+
+The next environment should start normally, with the prompt at the beginning of the line.
+\begin{juliaconsole}
+println("After ...")
+\end{juliaconsole}
+
+
+
+\subsection*{Continuity between environments}
+
+Set a variable.
+\begin{juliaconsole}
+x = 2^12
+\end{juliaconsole}
+
+Retrieve variable value.
+\begin{juliaconsole}
+x
+\end{juliaconsole}
+
+
+\subsection*{Continue after errors}
+
+\begin{juliaconsole}[][breaklines]
+1+"a"
+3*6
+\end{juliaconsole}
+
+
+\end{document}
