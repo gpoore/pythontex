@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2018/10/22 v0.17dev execute and typeset Python code and other languages]
+    [2018/10/25 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3276}
+% \CheckSum{3321}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -160,6 +160,7 @@
 % \item There are now meaningful error messages for Julia console when Weave.jl is not installed or raises errors (\#131).
 % \item \texttt{pythontexcustomcode} and \texttt{\string\pythontexcustomc} now set \texttt{pytex.context} (\#65).
 % \item Added support for R.  The \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...) executes code as a script.  There is currently no utilities class or equivalent.  The \texttt{Rcon} family (\texttt{Rconsole}) executes code to emulate an interactive R session (\#121).
+% \item \texttt{fancyvrb} settings from \texttt{\string\setpythontexfv} and console environments now work with Julia and R consoles.
 % \end{itemize}
 % \end{changelog}
 %
@@ -1601,8 +1602,7 @@
 %
 % Support for R was added in v0.17.
 %
-% Loading \pytex\ with |usefamily=R| enables 
-the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...).  These execute code with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  Expressions passed to the |\R| command are converted into strings via |toString()|.  There is currently no utilities class or related features.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
+% Loading \pytex\ with |usefamily=R| enables the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...).  These execute code with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  Expressions passed to the |\R| command are converted into strings via |toString()|.  There is currently no utilities class or related features.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
 %
 % \subsubsection*{Console}
 %
@@ -3705,6 +3705,30 @@ the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \ifdefstring{\pytx@type}{juliacon}{%
+        \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+        \pytx@FVSet
+        \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+        \pytx@ConfigPygments
+        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+           {}%
+           {\par\textbf{??~\pytx@packagename~??}\par
+            \PackageWarning{\pytx@packagename}{Non-existent console content}}%
+        \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+        \let\pytx@EnvAutoprint\relax
+    }{}%
+    \ifdefstring{\pytx@type}{Rcon}{%
+        \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+        \pytx@FVSet
+        \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+        \pytx@ConfigPygments
+        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+           {}%
+           {\par\textbf{??~\pytx@packagename~??}\par
+            \PackageWarning{\pytx@packagename}{Non-existent console content}}%
+        \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+        \let\pytx@EnvAutoprint\relax
+    }{}%
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
     \pytx@EnvAutoprint
@@ -3721,6 +3745,8 @@ the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
     \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
+    \edef\pytx@linecount{\pytx@counter @line}%
+    \pytx@CheckCounter{\pytx@linecount}%
     \pytx@WriteCodefileInfo
     \begingroup
     \obeylines
@@ -3734,6 +3760,8 @@ the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{
 % As described above, this macro captures a second optional argument, if present, and then starts the |VerbatimOut| environment.  Note that |VerbatimOut| does not have a mandatory argument, because we are invoking our custom |\pytx@FVB@VerbatimOut| macro.  The default |fancyvrb| macro needs an argument to tell it the name of the file to which to save the verbatim content.  But in our case, we are always writing to the same file, and the custom macro accounts for this by not having a mandatory file name argument.  We must perform the typical |FancyVerbLine| trickery, to prevent the |fancyvrb| line counter from being affected by \textbf{writing} content!
 %    \begin{macrocode}
 \def\pytx@BeginCodeEnv@i[#1]{%
+    \def\pytx@fvopttmp{#1}%
+    \def\pytx@argspprint{#1}%
     \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
     \let\FVB@VerbatimOut\pytx@FVB@VerbatimOut
     \let\FVE@VerbatimOut\pytx@FVE@VerbatimOut
@@ -4118,14 +4146,8 @@ the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{
         \newenvironment{juliaconsole}%
            {\VerbatimEnvironment
             \def\pytx@type{juliacon}%
-            \pytx@ConfigPygments
             \begin{juliaconcode}}%
-           {\end{juliaconcode}%
-            \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}%
-            \IfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
-               {}%
-               {\textbf{??~\pytx@packagename~??}}%
-                \PackageWarning{\pytx@packagename}{Non-existent console content}}
+           {\end{juliaconcode}}
     }{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
@@ -4150,14 +4172,8 @@ the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{
         \newenvironment{Rconsole}%
            {\VerbatimEnvironment
             \def\pytx@type{Rcon}%
-            \pytx@ConfigPygments
             \begin{Rconcode}}%
-           {\end{Rconcode}%
-            \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}%
-            \IfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
-               {}%
-               {\textbf{??~\pytx@packagename~??}%
-                \PackageWarning{\pytx@packagename}{Non-existent console content}}}
+           {\end{Rconcode}}
     }{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}

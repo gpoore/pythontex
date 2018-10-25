@@ -20,7 +20,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2018/10/19 v0.17dev execute and typeset Python code and other languages]
+    [2018/10/25 v0.17dev execute and typeset Python code and other languages]
 
 \newcommand{\pytx@packagename}{PythonTeX}
 \newcommand{\pytx@packageversion}{0.17dev}
@@ -1037,6 +1037,30 @@
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
+    \ifdefstring{\pytx@type}{juliacon}{%
+        \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+        \pytx@FVSet
+        \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+        \pytx@ConfigPygments
+        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+           {}%
+           {\par\textbf{??~\pytx@packagename~??}\par
+            \PackageWarning{\pytx@packagename}{Non-existent console content}}%
+        \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+        \let\pytx@EnvAutoprint\relax
+    }{}%
+    \ifdefstring{\pytx@type}{Rcon}{%
+        \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+        \pytx@FVSet
+        \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+        \pytx@ConfigPygments
+        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+           {}%
+           {\par\textbf{??~\pytx@packagename~??}\par
+            \PackageWarning{\pytx@packagename}{Non-existent console content}}%
+        \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+        \let\pytx@EnvAutoprint\relax
+    }{}%
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
     \pytx@EnvAutoprint
@@ -1046,12 +1070,16 @@
     \ifstrempty{#1}{\edef\pytx@session{default}}{\StrSubstitute{#1}{:}{-}[\pytx@session]}%
     \xdef\pytx@counter{pytx@\pytx@type @\pytx@session @\pytx@group}%
     \pytx@CheckCounter{\pytx@counter}%
+    \edef\pytx@linecount{\pytx@counter @line}%
+    \pytx@CheckCounter{\pytx@linecount}%
     \pytx@WriteCodefileInfo
     \begingroup
     \obeylines
     \@ifnextchar[{\endgroup\pytx@BeginCodeEnv@i}{\endgroup\pytx@BeginCodeEnv@i[]}%
 }%
 \def\pytx@BeginCodeEnv@i[#1]{%
+    \def\pytx@fvopttmp{#1}%
+    \def\pytx@argspprint{#1}%
     \setcounter{pytx@FancyVerbLineTemp}{\value{FancyVerbLine}}%
     \let\FVB@VerbatimOut\pytx@FVB@VerbatimOut
     \let\FVE@VerbatimOut\pytx@FVE@VerbatimOut
@@ -1332,14 +1360,8 @@
         \newenvironment{juliaconsole}%
            {\VerbatimEnvironment
             \def\pytx@type{juliacon}%
-            \pytx@ConfigPygments
             \begin{juliaconcode}}%
-           {\end{juliaconcode}%
-            \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}%
-            \IfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
-               {}%
-               {\textbf{??~\pytx@packagename~??}}%
-                \PackageWarning{\pytx@packagename}{Non-existent console content}}
+           {\end{juliaconcode}}
     }{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
@@ -1364,14 +1386,8 @@
         \newenvironment{Rconsole}%
            {\VerbatimEnvironment
             \def\pytx@type{Rcon}%
-            \pytx@ConfigPygments
             \begin{Rconcode}}%
-           {\end{Rconcode}%
-            \ifbool{pytx@opt@autoprint}{}{\printpythontex{}}%
-            \IfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
-               {}%
-               {\textbf{??~\pytx@packagename~??}%
-                \PackageWarning{\pytx@packagename}{Non-existent console content}}}
+           {\end{Rconcode}}
     }{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
