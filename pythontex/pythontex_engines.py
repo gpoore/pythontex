@@ -1547,6 +1547,7 @@ SubCodeEngine('rust', 'rs')
 r_template = '''
     library(methods)
     setwd("{workingdir}")
+    pdf(file=NULL)
     {body}
     write("{dependencies_delim}", stdout())
     write("{created_delim}", stdout())
@@ -1572,9 +1573,9 @@ CodeEngine('R', 'R', '.R',
 
 rcon_template = '''
     options(echo=TRUE, error=function(){{}})
-    pdf(file=NULL)
     library(methods)
     setwd("{workingdir}")
+    pdf(file=NULL)
     {body}
     '''
 

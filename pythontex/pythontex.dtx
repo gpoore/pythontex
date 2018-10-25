@@ -1602,11 +1602,11 @@
 % Support for R was added in v0.17.
 %
 % Loading \pytex\ with |usefamily=R| enables 
-the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...).  These execute code with |Rscript|.  The |methods| library is loaded automatically as part of the code template.  Expressions passed to the |\R| command are converted into strings via |toString()|.  There is currently no utilities class or related features. 
+the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...).  These execute code with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  Expressions passed to the |\R| command are converted into strings via |toString()|.  There is currently no utilities class or related features.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
 %
 % \subsubsection*{Console}
 %
-% Loading \pytex\ with |usefamily=Rcon| enables the \texttt{Rconsole} environment, which executes code to emulate an interactive R session.  Code is executed with |Rscript|.  The option |echo=TRUE| is used to intersperse code with output, while |error=function(){}| is used to avoid halting on errors.  A null graphics device, |pdf(file=NULL)|, is created by default, so plots that are to be included in the document require explicit commands.  The |methods| library is loaded automatically as part of the code template.
+% Loading \pytex\ with |usefamily=Rcon| enables the \texttt{Rconsole} environment, which executes code to emulate an interactive R session.  Code is executed with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  The option |echo=TRUE| is used to intersperse code with output, while |error=function(){}| is used to avoid halting on errors.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
 %
 %
 % \subsection{Adding support for a new language}
