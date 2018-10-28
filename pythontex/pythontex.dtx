@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2018/10/25 v0.17dev execute and typeset Python code and other languages]
+    [2018/10/28 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -1560,7 +1560,7 @@
 %
 % \subsubsection*{Console}
 %
-% Preliminary Julia console support was added in v0.16, under the base name |juliacon|.  Unlike the Python console environments that allow invalid input, currently everything entered in a |juliaconsole| environment must be valid.  The Julia console uses \href{https://github.com/mpastell/Weave.jl}{\textsf{Weave.jl}} internally to evaluate code, and it currently does not support invalid input.
+% Julia console support was added in v0.16.  It may be enabled by loading \pytex\ with |usefamily=juliacon|.  The |juliaconsole| environment uses \href{https://github.com/mpastell/Weave.jl}{\textsf{Weave.jl}} internally to evaluate code.
 %
 %
 % \subsection{Octave}
