@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3321}
+% \CheckSum{3277}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -161,6 +161,7 @@
 % \item \texttt{pythontexcustomcode} and \texttt{\string\pythontexcustomc} now set \texttt{pytex.context} (\#65).
 % \item Added support for R.  The \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...) executes code as a script.  There is currently no utilities class or equivalent.  The \texttt{Rcon} family (\texttt{Rconsole}) executes code to emulate an interactive R session (\#121).
 % \item \texttt{fancyvrb} settings from \texttt{\string\setpythontexfv} and console environments now work with Julia and R consoles.
+% \item \texttt{pythontexcustomcode} now works with |juliacon|.  There are now proper \texttt{juliaconcode} and \texttt{Rconcode} environments that execute code but typeset nothing, to parallel \texttt{pyconcode} (\#134).
 % \end{itemize}
 % \end{changelog}
 %
@@ -1560,7 +1561,7 @@
 %
 % \subsubsection*{Console}
 %
-% Julia console support was added in v0.16.  It may be enabled by loading \pytex\ with |usefamily=juliacon|.  The |juliaconsole| environment uses \href{https://github.com/mpastell/Weave.jl}{\textsf{Weave.jl}} internally to evaluate code.
+% Julia console support was added in v0.16.  It may be enabled by loading \pytex\ with |usefamily=juliacon|.  The |juliaconsole| environment uses \href{https://github.com/mpastell/Weave.jl}{\textsf{Weave.jl}} internally to evaluate code.  There is also a |juliaconcode| environment that executes code but typesets nothing.
 %
 %
 % \subsection{Octave}
@@ -1602,11 +1603,11 @@
 %
 % Support for R was added in v0.17.
 %
-% Loading \pytex\ with |usefamily=R| enables the \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...).  These execute code with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  Expressions passed to the |\R| command are converted into strings via |toString()|.  There is currently no utilities class or related features.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
+% Loading \pytex\ with |usefamily=R| enables the |R| family of commands and environments (|\R|, |\Rc|, |Rcode|, ...).  These execute code with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  Expressions passed to the |\R| command are converted into strings via |toString()|.  There is currently no utilities class or related features.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
 %
 % \subsubsection*{Console}
 %
-% Loading \pytex\ with |usefamily=Rcon| enables the \texttt{Rconsole} environment, which executes code to emulate an interactive R session.  Code is executed with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  The option |echo=TRUE| is used to intersperse code with output, while |error=function(){}| is used to avoid halting on errors.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
+% Loading \pytex\ with |usefamily=Rcon| enables the |Rconsole| environment, which executes code to emulate an interactive R session.  There is also an |Rconcode| environment that executes code but typesets nothing.  Code is executed with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  The option |echo=TRUE| is used to intersperse code with output, while |error=function(){}| is used to avoid halting on errors.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
 %
 %
 % \subsection{Adding support for a new language}
@@ -3705,30 +3706,22 @@
     }%
     {\end{VerbatimOut}%
     \xdef\pytx@stdfile{\pytx@type_\pytx@session_\pytx@group_\arabic{\pytx@counter}}%
-    \ifdefstring{\pytx@type}{juliacon}{%
-        \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
-        \pytx@FVSet
-        \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
-        \pytx@ConfigPygments
-        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
-           {}%
-           {\par\textbf{??~\pytx@packagename~??}\par
-            \PackageWarning{\pytx@packagename}{Non-existent console content}}%
-        \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+    \ifcsname pytx@nonpyconsole@\pytx@type\endcsname
+        \ifcsname pytx@code@as@console\endcsname
+            \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
+            \pytx@FVSet
+            \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
+            \pytx@ConfigPygments
+            \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
+               {\DepyFile{p:\pytx@outputdir/\pytx@stdfile.stdout}}%
+               {\par\textbf{??~\pytx@packagename~??}\par
+                \PackageWarning{\pytx@packagename}{Non-existent console content}}%
+            \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
+        \else
+        \fi
         \let\pytx@EnvAutoprint\relax
-    }{}%
-    \ifdefstring{\pytx@type}{Rcon}{%
-        \setcounter{FancyVerbLine}{\value{\pytx@linecount}}%
-        \pytx@FVSet
-        \ifdefstring{\pytx@fvopttmp}{}{}{\expandafter\fvset\expandafter{\pytx@fvopttmp}}%
-        \pytx@ConfigPygments
-        \InputIfFileExists{\pytx@outputdir/\pytx@stdfile.stdout}%
-           {}%
-           {\par\textbf{??~\pytx@packagename~??}\par
-            \PackageWarning{\pytx@packagename}{Non-existent console content}}%
-        \setcounter{\pytx@linecount}{\value{FancyVerbLine}}%
-        \let\pytx@EnvAutoprint\relax
-    }{}%
+    \else
+    \fi
     \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
     \stepcounter{\pytx@counter}%
     \pytx@EnvAutoprint
@@ -4050,6 +4043,34 @@
 %    \end{macrocode}
 % \end{macro}
 %
+%
+% \begin{macro}{\makepythontexfamily@con}
+% This macro creates |console| and |code| environments for non-Python consoles.  \pytex\ was not designed with commands and environments for non-Python consoles.  Non-Python consoles are currently created via specially customized |code| environments.  Note that simply creating these |console| and |code| environments is typically not enough to create non-Python consoles; |pythontex2.py| and |pythontex3.py| usually also require customization.  This macro's definition should not be treated as stable; it will change in the future.  The ultimate long-term goal is to eliminate it entirely, by redesigning the code execution core of \pytex\ to accomodate non-Python consoles more easily.
+%    \begin{macrocode}
+\newcommand{\makepythontexfamily@con}[2][text]{%
+    \pgfkeys{/PYTX/family, name=#2con, default, pyglexer=#1, console=true}%
+    \expandafter\xdef\csname pytx@macroformatter@#2con\endcsname{\pytx@tmp@pprinter}%
+    \expandafter\gdef\csname pytx@fvsettings@#2con\endcsname{}%
+    \expandafter\xdef\csname pytx@pyglexer@#2con\endcsname{\pytx@tmp@pyglexer}%
+    \expandafter\xdef\csname pytx@pygopt@#2con\endcsname{\pytx@tmp@pygopt}%
+    \expandafter\xdef\csname pytx@console@#2con\endcsname{\pytx@tmp@console}%
+    \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=#2con|%
+        \csname pytx@pyglexer@#2con\endcsname|%
+        \csname pytx@pygopt@#2con\endcsname}%
+    }%
+    \pytx@MakeCodeFV{#2con}%
+    \expandafter\global\expandafter\let\csname pytx@nonpyconsole@#2con\endcsname\relax
+    \newenvironment{#2console}%
+       {\VerbatimEnvironment
+        \def\pytx@type{#2con}%
+        \let\pytx@code@as@console\relax
+        \begin{#2concode}}%
+       {\end{#2concode}}%
+}
+%    \end{macrocode}
+% \end{macro}
+
+%
 % \begin{macro}{\setpythontexpyglexer}
 % We need to be able to reset the lexer associated with a family after the family has already been created.
 %    \begin{macrocode}
@@ -4131,24 +4152,7 @@
     \ifstrequal{#1}{ruby}{\makepythontexfamily[pyglexer=ruby]{ruby}}{}%
     \ifstrequal{#1}{rb}{\makepythontexfamily[pyglexer=ruby]{rb}}{}%
     \ifstrequal{#1}{julia}{\makepythontexfamily[pyglexer=julia]{julia}}{}%
-    \ifstrequal{#1}{juliacon}{%
-        \pgfkeys{/PYTX/family, name=juliacon, default, pyglexer=jlcon}%
-        \expandafter\xdef\csname pytx@macroformatter@juliacon\endcsname{\pytx@tmp@pprinter}%
-        \expandafter\gdef\csname pytx@fvsettings@juliacon\endcsname{}%
-        \expandafter\xdef\csname pytx@pyglexer@juliacon\endcsname{\pytx@tmp@pyglexer}%
-        \expandafter\xdef\csname pytx@pygopt@juliacon\endcsname{\pytx@tmp@pygopt}%
-        \expandafter\xdef\csname pytx@console@juliacon\endcsname{\pytx@tmp@console}%
-        \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=juliacon|%
-            \csname pytx@pyglexer@juliacon\endcsname|%
-            \csname pytx@pygopt@juliacon\endcsname}%
-        }%
-        \pytx@MakeCodeFV{juliacon}%
-        \newenvironment{juliaconsole}%
-           {\VerbatimEnvironment
-            \def\pytx@type{juliacon}%
-            \begin{juliaconcode}}%
-           {\end{juliaconcode}}
-    }{}%
+    \ifstrequal{#1}{juliacon}{\makepythontexfamily@con[jlcon]{julia}}{}%
     \ifstrequal{#1}{jl}{\makepythontexfamily[pyglexer=julia]{jl}}{}%
     \ifstrequal{#1}{matlab}{\makepythontexfamily[pyglexer=matlab]{matlab}}{}%
     \ifstrequal{#1}{octave}{\makepythontexfamily[pyglexer=octave]{octave}}{}%
@@ -4157,24 +4161,7 @@
     \ifstrequal{#1}{rust}{\makepythontexfamily[pyglexer=rust]{rust}}{}%
     \ifstrequal{#1}{rs}{\makepythontexfamily[pyglexer=rust]{rs}}{}%
     \ifstrequal{#1}{R}{\makepythontexfamily[pyglexer=r]{R}}{}%
-    \ifstrequal{#1}{Rcon}{%
-        \pgfkeys{/PYTX/family, name=Rcon, default, pyglexer=rconsole}%
-        \expandafter\xdef\csname pytx@macroformatter@Rcon\endcsname{\pytx@tmp@pprinter}%
-        \expandafter\gdef\csname pytx@fvsettings@Rcon\endcsname{}%
-        \expandafter\xdef\csname pytx@pyglexer@Rcon\endcsname{\pytx@tmp@pyglexer}%
-        \expandafter\xdef\csname pytx@pygopt@Rcon\endcsname{\pytx@tmp@pygopt}%
-        \expandafter\xdef\csname pytx@console@Rcon\endcsname{\pytx@tmp@console}%
-        \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=Rcon|%
-            \csname pytx@pyglexer@Rcon\endcsname|%
-            \csname pytx@pygopt@Rcon\endcsname}%
-        }%
-        \pytx@MakeCodeFV{Rcon}%
-        \newenvironment{Rconsole}%
-           {\VerbatimEnvironment
-            \def\pytx@type{Rcon}%
-            \begin{Rconcode}}%
-           {\end{Rconcode}}
-    }{}%
+    \ifstrequal{#1}{Rcon}{\makepythontexfamily@con[rconsole]{R}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}

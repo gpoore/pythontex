@@ -62,6 +62,7 @@ from pygments.styles import get_all_styles
 from pythontex_engines import *
 import textwrap
 import platform
+import itertools
 
 if sys.version_info[0] == 2:
     try:
@@ -1275,7 +1276,11 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     for key in code_dict:
         family = key.split('#')[0]
         # Uncomment the following for debugging, and comment out what follows
-        '''run_code(encoding, outputdir, workingdir, code_dict[key],
+        '''run_code(encoding, outputdir,
+                                                 workingdir,
+                                                 cc_dict_begin[family],
+                                                 code_dict[key],
+                                                 cc_dict_end[family],
                                                  engine_dict[family].language,
                                                  engine_dict[family].commands,
                                                  engine_dict[family].created,
@@ -1287,9 +1292,12 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
                                                  engine_dict[family].linenumbers,
                                                  engine_dict[family].lookbehind,
                                                  keeptemps, hashdependencies,
-                                                 pygments_settings)'''
+                                                 pygments_settings]))'''
         tasks.append(pool.apply_async(run_code, [encoding, outputdir,
-                                                 workingdir, code_dict[key],
+                                                 workingdir,
+                                                 cc_dict_begin[family],
+                                                 code_dict[key],
+                                                 cc_dict_end[family],
                                                  engine_dict[family].language,
                                                  engine_dict[family].commands,
                                                  engine_dict[family].created,
@@ -1474,7 +1482,8 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
 
 
 
-def run_code(encoding, outputdir, workingdir, code_list, language, commands,
+def run_code(encoding, outputdir, workingdir,
+             cc_begin_list, code_list, cc_end_list, language, commands,
              command_created, extension, makestderr, stderrfilename,
              code_index, errorsig, warningsig, linesig, stderrlookbehind,
              keeptemps, hashdependencies, pygments_settings):
@@ -1583,11 +1592,11 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         if family == 'juliacon':
             with open(out_file_name.rsplit('.', 1)[0] + '.tex', 'r', encoding=encoding) as f:
                 tex_data_lines = f.readlines()
-            inst = 0
+            code_iter = itertools.chain(cc_begin_list, code_list, cc_end_list)
             for n, line in enumerate(tex_data_lines):
                 if line.rstrip() == '\\begin{juliaterm}':
-                    tex_data_lines[n] = '=>PYTHONTEX:STDOUT#{0}#code#\n'.format(inst)
-                    inst += 1
+                    c = next(code_iter)
+                    tex_data_lines[n] = '=>PYTHONTEX:STDOUT#{0}#code#\n'.format(c.instance)
                     if n != 0:
                         tex_data_lines[n-1] = ''
                 if line.rstrip() == '\\end{juliaterm}':
@@ -1598,24 +1607,24 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
         elif family == 'Rcon':
             with open(out_file_name, 'r', encoding=encoding) as f:
                 stdout_lines = f.readlines()
-                for n, line in enumerate(stdout_lines):
-                    if line.startswith('> =>PYTHONTEX:'):
-                        stdout_lines[n] = line[2:]
-                    elif '> write("=>PYTHONTEX:' in line:
-                        if line.startswith('> write("=>PYTHONTEX:'):
-                            stdout_lines[n] = ''
-                        else:
-                            # cat() and similar functions can result in the
-                            # prompt not being at the start of a new line.  In
-                            # that case, preserve the prompt to accurately
-                            # emulate the console.  If there is a following
-                            # console environment, this effectively amounts
-                            # to adding an extra empty line (pressing ENTER)
-                            # between the two.
-                            stdout_lines[n] = line.split('write("=>PYTHONTEX:', 1)[0]
-                while stdout_lines and (stdout_lines[-1].startswith('>') and not stdout_lines[-1][1:].strip(' \n')):
-                    stdout_lines.pop()
-                stdout_lines.append('=>PYTHONTEX:DEPENDENCIES#\n=>PYTHONTEX:CREATED#\n')
+            for n, line in enumerate(stdout_lines):
+                if line.startswith('> =>PYTHONTEX:'):
+                    stdout_lines[n] = line[2:]
+                elif '> write("=>PYTHONTEX:' in line:
+                    if line.startswith('> write("=>PYTHONTEX:'):
+                        stdout_lines[n] = ''
+                    else:
+                        # cat() and similar functions can result in the
+                        # prompt not being at the start of a new line.  In
+                        # that case, preserve the prompt to accurately
+                        # emulate the console.  If there is a following
+                        # console environment, this effectively amounts
+                        # to adding an extra empty line (pressing ENTER)
+                        # between the two.
+                        stdout_lines[n] = line.split('write("=>PYTHONTEX:', 1)[0]
+            while stdout_lines and (stdout_lines[-1].startswith('>') and not stdout_lines[-1][1:].strip(' \n')):
+                stdout_lines.pop()
+            stdout_lines.append('=>PYTHONTEX:DEPENDENCIES#\n=>PYTHONTEX:CREATED#\n')
             with open(out_file_name, 'w', encoding=encoding) as f:
                 f.write(''.join(stdout_lines))
 
@@ -1690,7 +1699,7 @@ def run_code(encoding, outputdir, workingdir, code_list, language, commands,
             for block in out.split('=>PYTHONTEX:STDOUT#')[1:]:
                 if block:
                     delims, content = block.split('#\n', 1)
-                    if not content.endswith('\n'):
+                    if content and not content.endswith('\n'):
                         # Content might not end with a newline.  For example,
                         # Rcon with something like cat() as the last function.
                         content += '\n'
