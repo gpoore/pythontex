@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2018/10/28 v0.17dev execute and typeset Python code and other languages]
+    [2018/10/30 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3277}
+% \CheckSum{3281}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -162,6 +162,7 @@
 % \item Added support for R.  The \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...) executes code as a script.  There is currently no utilities class or equivalent.  The \texttt{Rcon} family (\texttt{Rconsole}) executes code to emulate an interactive R session (\#121).
 % \item \texttt{fancyvrb} settings from \texttt{\string\setpythontexfv} and console environments now work with Julia and R consoles.
 % \item \texttt{pythontexcustomcode} now works with |juliacon|.  There are now proper \texttt{juliaconcode} and \texttt{Rconcode} environments that execute code but typeset nothing, to parallel \texttt{pyconcode} (\#134).
+% \item Added support for Perl with the \texttt{perl} and \texttt{pl} families of commands and environments.  There is currently no utilities class or equivalent.
 % \end{itemize}
 % \end{changelog}
 %
@@ -1608,6 +1609,13 @@
 % \subsubsection*{Console}
 %
 % Loading \pytex\ with |usefamily=Rcon| enables the |Rconsole| environment, which executes code to emulate an interactive R session.  There is also an |Rconcode| environment that executes code but typesets nothing.  Code is executed with |Rscript|.  The |methods| library is loaded automatically as part of the template code.  The option |echo=TRUE| is used to intersperse code with output, while |error=function(){}| is used to avoid halting on errors.  A null graphics device, |pdf(file=NULL)|, is created by default to avoid the automatic, unintentional creation of plot files with default names.  Plots that are to be saved require explicit graphics commands.
+%
+%
+% \subsection{Perl}
+% 
+% Support for Perl was added in v0.17.
+%
+% Loading \pytex\ with |usefamily=perl| enables the |perl| family of commands and environments.  Alternatively, |usefamily=pl| may be used to enable the |pl| family.  There is currently no utilities class or related features.
 %
 %
 % \subsection{Adding support for a new language}
@@ -4162,6 +4170,8 @@
     \ifstrequal{#1}{rs}{\makepythontexfamily[pyglexer=rust]{rs}}{}%
     \ifstrequal{#1}{R}{\makepythontexfamily[pyglexer=r]{R}}{}%
     \ifstrequal{#1}{Rcon}{\makepythontexfamily@con[rconsole]{R}}{}%
+    \ifstrequal{#1}{perl}{\makepythontexfamily[pyglexer=perl]{perl}}{}%
+    \ifstrequal{#1}{pl}{\makepythontexfamily[pyglexer=perl]{pl}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}

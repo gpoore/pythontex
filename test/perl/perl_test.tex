@@ -1,0 +1,103 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={perl}]{pythontex}
+
+
+\begin{document}
+
+
+
+\section*{Perl}
+
+\subsection*{Commands}
+
+\perl{2**8}
+
+\perlc{print 2**16;}
+
+\perlb{print 2**32;}
+
+\printpythontex
+
+\perlv{print 2**32;}
+
+\perls{\LaTeX\ and then \textcolor{blue}{!{"Perl"}} and back to \LaTeX.}
+
+
+\subsection*{Environments}
+
+Code:
+\begin{perlcode}
+print "A string." . " ";
+print 2**8;
+\end{perlcode}
+
+Block:
+\begin{perlblock}
+print "A string." . " ";
+print 2**8;
+\end{perlblock}
+
+\printpythontex
+
+Verbatim:
+\begin{perlverbatim}
+print "A string." . " ";
+print 2**8;
+\end{perlverbatim}
+
+Sub:
+\begin{perlsub}
+\LaTeX\ and then \textcolor{blue}{!{"Perl"}} and back to \LaTeX.
+\end{perlsub}
+
+
+\section*{Perl stderr}
+
+
+\begin{perlblock}[err1][numbers=left]
+# Comment
+s = "Perl a
+\end{perlblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+\begin{perlblock}[err2][numbers=left]
+1+;
+\end{perlblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+\begin{perlblock}[err3][numbers=left]
+# Comment
+# Another comment
+"a" "b";
+\end{perlblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+
+
+\end{document}
+

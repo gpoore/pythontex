@@ -34,7 +34,7 @@ from collections import OrderedDict, namedtuple
 
 
 interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash',
-                                  'sage', 'rustc', 'Rscript')}
+                                  'sage', 'rustc', 'Rscript', 'perl')}
 # The {file} field needs to be replaced by itself, since the actual
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is
@@ -1589,3 +1589,36 @@ CodeEngine('Rcon', 'R', '.R',
            rcon_template, rcon_wrapper, '', '',
            ['error', 'Error'], ['warning', 'Warning'],
            '')
+
+
+perl_template = '''
+    use v5.14;
+    use utf8;
+    use strict;
+    use autodie;
+    use warnings;
+    use warnings qw(FATAL utf8);
+    use feature qw(unicode_strings);
+    use open qw(:encoding(UTF-8) :std);
+    chdir("{workingdir}");
+    {body}
+    print STDOUT "{dependencies_delim}\\n";
+    print STDOUT "{created_delim}\\n";
+    '''
+
+perl_wrapper = '''
+    print STDOUT "{stdoutdelim}\\n";
+    print STDERR "{stderrdelim}\\n";
+    {code}
+    '''
+
+perl_sub = '''
+    print STDOUT "{field_delim}\\n";
+    print STDOUT "" . ({field});
+    '''
+
+CodeEngine('perl', 'perl', '.pl',
+           '{perl} "{file}.pl"',
+           perl_template, perl_wrapper, 'print STDOUT "" . ({code});', perl_sub,
+           ['error', 'Error'], ['warning', 'Warning'],
+           'line {number}')
