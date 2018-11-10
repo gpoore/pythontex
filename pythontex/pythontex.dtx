@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2018/10/30 v0.17dev execute and typeset Python code and other languages]
+    [2018/11/10 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3281}
+% \CheckSum{3285}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -154,7 +154,7 @@
 %
 %
 %
-% \begin{changelog}{v0.17}{2018/10/??}
+% \begin{changelog}{v0.17}{2018/11/??}
 % \begin{itemize}
 % \item Updated Julia support for Julia versions 0.6 (\#107), and 0.7 and 1.0 (\#126, \#130).
 % \item There are now meaningful error messages for Julia console when Weave.jl is not installed or raises errors (\#131).
@@ -163,6 +163,8 @@
 % \item \texttt{fancyvrb} settings from \texttt{\string\setpythontexfv} and console environments now work with Julia and R consoles.
 % \item \texttt{pythontexcustomcode} now works with |juliacon|.  There are now proper \texttt{juliaconcode} and \texttt{Rconcode} environments that execute code but typeset nothing, to parallel \texttt{pyconcode} (\#134).
 % \item Added support for Perl with the \texttt{perl} and \texttt{pl} families of commands and environments.  There is currently no utilities class or equivalent.
+% \item Added support for Perl 6 with the \texttt{perlsix} and \texttt{psix} families of commands and environments (\#104).  There is currently no utilities class or equivalent.
+% \item Under Windows, capitalization of script paths in \texttt{stderr} is now preserved.
 % \end{itemize}
 % \end{changelog}
 %
@@ -1616,6 +1618,13 @@
 % Support for Perl was added in v0.17.
 %
 % Loading \pytex\ with |usefamily=perl| enables the |perl| family of commands and environments.  Alternatively, |usefamily=pl| may be used to enable the |pl| family.  There is currently no utilities class or related features.
+%
+%
+% \subsection{Perl 6}
+% 
+% Support for Perl 6 was added in v0.17.
+%
+% Loading \pytex\ with |usefamily=perlsix| enables the |perlsix| family of commands and environments.  Alternatively, |usefamily=psix| may be used to enable the |psix| family.  There is currently no utilities class or related features.
 %
 %
 % \subsection{Adding support for a new language}
@@ -4172,6 +4181,8 @@
     \ifstrequal{#1}{Rcon}{\makepythontexfamily@con[rconsole]{R}}{}%
     \ifstrequal{#1}{perl}{\makepythontexfamily[pyglexer=perl]{perl}}{}%
     \ifstrequal{#1}{pl}{\makepythontexfamily[pyglexer=perl]{pl}}{}%
+    \ifstrequal{#1}{perlsix}{\makepythontexfamily[pyglexer=perl6]{perlsix}}{}%
+    \ifstrequal{#1}{psix}{\makepythontexfamily[pyglexer=perl6]{psix}}{}%    
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}

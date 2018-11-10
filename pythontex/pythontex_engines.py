@@ -34,7 +34,7 @@ from collections import OrderedDict, namedtuple
 
 
 interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash',
-                                  'sage', 'rustc', 'Rscript', 'perl')}
+                                  'sage', 'rustc', 'Rscript', 'perl', 'perl6')}
 # The {file} field needs to be replaced by itself, since the actual
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is
@@ -195,7 +195,7 @@ class CodeEngine(object):
                 if not isinstance(l, str):
                     raise TypeError('CodeEngine needs "linenumbers" to contain strings')
         # Need to replace tags
-        linenumbers = [l.replace('{number}', r'(\d+)') for l in linenumbers]
+        linenumbers = [r'(\d+)'.join(re.escape(x) for x in l.split('{number}')) if '{number}' in l else l for l in linenumbers]
         self.linenumbers = linenumbers
 
         # Type check lookbehind
@@ -1268,6 +1268,7 @@ CodeEngine('octave', 'octave', '.m',
            octave_template, octave_wrapper, 'disp({code})', octave_sub,
            'error', 'warning', 'line {number}')
 
+
 bash_template = '''
     cd "{workingdir}"
     {body}
@@ -1622,3 +1623,33 @@ CodeEngine('perl', 'perl', '.pl',
            perl_template, perl_wrapper, 'print STDOUT "" . ({code});', perl_sub,
            ['error', 'Error'], ['warning', 'Warning'],
            'line {number}')
+
+SubCodeEngine('perl', 'pl')
+
+
+perl6_template = '''
+    use v6;
+    chdir("{workingdir}");
+    {body}
+    put "{dependencies_delim}";
+    put "{created_delim}";
+    '''
+
+perl6_wrapper = '''
+    put "{stdoutdelim}";
+    note "{stderrdelim}";
+    {code}
+    '''
+
+perl6_sub = '''
+    put "{field_delim}";
+    put ({field});
+    '''
+
+CodeEngine('perlsix', 'perl6', '.p6',
+           '{perl6} "{File}.p6"',
+           perl6_template, perl6_wrapper, 'put ({code});', perl6_sub,
+           ['error', 'Error', 'Cannot'], ['warning', 'Warning'],
+           ['.p6:{number}', '.p6 line {number}'], True)
+
+SubCodeEngine('perlsix', 'psix')

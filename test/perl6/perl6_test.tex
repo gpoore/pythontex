@@ -1,0 +1,127 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={perlsix}]{pythontex}
+
+
+\begin{document}
+
+
+
+\section*{Perl 6}
+
+\subsection*{Commands}
+
+\perlsix{2**8}
+
+\perlsixc{put 2**16;}
+
+\perlsixb{put 2**32;}
+
+\printpythontex
+
+\perlsixv{put 2**32;}
+
+\perlsixs{\LaTeX\ and then \textcolor{blue}{!{"Perl 6"}} and back to \LaTeX.}
+
+
+\subsection*{Environments}
+
+Code:
+\begin{perlsixcode}
+put "A string. " ~ "More.";
+put 2**8;
+\end{perlsixcode}
+
+Block:
+\begin{perlsixblock}
+put "A string. " ~ "More.";
+put 2**8;
+\end{perlsixblock}
+
+\printpythontex
+
+Verbatim:
+\begin{perlsixverbatim}
+put "A string. " ~ "More.";
+put 2**8;
+\end{perlsixverbatim}
+
+Sub:
+\begin{perlsixsub}
+\LaTeX\ and then \textcolor{blue}{!{"Perl 6"}} and back to \LaTeX.
+\end{perlsixsub}
+
+
+\section*{Perl 6 stderr}
+
+
+\begin{perlsixblock}[err1][numbers=left]
+# Comment
+my $s = "Perl a
+\end{perlsixblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+
+\begin{perlsixblock}[err2][numbers=left]
+1+;
+\end{perlsixblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+
+\begin{perlsixblock}[err3][numbers=left]
+# Comment
+# Another comment
+"a" "b";
+\end{perlsixblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+
+\begin{perlsixblock}[err4][numbers=left]
+# Comment
+my $idx = "text";
+my @arr = <1, 2, 3>;
+my $var = @arr[$idx];
+\end{perlsixblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+
+\begin{perlsixblock}[err5][numbers=left]
+sub nums {1 ... 1000}
+
+for nums {
+    say "Current element: $_";
+}
+\end{perlsixblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+
+
+
+\end{document}
+

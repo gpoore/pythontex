@@ -20,7 +20,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2018/10/30 v0.17dev execute and typeset Python code and other languages]
+    [2018/11/10 v0.17dev execute and typeset Python code and other languages]
 
 \newcommand{\pytx@packagename}{PythonTeX}
 \newcommand{\pytx@packageversion}{0.17dev}
@@ -1370,6 +1370,8 @@
     \ifstrequal{#1}{Rcon}{\makepythontexfamily@con[rconsole]{R}}{}%
     \ifstrequal{#1}{perl}{\makepythontexfamily[pyglexer=perl]{perl}}{}%
     \ifstrequal{#1}{pl}{\makepythontexfamily[pyglexer=perl]{pl}}{}%
+    \ifstrequal{#1}{perlsix}{\makepythontexfamily[pyglexer=perl6]{perlsix}}{}%
+    \ifstrequal{#1}{psix}{\makepythontexfamily[pyglexer=perl6]{psix}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 \newbool{pytx@listingenv}
