@@ -369,6 +369,21 @@ def load_code_get_settings(data, temp_data):
         print('Run LaTeX to make sure the file is current')
         return sys.exit(1)
 
+    j=-10000000000000000000
+    coun=0
+    for i in range(0,len(spl)):
+        if '=>PYTHONTEX' in spl[i]:
+            j=i+1
+            string1=spl[j]
+            coun=0
+            while string1[0]=='\t':
+                coun+=1
+                string1=string1[1:]
+            print('coun',coun)
+        if i>j:
+            spl[i]=spl[i][coun:]
+
+    pytxcode='\n'.join(spl)
 
     # Prepare to process settings
     #
