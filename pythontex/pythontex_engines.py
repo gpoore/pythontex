@@ -1653,3 +1653,98 @@ CodeEngine('perlsix', 'perl6', '.p6',
            ['.p6:{number}', '.p6 line {number}'], True)
 
 SubCodeEngine('perlsix', 'psix')
+
+javascript_template = '''
+    jstex = {{
+        before : function () {{ }},
+        after : function () {{ }},
+        _dependencies : [ ],
+        _created : [ ],
+        add_dependencies : function () {{
+            jstex._dependencies = jstex._dependencies.concat(
+                Array.prototype.slice.apply( arguments ) );
+        }},
+        add_created : function () {{
+            jstex._created = jstex._created.concat(
+                Array.prototype.slice.apply( arguments ) );
+        }},
+        cleanup : function () {{
+            console.log( "{dependencies_delim}" );
+            jstex._dependencies.map(
+                dep => console.log( dep ) );
+            console.log( "{created_delim}" );
+            jstex._dependencies.map(
+                cre => console.log( cre ) );
+        }},
+        formatter : function ( x ) {{
+            return String( x );
+        }},
+        escape : function ( x ) {{
+            return String( x ).replace( /_/g, '\\\\_' )
+                              .replace( /\\$/g, '\\\\$' )
+                              .replace( /\\^/g, '\\\\^' );
+        }},
+        docdir : process.cwd(),
+        context : {{ }},
+        _context_raw : '',
+        set_context : function ( expr ) {{
+            if ( expr != '' && expr != jstex._context_raw ) {{
+                jstex.context = {{ }};
+                expr.split( ',' ).map( pair => {{
+                    const halves = pair.split( '=' );
+                    jstex.context[halves[0]] = halves[1];
+                }} );
+            }}
+        }}
+    }};
+
+    try {{
+        process.chdir( "{workingdir}" );
+    }} catch ( e ) {{
+        if ( process.argv.indexOf( '--manual' ) == -1 )
+            console.error( e );
+    }}
+    if ( module.paths.indexOf( jstex.docdir ) == -1 )
+        module.paths.unshift( jstex.docdir );
+
+    {extend}
+
+    jstex.id = "{family}_{session}_{restart}";
+    jstex.family = "{family}";
+    jstex.session = "{session}";
+    jstex.restart = "{restart}";
+
+    {body}
+
+    jstex.cleanup();
+    '''
+
+javascript_wrapper = '''
+    jstex.command = "{command}";
+    jstex.set_context( "{context}" );
+    jstex.args = "{args}";
+    jstex.instance = "{instance}";
+    jstex.line = "{line}";
+
+    console.log( "{stdoutdelim}" );
+    console.error( "{stderrdelim}" );
+    jstex.before();
+
+    {code}
+
+    jstex.after();
+    '''
+
+javascript_sub = '''
+    console.log( "{field_delim}" );
+    console.log( {field} );
+    '''
+
+CodeEngine('javascript', 'javascript', '.js',
+           'node "{file}.js"',
+           javascript_template, javascript_wrapper,
+           'console.log( jstex.formatter( {code} ) )',
+           javascript_sub,
+           ['error', 'Error'], ['warning', 'Warning'],
+           ':{number}:')
+
