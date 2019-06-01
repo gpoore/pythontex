@@ -1653,3 +1653,128 @@ CodeEngine('perlsix', 'perl6', '.p6',
            ['.p6:{number}', '.p6 line {number}'], True)
 
 SubCodeEngine('perlsix', 'psix')
+
+#
+# Define a CodeEngine subclass for Jupyter-based engines
+#
+# Relevant documentation:
+# https://jupyter-client.readthedocs.io/en/stable/api/manager.html
+# https://jupyter-client.readthedocs.io/en/stable/api/client.html
+#
+# Example use:
+# \makepythontexfamily{jupyterjavascript}
+# ...
+# \begin{jupyterjavascriptcode}
+# console.log( Math.cos( 0 ) );
+# \end{jupyterjavascriptcode}
+#
+# $1+2=\jupyterjavascript{1+2}$
+#
+class JupyterCodeEngine(CodeEngine):
+    def __init__ ( self, kernel ):
+        import re
+        name = re.sub( r'[^a-zA-Z]', '', 'jupyter' + kernel )
+        # We will actually just create a Python engine, then use
+        # Python's jupyter API to send code to Jupyter.
+        super( JupyterCodeEngine, self ).__init__(
+            name, name, '.py', '{python} {file}.py',
+            python_template, python_wrapper,
+            'print(pytex.formatter({code}))', python_sub,
+            'Error:', 'Warning:', [ 'line {number}', ':{number}:' ]
+        )
+        # We need to extend the python module with a few declarations
+        # at the top to set up the tools we need to talk to Jupyter.
+        self.extend = '''
+# First, see if we can even successfully import Jupyter modules.
+try:
+    import jupyter_client
+    import atexit
+    # Start up the desired kernel.
+    jupyter_kernel = jupyter_client.KernelManager(
+        kernel_name="%s" )
+    jupyter_kernel.start_kernel()
+    # Connect a client to it.
+    jupyter_client = jupyter_kernel.client()
+    jupyter_client.start_channels()
+    # Promise we will shut it down later.
+    def shut_kernel_down ():
+        jupyter_kernel.shutdown_kernel()
+    atexit.register( shut_kernel_down )
+except ImportError:
+    jupyter_client = None
+
+import sys
+def jupyter_execute ( code ):
+    # If we couldn't successfully access Jupyter from Python, give up.
+    if jupyter_client == None:
+        print( 'Could not access Jupyter from PythonTeX.' )
+        return
+    result = None
+    # Ask the client to execute the code, saving the message ID.
+    id = jupyter_client.execute( code )
+    # Poll for messages from client
+    while True:
+        # Get next message from client
+        msg = jupyter_client.iopub_channel.get_msg( timeout=5 )
+        # If this message wasn't about our execute request, skip:
+        if msg['parent_header'].get( 'msg_id' ) != id:
+            continue
+        # Extract message type and content, for convenience below
+        mtype = msg['msg_type']
+        content = msg['content']
+        # If it's the result of the computation we asked for,
+        # then record that and we'll return it later.
+        if mtype == 'execute_result':
+            if 'text/plain' in content['data']:
+                result = content['data']['text/plain']
+            else:
+                result = content['data'] # this will be ugly
+            continue
+        # If they're telling us the kernel is idle, then we're
+        # done and can return our results.
+        if mtype == 'status' and \\
+           content['execution_state'] == 'idle':
+            return result
+        # If it's an error, write it to stderr.
+        if mtype == 'error':
+            sys.stderr.write( content + '\\n' )
+            continue
+        # If it's content that should be printed to stdout/stderr
+        # then do that.
+        if mtype == 'stream':
+            if content['name'] == 'stdout':
+                print( content['text'] )
+            if content['name'] == 'stderr':
+                sys.stderr.write( content['text'] + '\\n' )
+            continue
+        # Ignore all other types of messages.
+''' % kernel
+        # Tell people the name by which this kernel is called in PythonTeX.
+        print( 'PythonTeX installed ' + name )
+    # When building a script, the only augmentation is wrapping code in a
+    # Python function that sends it over to Jupyter to run instead.
+    def get_script( self, encoding, utilspath, outputdir, workingdir,
+                    cc_list_begin, code_list, cc_list_end, debug, interactive ):
+        for c in code_list:
+            c.code = "jupyter_execute( '''" \
+                   + c.code.replace( "'", "\\'" ) \
+                   + "''')\n"
+        return super( JupyterCodeEngine, self ).get_script(
+            encoding, utilspath, outputdir, workingdir,
+            cc_list_begin, code_list, cc_list_end, debug, interactive )
+
+#
+# Create instances of that class for each known kernel
+#
+# You will see the list of Kernels dumped to the terminal when PythonTeX runs.
+#
+# Relevant documentation:
+# https://jupyter-client.readthedocs.io/en/stable/api/kernelspec.html
+#
+try:
+    import jupyter_client
+    manager = jupyter_client.kernelspec.KernelSpecManager()
+    for name in manager.find_kernel_specs():
+        JupyterCodeEngine( name )
+except ImportError:
+    pass
