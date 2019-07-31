@@ -1692,7 +1692,7 @@ javascript_template = '''
                 jstex.context = {{ }};
                 expr.split( ',' ).map( pair => {{
                     const halves = pair.split( '=' );
-                    jstex.context[halves[0]] = halves[1];
+                    jstex.context[halves[0].trim()] = halves[1].trim();
                 }} );
             }}
         }}
@@ -1746,5 +1746,5 @@ CodeEngine('javascript', 'javascript', '.js',
            'console.log( jstex.formatter( {code} ) )',
            javascript_sub,
            ['error', 'Error'], ['warning', 'Warning'],
-           ':{number}:')
+           ':{number}')
 
