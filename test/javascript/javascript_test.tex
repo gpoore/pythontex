@@ -1,0 +1,103 @@
+\documentclass[11pt]{article}
+
+% Engine-specific settings
+% pdftex:
+\ifcsname pdfmatch\endcsname
+    \usepackage[T1]{fontenc}
+    \usepackage[utf8]{inputenc}
+\fi
+% xetex:
+\ifcsname XeTeXinterchartoks\endcsname
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX}
+\fi
+% luatex:
+\ifcsname directlua\endcsname
+    \usepackage{fontspec}
+\fi
+% End engine-specific settings
+
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage[keeptemps=all, makestderr, usefamily={javascript}]{pythontex}
+
+
+\begin{document}
+
+
+
+\section*{JavaScript}
+
+\subsection*{Commands}
+
+\javascript{2**8}
+
+\javascriptc{console.log(2**16);}
+
+\javascriptb{console.log(2**32);}
+
+\printpythontex
+
+\javascriptv{console.log(2**32);}
+
+\javascripts{\LaTeX\ and then \textcolor{blue}{!{"JavaScript"}} and back to \LaTeX.}
+
+
+\subsection*{Environments}
+
+Code:
+\begin{javascriptcode}
+console.log("A string." + " ");
+console.log(2**8);
+\end{javascriptcode}
+
+Block:
+\begin{javascriptblock}
+console.log("A string." + " ");
+console.log(2**8);
+\end{javascriptblock}
+
+\printpythontex
+
+Verbatim:
+\begin{javascriptverbatim}
+console.log("A string." + " ");
+console.log(2**8);
+\end{javascriptverbatim}
+
+Sub:
+\begin{javascriptsub}
+\LaTeX\ and then \textcolor{blue}{!{"JavaScript"}} and back to \LaTeX.
+\end{javascriptsub}
+
+
+\section*{JavaScript stderr}
+
+
+\begin{javascriptblock}[err1][numbers=left]
+// Comment
+s = "javascript a
+\end{javascriptblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+\begin{javascriptblock}[err2][numbers=left]
+1+;
+\end{javascriptblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+\begin{javascriptblock}[err3][numbers=left]
+// Comment
+// Another comment
+"a" "b";
+\end{javascriptblock}
+
+\stderrpythontex[][breaklines, breakafter=\\/]
+
+
+
+\end{document}
+

@@ -8,7 +8,7 @@
 %% 
 %% This is a generated file.
 %% 
-%% Copyright (C) 2012-2016 by Geoffrey M. Poore <gpoore@gmail.com>
+%% Copyright (C) 2012-2019 by Geoffrey M. Poore <gpoore@gmail.com>
 %% --------------------------------------------------------------------------
 %% This work may be distributed and/or modified under the
 %% conditions of the LaTeX Project Public License, either version 1.3
@@ -20,7 +20,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}[1999/12/01]
 \ProvidesPackage{pythontex}
-    [2018/11/10 v0.17dev execute and typeset Python code and other languages]
+    [2019/08/01 v0.17dev execute and typeset Python code and other languages]
 
 \newcommand{\pytx@packagename}{PythonTeX}
 \newcommand{\pytx@packageversion}{0.17dev}
@@ -1372,6 +1372,8 @@
     \ifstrequal{#1}{pl}{\makepythontexfamily[pyglexer=perl]{pl}}{}%
     \ifstrequal{#1}{perlsix}{\makepythontexfamily[pyglexer=perl6]{perlsix}}{}%
     \ifstrequal{#1}{psix}{\makepythontexfamily[pyglexer=perl6]{psix}}{}%
+    \ifstrequal{#1}{javascript}{\makepythontexfamily[pyglexer=js]{javascript}}{}%
+    \ifstrequal{#1}{js}{\makepythontexfamily[pyglexer=js]{js}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 \newbool{pytx@listingenv}

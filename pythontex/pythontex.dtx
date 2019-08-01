@@ -1,6 +1,6 @@
 % \iffalse meta-comment
 %
-% Copyright (C) 2012-2018 by Geoffrey M. Poore <gpoore@gmail.com>
+% Copyright (C) 2012-2019 by Geoffrey M. Poore <gpoore@gmail.com>
 % ---------------------------------------------------------------------------
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2018/11/10 v0.17dev execute and typeset Python code and other languages]
+    [2019/08/01 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -134,7 +134,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{3285}
+% \CheckSum{3289}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -154,8 +154,9 @@
 %
 %
 %
-% \begin{changelog}{v0.17}{2018/11/??}
+% \begin{changelog}{v0.17}{2019/08/??}
 % \begin{itemize}
+% \item Added support for JavaScript (\#147; thanks to Nathan Carter).
 % \item Updated Julia support for Julia versions 0.6 (\#107), and 0.7 and 1.0 (\#126, \#130).
 % \item There are now meaningful error messages for Julia console when Weave.jl is not installed or raises errors (\#131).
 % \item \texttt{pythontexcustomcode} and \texttt{\string\pythontexcustomc} now set \texttt{pytex.context} (\#65).
@@ -451,7 +452,7 @@
 %
 % Because documents that use \pytex\ mix \LaTeX\ and Python code, they are less suitable than plain \LaTeX\ documents for journal submission, sharing, and conversion to other formats.  \pytex\ includes a |depythontex| utility that creates a copy of a document in which all \pytex\ content is replaced by its output.
 %
-% While Python is the focus of \pytex, adding basic support for an additional language is usually as simple as creating a new class instance and a few templates, usually totaling less than 100 lines of code.  The following languages already have built-in support:  Ruby, Julia, and Octave.
+% While Python is the focus of \pytex, adding basic support for an additional language is usually as simple as creating a new class instance and a few templates, usually totaling less than 100 lines of code.  The following languages already have built-in support:  Ruby, Julia, Octave, Bash, Rust, R, Perl, Perl 6, and JavaScript.
 % \end{abstract}
 %
 %
@@ -1627,6 +1628,13 @@
 % Loading \pytex\ with |usefamily=perlsix| enables the |perlsix| family of commands and environments.  Alternatively, |usefamily=psix| may be used to enable the |psix| family.  There is currently no utilities class or related features.
 %
 %
+% \subsection{JavaScript}
+%
+% Support for JavaScript was added in v0.17.
+%
+% Loading \pytex\ with |usefamily=javascript| enables the |javascript| family of commands and environments.  Alternatively, |usefamily=js| may be used to enable the |js| family.  There is a utilities object |jstex|.
+%
+%
 % \subsection{Adding support for a new language}
 %
 % Adding support for an additional language involves creating two templates,  creating a new instance of a class, and using a \pytex\ macro.  In some cases, additional changes may be necessary for full support.  The information below does not deal with creating |console| families; additional support for user-defined |console| families will be added in the future.
@@ -1833,6 +1841,8 @@
 % Thanks to Øystein Bjørndal for many suggestions and for help with OS X compatibility.
 %
 % Thanks to Alexander Altman for suggesting Rust support and providing template code.
+%
+% Thanks to Nathan Carter for suggesting JavaScript support and providing template code.
 %
 %
 % \PrintChangelog
@@ -4182,7 +4192,9 @@
     \ifstrequal{#1}{perl}{\makepythontexfamily[pyglexer=perl]{perl}}{}%
     \ifstrequal{#1}{pl}{\makepythontexfamily[pyglexer=perl]{pl}}{}%
     \ifstrequal{#1}{perlsix}{\makepythontexfamily[pyglexer=perl6]{perlsix}}{}%
-    \ifstrequal{#1}{psix}{\makepythontexfamily[pyglexer=perl6]{psix}}{}%    
+    \ifstrequal{#1}{psix}{\makepythontexfamily[pyglexer=perl6]{psix}}{}%
+    \ifstrequal{#1}{javascript}{\makepythontexfamily[pyglexer=js]{javascript}}{}%
+    \ifstrequal{#1}{js}{\makepythontexfamily[pyglexer=js]{js}}{}%
 }
 \expandafter\docsvlist\expandafter{\pytx@families}
 %    \end{macrocode}
