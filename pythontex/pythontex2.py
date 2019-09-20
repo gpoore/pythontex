@@ -2388,6 +2388,8 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
         if codetype != ':GLOBAL':
             p = pygments_settings[codetype]['formatter_options'].copy()
             p['commandprefix'] = 'PYG'
+            if pygments_settings[codetype]['lexer'] == 'pycon':
+                p['python3'] = True
             formatter[codetype] = LatexFormatter(**p)
             lexer[codetype] = get_lexer_by_name(pygments_settings[codetype]['lexer'], **p)
 
@@ -2594,6 +2596,8 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
         from pygments.formatters import LatexFormatter
         p = pygments_settings['formatter_options'].copy()
         p['commandprefix'] = 'PYG'
+        if pygments_settings['lexer'] == 'pycon':
+            p['python3'] = True
         formatter = LatexFormatter(**p)
         lexer = get_lexer_by_name(pygments_settings['lexer'], **p)
     else:

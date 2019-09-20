@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2019/08/01 v0.17dev execute and typeset Python code and other languages]
+    [2019/09/20 v0.17dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -154,8 +154,9 @@
 %
 %
 %
-% \begin{changelog}{v0.17}{2019/08/??}
+% \begin{changelog}{v0.17}{2019/09/??}
 % \begin{itemize}
+% \item Pygments syntax highlighting for the Python console (\texttt{pycon} lexer) now uses the \texttt{python3} option, and the default Python lexer is now \texttt{python3} (\#156).
 % \item Added support for JavaScript (\#147; thanks to Nathan Carter).
 % \item Updated Julia support for Julia versions 0.6 (\#107), and 0.7 and 1.0 (\#126, \#130).
 % \item There are now meaningful error messages for Julia console when Weave.jl is not installed or raises errors (\#131).
@@ -4166,11 +4167,11 @@
 %
 % All of these command and environment families are created conditionally, depending on whether the package option |pygments| is used, via |\makepythontexfamily|.  We recommend that any custom families created by the user be constructed in the same manner.
 %    \begin{macrocode}
-\makepythontexfamily[pyglexer=python]{py}
+\makepythontexfamily[pyglexer=python3]{py}
 \makepythontexfamily[pyglexer=pycon, console=true]{pycon}
-\makepythontexfamily[pyglexer=python]{sympy}
+\makepythontexfamily[pyglexer=python3]{sympy}
 \makepythontexfamily[pyglexer=pycon, console=true]{sympycon}
-\makepythontexfamily[pyglexer=python]{pylab}
+\makepythontexfamily[pyglexer=python3]{pylab}
 \makepythontexfamily[pyglexer=pycon, console=true]{pylabcon}
 %    \end{macrocode}
 % We also need to create any additional families specified via the |usefamily| package option.\footnote{The loop here is accomplished via \texttt{etoolbox}.  \texttt{pgffor} might be an alternative, but making definitions global requires trickery.}
