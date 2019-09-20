@@ -167,6 +167,7 @@
 % \item Added support for Perl with the \texttt{perl} and \texttt{pl} families of commands and environments.  There is currently no utilities class or equivalent.
 % \item Added support for Perl 6 with the \texttt{perlsix} and \texttt{psix} families of commands and environments (\#104).  There is currently no utilities class or equivalent.
 % \item Under Windows, capitalization of script paths in \texttt{stderr} is now preserved.
+% \item Fixed a bug that prevented the \texttt{sub} environment from working with \texttt{depythontex} (\#155).
 % \end{itemize}
 % \end{changelog}
 %
@@ -3834,7 +3835,7 @@
 \newcommand{\pytx@MakeSubFV}[1]{%
     \expandafter\newenvironment{#1sub}{%
         \VerbatimEnvironment
-        \Depythontex{env:#1sub:om|:p}%
+        \Depythontex{env:#1sub:oo|:p}%
         \xdef\pytx@type{#1}%
         \edef\pytx@cmd{sub}%
         \pytx@SetContext
