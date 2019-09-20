@@ -1424,7 +1424,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     unresolved_sessions = []
     for key in dependencies:
         for dep, val in dependencies[key].items():
-            if val[0] > start_time:
+            if val[0] is None or val[0] > start_time:
                 unresolved_dependencies = True
                 dependencies[key][dep] = (None, None)
                 unresolved_sessions.append(key.replace('#', ':'))

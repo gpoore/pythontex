@@ -168,6 +168,7 @@
 % \item Added support for Perl 6 with the \texttt{perlsix} and \texttt{psix} families of commands and environments (\#104).  There is currently no utilities class or equivalent.
 % \item Under Windows, capitalization of script paths in \texttt{stderr} is now preserved.
 % \item Fixed a bug that prevented the \texttt{sub} environment from working with \texttt{depythontex} (\#155).
+% \item Fixed a bug in checking mtime of dependencies to see if they have been modified while \texttt{pythontex} is running.  The check failed for dependencies that do not exist or were deleted before \texttt{pythontex} can read them (\#136)
 % \end{itemize}
 % \end{changelog}
 %
