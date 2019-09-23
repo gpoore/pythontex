@@ -11,7 +11,7 @@
 
 :Author: Geoffrey Poore
 
-:Version: 0.16
+:Version: 0.17
 
 :License:  LPPL_ (LaTeX code) and `BSD 3-Clause`_ (Python code)
 
@@ -30,8 +30,9 @@ results to be included within the original document.  It also provides syntax
 highlighting for code within LaTeX documents via the Pygments syntax
 highlighter.
 
-PythonTeX also provides support for Ruby, Julia, Octave, Sage, Bash, Rust,
-and R.  Support for additional languages is coming soon.
+PythonTeX also provides support for Ruby, Julia, Octave, Sage, Bash, Rust, R,
+Perl, Perl 6, and JavaScript.  Support for additional languages is coming
+soon.
 
 See ``pythontex_quickstart.pdf`` to get started, and ``pythontex_gallery.pdf``
 for examples of what is possible with PythonTeX.  PythonTeX is included in

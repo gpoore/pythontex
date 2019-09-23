@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2019/09/20 v0.17dev execute and typeset Python code and other languages]
+    [2019/09/22 v0.17 execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -40,6 +40,20 @@
 \usepackage{environ}
 \usepackage{enumitem}
 \usepackage{fvextra}
+% The typesetting for macrocode doesn't use \@noligs, which upquote modifies.
+% So apply the upquote fix to \verbatim@nolig@list as well, which is in macrocode.
+\begingroup
+\catcode`'=\active
+\catcode``=\active
+\g@addto@macro\verbatim@nolig@list{%
+  \let'\textquotesingle
+  \let`\textasciigrave
+  \ifx\encodingdefault\upquote@OTone
+  \ifx\ttdefault\upquote@cmtt
+    \def'{\char13 }%
+    \def`{\char18 }%
+  \fi\fi}
+\endgroup
 \usepackage{pythontex}
 \usepackage{hyperref}
 \hypersetup{
@@ -154,21 +168,22 @@
 %
 %
 %
-% \begin{changelog}{v0.17}{2019/09/??}
+% \begin{changelog}{v0.17}{2019/09/22}
 % \begin{itemize}
 % \item Pygments syntax highlighting for the Python console (\texttt{pycon} lexer) now uses the \texttt{python3} option, and the default Python lexer is now \texttt{python3} (\#156).
 % \item Added support for JavaScript (\#147; thanks to Nathan Carter).
 % \item Updated Julia support for Julia versions 0.6 (\#107), and 0.7 and 1.0 (\#126, \#130).
-% \item There are now meaningful error messages for Julia console when Weave.jl is not installed or raises errors (\#131).
+% \item There are now meaningful error messages for the Julia console when Weave.jl is not installed or raises errors (\#131).
 % \item \texttt{pythontexcustomcode} and \texttt{\string\pythontexcustomc} now set \texttt{pytex.context} (\#65).
 % \item Added support for R.  The \texttt{R} family of commands and environments (\texttt{\string\R}, \texttt{\string\Rc}, \texttt{Rcode}, ...) executes code as a script.  There is currently no utilities class or equivalent.  The \texttt{Rcon} family (\texttt{Rconsole}) executes code to emulate an interactive R session (\#121).
 % \item \texttt{fancyvrb} settings from \texttt{\string\setpythontexfv} and console environments now work with Julia and R consoles.
-% \item \texttt{pythontexcustomcode} now works with |juliacon|.  There are now proper \texttt{juliaconcode} and \texttt{Rconcode} environments that execute code but typeset nothing, to parallel \texttt{pyconcode} (\#134).
+% \item \texttt{pythontexcustomcode} now works with \texttt{juliacon}.  There are now proper \texttt{juliaconcode} and \texttt{Rconcode} environments that execute code but typeset nothing, to parallel \texttt{pyconcode} (\#134).
 % \item Added support for Perl with the \texttt{perl} and \texttt{pl} families of commands and environments.  There is currently no utilities class or equivalent.
 % \item Added support for Perl 6 with the \texttt{perlsix} and \texttt{psix} families of commands and environments (\#104).  There is currently no utilities class or equivalent.
+% \item Updated Rust support by using \texttt{dyn} with traits in utilities object.
 % \item Under Windows, capitalization of script paths in \texttt{stderr} is now preserved.
 % \item Fixed a bug that prevented the \texttt{sub} environment from working with \texttt{depythontex} (\#155).
-% \item Fixed a bug in checking mtime of dependencies to see if they have been modified while \texttt{pythontex} is running.  The check failed for dependencies that do not exist or were deleted before \texttt{pythontex} can read them (\#136)
+% \item Fixed a bug in checking mtime of dependencies to see if they have been modified while \texttt{pythontex} is running.  The check failed for dependencies that do not exist or were deleted before \texttt{pythontex} can read them (\#136).
 % \end{itemize}
 % \end{changelog}
 %
@@ -457,6 +472,7 @@
 %
 % While Python is the focus of \pytex, adding basic support for an additional language is usually as simple as creating a new class instance and a few templates, usually totaling less than 100 lines of code.  The following languages already have built-in support:  Ruby, Julia, Octave, Bash, Rust, R, Perl, Perl 6, and JavaScript.
 % \end{abstract}
+% 
 %
 %
 % \section*{\centering Warning}
@@ -679,7 +695,7 @@
 %
 % \DescribeMacro{usefamily=\meta{basename}/\marg{basename1,~basename2,~...}}
 %
-% By default, only the |py|, |sympy|, and |pylab| families of commands and environments are defined, to prevent possible package conflicts.\footnote{For example, a \texttt{\string\ruby} command for Ruby code, and the \texttt{\string\ruby} command defined by the Ruby package in the \href{http://www.ctan.org/pkg/cjk}{CJK package}.}  This option defines preconfigured families for other available languages.  It takes either a single language base name, or a list of comma-separated names enclosed in curly braces.  Currently, the Ruby families |rb| and |ruby|, the Julia families |jl| and |julia|, and the Octave family |octave| may be created.
+% By default, only the |py|, |sympy|, and |pylab| families of commands and environments are defined, to prevent possible package conflicts.\footnote{For example, a \texttt{\string\ruby} command for Ruby code, and the \texttt{\string\ruby} command defined by the Ruby package in the \href{http://www.ctan.org/pkg/cjk}{CJK package}.}  This option defines preconfigured families for other available languages.  It takes either a single language base name, or a list of comma-separated names enclosed in curly braces.  For example, the Ruby families |rb| and |ruby|, the Julia families |jl| and |julia|, and the Octave family |octave| may be enabled.  For a full list of supported languages, see \Cref{sec:other-languages}.
 %
 %
 % \DescribeMacro{gobble=none/auto default:none}
@@ -1538,11 +1554,13 @@
 % \section{Support for additional languages}
 % \label{sec:other-languages}
 %
-% Beginning with v0.12, it is much simpler to add support for languages beyond Python.  Support for several additional languages will be added in coming months.
+% Details about adding support for additional languages are in \Cref{sec:other-languages:adding}.  This section begins with a brief overview of supported languages and available features.
 %
-% In the immediate future, support for additional languages will be part of \pytex.  Later, it may make sense to provide an alternative interface for other languages.  For example, a package could be created that provides access to \pytex\ internals in a language-agnostic manner, without having the word ``python'' as part of the command names.
-%
-% Languages beyond Python will typically not be enabled by default, to prevent potential macro naming conflicts with other packages.  At least two possible base names for commands and environments will be provided for each language.  Typically these will be the name of the language and the language's file extension.  For example, Ruby has the |ruby| and |rb| base names.  You can choose which base name to use for creating a family of commands and environments based on personal preference and potential naming conflicts.
+% Languages beyond Python are typically not be enabled by default to prevent potential macro naming conflicts with other packages.  Languages are enabled via the |usefamily| package option (\Cref{sec:usage}).  For example,
+%\begin{verbatim}
+%\usepackage[usefamily=ruby]{pythontex}
+%\end{verbatim}
+% Usually at least two possible base names for commands and environments will be provided for each language.  Typically these will be the name of the language and the language's file extension.  For example, Ruby has the |ruby| and |rb| base names.  You can choose which base name to use for creating a family of commands and environments based on personal preference and potential naming conflicts.
 %
 %
 % \subsection{Ruby}
@@ -1639,6 +1657,7 @@
 %
 %
 % \subsection{Adding support for a new language}
+% \label{sec:other-languages:adding}
 %
 % Adding support for an additional language involves creating two templates,  creating a new instance of a class, and using a \pytex\ macro.  In some cases, additional changes may be necessary for full support.  The information below does not deal with creating |console| families; additional support for user-defined |console| families will be added in the future.
 %
@@ -1866,7 +1885,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.17dev}
+\newcommand{\pytx@packageversion}{0.17}
 %    \end{macrocode}
 %
 % \subsection{Required packages}

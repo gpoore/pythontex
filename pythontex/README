@@ -3,15 +3,16 @@
 ===================================================================
 
 :Author:  Geoffrey Poore
-:Version:  0.16 (2017/07/20)
+:Version:  0.17 (2019/09/22)
 :License:  LPPL v1.3 or later (LaTeX code) and BSD 3-Clause (Python code)
 :Development:  https://github.com/gpoore/pythontex
 :Requirements:  Python 2.7 or 3.2+; Pygments
 
 
-The PythonTeX package allows you to enter Python code within a LaTeX
-document, execute the code, and access its output in the original document.
-It also supports the Ruby, Julia, Octave, Sage, Bash, and Rust languages.
+The PythonTeX package allows you to enter Python code within a LaTeX document,
+execute the code, and access its output in the original document.  It also
+supports the Ruby, Julia, Octave, Sage, Bash, Rust, R, Perl, Perl 6, and
+JavaScript languages.
 
 PythonTeX provides fast, user-friendly access to Python from within LaTeX.
 Python code is only executed when it has been modified, or when it meets

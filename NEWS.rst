@@ -7,6 +7,57 @@ Version History
 ===============
 
 
+v0.17 (2019/09/22)
+------------------
+
+*  Pygments syntax highlighting for the Python console (``pycon`` lexer) now
+   uses the ``python3`` option, and the default Python lexer is now
+   ``python3`` (#156).
+
+*  Added support for JavaScript (#147; thanks to Nathan Carter).
+
+*  Updated Julia support for Julia versions 0.6 (#107), and 0.7 and 1.0 (#126,
+   #130).
+
+*  There are now meaningful error messages for the Julia console when Weave.jl
+   is not installed or raises errors (#131).
+
+*  ``pythontexcustomcode`` and ``\pythontexcustomc`` now set
+   ``pytex.context`` (#65).
+
+*  Added support for R.  The ``R`` family of commands and environments
+   (``\R``, ``\Rc``, ``Rcode``, ...) executes code as a script.
+   There is currently no utilities class or equivalent.  The ``Rcon`` family
+   (``Rconsole``) executes code to emulate an interactive R session (#121).
+
+*  ``fancyvrb`` settings from ``\setpythontexfv`` and console
+   environments now work with Julia and R consoles.
+
+*  ``pythontexcustomcode`` now works with ``juliacon``.  There are now proper
+   ``juliaconcode`` and ``Rconcode`` environments that execute code but
+   typeset nothing, to parallel ``pyconcode`` (#134).
+
+*  Added support for Perl with the ``perl`` and ``pl`` families of commands
+   and environments.  There is currently no utilities class or equivalent.
+
+*  Added support for Perl 6 with the ``perlsix`` and ``psix`` families of
+   commands and environments (#104).  There is currently no utilities class or
+   equivalent.
+
+*  Updated Rust support by using ``dyn`` with traits in utilities object.
+
+*  Under Windows, capitalization of script paths in ``stderr`` is now
+   preserved.
+
+*  Fixed a bug that prevented the ``sub`` environment from working with
+   ``depythontex`` (#155).
+
+*  Fixed a bug in checking mtime of dependencies to see if they have been
+   modified while ``pythontex`` is running.  The check failed for dependencies
+   that do not exist or were deleted before ``pythontex`` can read them
+   (#136).
+
+
 
 v0.16 (2017/07/20)
 ------------------
