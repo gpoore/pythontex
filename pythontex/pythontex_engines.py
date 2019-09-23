@@ -1299,7 +1299,7 @@ rust_template = '''
         use std::{{borrow, collections, fmt, fs, io, iter, ops, path}};
         use self::OpenMode::{{ReadMode, WriteMode, AppendMode, TruncateMode, CreateMode, CreateNewMode}};
         pub struct UserAction<'u> {{
-            _act: Box<FnMut() + 'u>
+            _act: Box<dyn FnMut() + 'u>
         }}
         impl<'u> UserAction<'u> {{
             pub fn new() -> Self {{
@@ -1325,8 +1325,8 @@ rust_template = '''
         impl<'u, U: Into<UserAction<'u>> + 'u> ops::Add<U> for UserAction<'u> {{
             type Output = UserAction<'u>;
             fn add(self, f: U) -> Self::Output {{
-                let mut self_act: Box<FnMut() + 'u> = self._act;
-                let mut other_act: Box<FnMut() + 'u> = f.into()._act;
+                let mut self_act: Box<dyn FnMut() + 'u> = self._act;
+                let mut other_act: Box<dyn FnMut() + 'u> = f.into()._act;
                 Self::from(move || {{ self_act.as_mut()(); other_act.as_mut()(); }})
             }}
         }}
@@ -1337,7 +1337,7 @@ rust_template = '''
             }}
         }}
         impl<'u> ops::Deref for UserAction<'u> {{
-            type Target = FnMut() + 'u;
+            type Target = dyn FnMut() + 'u;
             fn deref(&self) -> &Self::Target {{
                 &*self._act
             }}
@@ -1348,7 +1348,7 @@ rust_template = '''
             }}
         }}
         pub struct RustTeXUtils<'u> {{
-            _formatter: Box<FnMut(&fmt::Display) -> String + 'u>,
+            _formatter: Box<dyn FnMut(&dyn fmt::Display) -> String + 'u>,
             pub before: UserAction<'u>,
             pub after: UserAction<'u>,
             pub family: &'u str,
@@ -1412,7 +1412,7 @@ rust_template = '''
         impl<'u> RustTeXUtils<'u> {{
             pub fn new() -> Self {{
                 RustTeXUtils {{
-                    _formatter: Box::new(|x: &fmt::Display| format!("{{}}", x)),
+                    _formatter: Box::new(|x: &dyn fmt::Display| format!("{{}}", x)),
                     before: UserAction::new(),
                     after: UserAction::new(),
                     family: "{family}",
@@ -1430,7 +1430,7 @@ rust_template = '''
             pub fn formatter<A: fmt::Display>(&mut self, x: A) -> String {{
                 (self._formatter)(&x)
             }}
-            pub fn set_formatter<F: FnMut(&fmt::Display) -> String + 'u>(&mut self, f: F) {{
+            pub fn set_formatter<F: FnMut(&dyn fmt::Display) -> String + 'u>(&mut self, f: F) {{
                 self._formatter = Box::new(f);
             }}
             pub fn add_dependencies<SS: IntoIterator>(&mut self, deps: SS)
