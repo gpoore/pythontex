@@ -94,14 +94,14 @@ println!("{}\\endinput", 2.0_f64.powf(8.0_f64);
 
 \begin{rustblock}[file_io]
 // Open and write to two files, to check created file tracking
-let mut my_file1 = io::BufWriter::new(rstex.open("my_file1.txt", open_mode::NW)
+let mut my_file1 = io::BufWriter::new(rstex.open("my_file1.txt", open_mode::W)
                                            .unwrap());
 writeln!(my_file1, "This is a text file.").unwrap();
 writeln!(my_file1, "Some more text.").unwrap();
 writeln!(my_file1, "3 + 2 = {}", 3 + 2).unwrap();
 drop(my_file1);
 
-let mut my_file2 = io::BufWriter::new(rstex.open("my_file2.txt", open_mode::NW)
+let mut my_file2 = io::BufWriter::new(rstex.open("my_file2.txt", open_mode::W)
                                            .unwrap());
 writeln!(my_file2, "This is another text file.").unwrap();
 writeln!(my_file2, "Some more text for another text file.").unwrap();
