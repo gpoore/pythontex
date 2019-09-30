@@ -945,7 +945,7 @@ SubCodeEngine('ruby', 'rb')
 
 
 
-julia_template = '''
+n_template = '''
     # -*- coding: UTF-8 -*-
 
     # Currently, Julia only supports UTF-8
@@ -1107,14 +1107,14 @@ julia_wrapper = '''
 julia_sub = '''println("{field_delim}")\nprintln({field})\n'''
 
 
-CodeEngine('julia', 'julia', '.jl', '{julia} "{file}.jl"', julia_template,
+CodeEngine('julia', 'julia', '.jl', '{julia} --project=@. "{file}.jl"', julia_template,
               julia_wrapper, 'println(jltex.formatter({code}))', julia_sub,
               'ERROR:', 'WARNING:', ':{number}', True)
 
 SubCodeEngine('julia', 'jl')
 
 
-CodeEngine('juliacon', 'julia', '.jl', '{julia} -e "using Weave; weave(\\"{File}.jl\\", \\"tex\\")"', '{body}\n',
+CodeEngine('juliacon', 'julia', '.jl', '{julia} --project=@. -e "using Weave; weave(\\"{File}.jl\\", \\"tex\\")"', '{body}\n',
            '#+ term=true\n{code}\n', '', '',
            'ERROR:', 'WARNING:', ':{number}', True, created='{File}.tex')
 
