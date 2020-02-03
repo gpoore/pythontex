@@ -13,7 +13,7 @@ should be in the same directory.
 
 Licensed under the BSD 3-Clause License:
 
-Copyright (c) 2012-2019, Geoffrey M. Poore
+Copyright (c) 2012-2020, Geoffrey M. Poore
 
 All rights reserved.
 
@@ -78,7 +78,7 @@ else:
 
 # Script parameters
 # Version
-__version__ = '0.17'
+__version__ = '0.18dev'
 
 
 
@@ -869,12 +869,15 @@ def hash_all(data, temp_data, old_data, engine_dict):
             if family in pygments_settings:
                 if (not pygments_settings_changed[family] and
                         key in old_typeset_hash_dict and
-                        typeset_hash_dict[key] == old_typeset_hash_dict[key]):
+                        typeset_hash_dict[key] == old_typeset_hash_dict[key] and
+                        not modified_dependencies(key, data, old_data, temp_data)):
                     pygments_update[key] = False
                     if key in old_pygments_macros:
                         pygments_macros[key] = old_pygments_macros[key]
                     if key in old_pygments_files:
                         pygments_files[key] = old_pygments_files[key]
+                    if key in old_dependencies:
+                        dependencies[key] = old_dependencies[key]
                 else:
                     pygments_update[key] = True
             else:
@@ -1359,11 +1362,15 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
 
     # Add a Pygments process
     if pygments_list:
+        # Uncomment the following for debugging
+        # do_pygments(encoding, outputdir, fvextfile, pygments_list,
+        #             pygments_settings, typeset_cache, hashdependencies)
         tasks.append(pool.apply_async(do_pygments, [encoding, outputdir,
                                                     fvextfile,
                                                     pygments_list,
                                                     pygments_settings,
-                                                    typeset_cache]))
+                                                    typeset_cache,
+                                                    hashdependencies]))
         if verbose:
             print('    - Pygments process')
 
@@ -1412,6 +1419,8 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
                 if result['pygments_files'][k]:
                     new_files = True
                     break
+            for k, v in result['dependencies'].items():
+                dependencies[k] = v
             pygments_macros.update(result['pygments_macros'])
             errors += result['errors']
             warnings += result['warnings']
@@ -2362,7 +2371,7 @@ def run_code(encoding, outputdir, workingdir,
 
 
 def do_pygments(encoding, outputdir, fvextfile, pygments_list,
-                pygments_settings, typeset_cache):
+                pygments_settings, typeset_cache, hashdependencies):
     '''
     Create Pygments content.
 
@@ -2380,6 +2389,7 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
     warnings = 0
     messages = []
     messages.append('\n----  Messages for Pygments  ----')
+    dependencies = {}
 
     # Create dicts of formatters and lexers.
     formatter = dict()
@@ -2402,6 +2412,12 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
                 f = open(c.extfile, encoding=encoding)
                 content = f.read()
                 f.close()
+                if hashdependencies:
+                    hasher = sha1()
+                    hasher.update(content.encode(encoding))
+                    dependencies[c.key_typeset] = {c.extfile: (os.path.getmtime(c.extfile), hasher.hexdigest())}
+                else:
+                    dependencies[c.key_typeset] = {c.extfile: (os.path.getmtime(c.extfile), '')}
             else:
                 content = None
                 messages.append('* PythonTeX error')
@@ -2440,6 +2456,7 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
     return {'process': 'pygments',
             'pygments_files': pygments_files,
             'pygments_macros': pygments_macros,
+            'dependencies': dependencies,
             'errors': errors,
             'warnings': warnings,
             'messages': messages}

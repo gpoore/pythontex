@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2019/09/22 v0.17 execute and typeset Python code and other languages]
+    [2020/02/03 v0.18dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -166,6 +166,13 @@
 %   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
 %
+%
+%
+% \begin{changelog}{v0.18}{2020/??/??}
+% \begin{itemize}
+% \item \texttt{\string\inputpygments} now checks inputted files for modification, so that typeset code will correctly update when the source is changed (\#162).
+% \end{itemize}
+% \end{changelog}
 %
 %
 % \begin{changelog}{v0.17}{2019/09/22}
@@ -1885,7 +1892,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.17}
+\newcommand{\pytx@packageversion}{0.18dev}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
