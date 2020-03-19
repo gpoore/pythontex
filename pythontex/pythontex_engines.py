@@ -945,7 +945,7 @@ SubCodeEngine('ruby', 'rb')
 
 
 
-n_template = '''
+julia_template = '''
     # -*- coding: UTF-8 -*-
 
     # Currently, Julia only supports UTF-8
