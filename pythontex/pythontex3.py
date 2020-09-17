@@ -1324,35 +1324,23 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     for key in cons_dict:
         family = key.split('#')[0]
         if engine_dict[family].language.startswith('python'):
-            if family in pygments_settings:
-                # Uncomment the following for debugging
-                '''python_console(jobname, encoding, outputdir, workingdir,
-                               fvextfile, pygments_settings[family],
-                               cc_dict_begin[family], cons_dict[key],
-                               cc_dict_end[family], engine_dict[family].startup,
-                               engine_dict[family].banner,
-                               engine_dict[family].filename)'''
-                tasks.append(pool.apply_async(python_console, [jobname, encoding,
-                                                               outputdir, workingdir,
-                                                               fvextfile,
-                                                               pygments_settings[family],
-                                                               cc_dict_begin[family],
-                                                               cons_dict[key],
-                                                               cc_dict_end[family],
-                                                               engine_dict[family].startup,
-                                                               engine_dict[family].banner,
-                                                               engine_dict[family].filename]))
-            else:
-                tasks.append(pool.apply_async(python_console, [jobname, encoding,
-                                                               outputdir, workingdir,
-                                                               fvextfile,
-                                                               None,
-                                                               cc_dict_begin[family],
-                                                               cons_dict[key],
-                                                               cc_dict_end[family],
-                                                               engine_dict[family].startup,
-                                                               engine_dict[family].banner,
-                                                               engine_dict[family].filename]))
+            # Uncomment the following for debugging
+            '''python_console(jobname, encoding, outputdir, workingdir,
+                           fvextfile, pygments_settings[family],
+                           cc_dict_begin[family], cons_dict[key],
+                           cc_dict_end[family], engine_dict[family].startup,
+                           engine_dict[family].banner,
+                           engine_dict[family].filename)'''
+            tasks.append(pool.apply_async(python_console, [jobname, encoding,
+                                                           outputdir, workingdir,
+                                                           fvextfile,
+                                                           pygments_settings[family] if family in pygments_settings else None,
+                                                           cc_dict_begin[family],
+                                                           cons_dict[key],
+                                                           cc_dict_end[family],
+                                                           engine_dict[family].startup,
+                                                           engine_dict[family].banner,
+                                                           engine_dict[family].filename]))
         else:
             print('* PythonTeX error')
             print('    Currently, non-Python consoles are not supported')
