@@ -1299,7 +1299,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
                                                  engine_dict[family].linenumbers,
                                                  engine_dict[family].lookbehind,
                                                  keeptemps, hashdependencies,
-                                                 pygments_settings]))'''
+                                                 pygments_settings)'''
         tasks.append(pool.apply_async(run_code, [encoding, outputdir,
                                                  workingdir,
                                                  cc_dict_begin[family],
