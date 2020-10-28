@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 '''
@@ -56,27 +56,18 @@ Licensed under the BSD 3-Clause License:
 
 
 # Imports
-#// Python 2
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-#\\ End Python 2
 import sys
 import os
-#// Python 2
-if sys.version_info.major != 2:
-    sys.exit('This version of the PythonTeX script requires Python 2.')
-#\\ End Python 2
-#// Python 3
-#if sys.version_info.major != 3:
-#    sys.exit('This version of the PythonTeX script requires Python 3.')
-#\\ End Python 3
 
-#// Python 2
 from io import open
-input = raw_input
-#\\ End Python 2
+try:
+    input = raw_input
+except NameError:
+    pass
 import argparse
 from collections import defaultdict
 from re import match, sub, search

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf8 -*-
 
 '''
@@ -18,10 +19,8 @@ correctly, so a few special tweaks are required.
 '''
 
 # Imports
-#// Python 2
 from __future__ import unicode_literals
 from io import open
-#\\ End Python 2
 import os
 import re
 import subprocess
@@ -53,7 +52,7 @@ for n, line in enumerate(gallery):
     if 'savefig' in line and re.search(r"savefig\('\w+\.pdf'", line):
         gallery[n] = re.sub(r"savefig\('(\w+)\.pdf'", r"savefig('\1.png'", line)
     if r'\includegraphics' in line and re.search(r'\\includegraphics(?:\[.*\])?\{\w+\.pdf\}', line):
-        gallery[n] = re.sub(r'\\includegraphics(?:\[.*\])?\{(\w+)\.pdf\}', r'\includegraphics{\1.png}', line)
+        gallery[n] = re.sub(r'\\includegraphics(?:\[.*\])?\{(\w+)\.pdf\}', r'\\includegraphics{\1.png}', line)
     if r'\begin{mdframed}' in line:
         gallery[n] = re.sub(r'\\begin\{mdframed\}(?:\[.*\])?', '', line)
     if r'\end{mdframed}' in line:

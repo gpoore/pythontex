@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 '''
@@ -42,12 +42,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 # Imports
-#// Python 2
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-#\\ End Python 2
 import sys
 import os
 import argparse
@@ -202,7 +200,6 @@ def process_argv(data, temp_data):
     temp_data['debug'] = args.debug
     temp_data['interactive'] = args.interactive
     # Update interpreter_dict based on interpreter
-    set_python_interpreter = False
     if args.interpreter is not None:
         interp_list = args.interpreter.lstrip('{').rstrip('}').split(',')
         for interp in interp_list:
@@ -212,65 +209,9 @@ def process_argv(data, temp_data):
                     k = k.strip(' \'"')
                     v = v.strip(' \'"')
                     interpreter_dict[k] = v
-                    if k == 'python':
-                        set_python_interpreter = True
                 except:
                     print('Invalid --interpreter argument')
                     return sys.exit(2)
-    # If the Python interpreter wasn't set, then try to set an appropriate
-    # default value, based on how PythonTeX was launched (pythontex.py,
-    # pythontex2.py, or pythontex3.py).
-    if not set_python_interpreter:
-        if temp_data['python'] == 2:
-            if platform.system() == 'Windows':
-                try:
-                    subprocess.check_output(['py', '--version'])
-                    interpreter_dict['python'] = 'py -2'
-                except:
-                    msg = '''
-                          * PythonTeX error:
-                              You have launched PythonTeX using pythontex{0}.py
-                              directly.  This should only be done when you want
-                              to use Python version {0}, but have a different
-                              version installed as the default.  (Otherwise, you
-                              should start PythonTeX with pythontex.py.)  For
-                              this to work correctly, you should install Python
-                              version 3.3+, which has a Windows wrapper (py) that
-                              PythonTeX can use to run the correct version of
-                              Python.  If you do not want to install Python 3.3+,
-                              you can also use the --interpreter command-line
-                              option to tell PythonTeX how to access the version
-                              of Python you wish to use.
-                          '''.format(temp_data['python'])
-                    print(textwrap.dedent(msg[1:]))
-                    return sys.exit(2)
-            else:
-                interpreter_dict['python'] = 'python2'
-        elif temp_data['python'] == 3:
-            if platform.system() == 'Windows':
-                try:
-                    subprocess.check_output(['py', '--version'])
-                    interpreter_dict['python'] = 'py -3'
-                except:
-                    msg = '''
-                          * PythonTeX error:
-                              You have launched PythonTeX using pythontex{0}.py
-                              directly.  This should only be done when you want
-                              to use Python version {0}, but have a different
-                              version installed as the default.  (Otherwise, you
-                              should start PythonTeX with pythontex.py.)  For
-                              this to work correctly, you should install Python
-                              version 3.3+, which has a Windows wrapper (py) that
-                              PythonTeX can use to run the correct version of
-                              Python.  If you do not want to install Python 3.3+,
-                              you can also use the --interpreter command-line
-                              option to tell PythonTeX how to access the version
-                              of Python you wish to use.
-                          '''.format(temp_data['python'])
-                    print(textwrap.dedent(msg[1:]))
-                    return sys.exit(2)
-            else:
-                interpreter_dict['python'] = 'python3'
 
     if args.TEXNAME is not None:
         # Determine if we a dealing with just a filename, or a name plus
@@ -2753,7 +2694,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
 
 
 
-def main(python=None):
+def main():
     # Create dictionaries for storing data.
     #
     # All data that must be saved for subsequent runs is stored in "data".
@@ -2766,7 +2707,7 @@ def main(python=None):
     # For simplicity, variables will often be created within functions to
     # refer to dictionary values.
     data = {'version': __version__, 'start_time': time.time()}
-    temp_data = {'errors': 0, 'warnings': 0, 'python': python}
+    temp_data = {'errors': 0, 'warnings': 0}
     old_data = dict()
 
 
@@ -2868,15 +2809,12 @@ def main(python=None):
 
 
 # The "if" statement is needed for multiprocessing under Windows; see the
-# multiprocessing documentation.  It is also needed in this case when the
-# script is invoked via the wrapper.
+# multiprocessing documentation.
 if __name__ == '__main__':
-    #// Python 2
-    if sys.version_info.major != 2:
-        sys.exit('This version of the PythonTeX script requires Python 2.')
-    #\\ End Python 2
-    #// Python 3
-    #if sys.version_info.major != 3:
-    #    sys.exit('This version of the PythonTeX script requires Python 3.')
-    #\\ End Python 3
-    main(python=sys.version_info.major)
+    if sys.version_info.major == 2 and sys.version_info.minor < 7:
+        sys.exit('PythonTeX require Python 2.7; you are using 2.{0}'.format(
+            sys.version_info.minor))
+    elif sys.version_info.major == 3 and sys.version_info.minor < 2:
+            sys.exit('PythonTeX require Python 3.2+; you are using 3.{0}'.format(
+                sys.version_info.minor))
+    main()
