@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+
+.python-version
+
+pythontex-files-*
+*.aux
+*.log
+*.out
+*.pytxcode
+*.toc

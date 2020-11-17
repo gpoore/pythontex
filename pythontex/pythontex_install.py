@@ -95,9 +95,9 @@ else:
 # Make sure all necessary files are present
 # The pythontex_gallery and pythontex_quickstart are optional; we 
 # check for them when installing doc, and install if available
-needed_files = ['pythontex.py', 'pythontex2.py', 'pythontex3.py',
+needed_files = ['pythontex.py',
                 'pythontex_engines.py', 'pythontex_utils.py',
-                'depythontex.py', 'depythontex2.py', 'depythontex3.py',
+                'depythontex.py',
                 'pythontex.sty', 'pythontex.ins', 'pythontex.dtx', 
                 'pythontex.pdf', 'README',
                 'syncpdb.py']
@@ -410,8 +410,7 @@ else:
         if path.exists(bin_path):
             # Unlink any old symlinks if they exist, and create new ones
             # Not doing this gave permissions errors under Ubuntu
-            for f in ('pythontex.py', 'pythontex2.py', 'pythontex3.py',
-                      'depythontex.py', 'depythontex2.py', 'depythontex3.py'):
+            for f in ('pythontex.py', 'depythontex.py'):
                 link = path.join(bin_path, f)
                 if path.exists(link):
                     unlink(link)
@@ -433,8 +432,7 @@ else:
                 # seeing if pdftex exists
                 check_output([path.join(bin_path, 'pdftex'), '--version'])
                 # Create symlinks
-                for f in ('pythontex.py', 'pythontex2.py', 'pythontex3.py',
-                          'depythontex.py', 'depythontex2.py', 'depythontex3.py'):
+                for f in ('pythontex.py', 'depythontex.py'):
                     link = path.join(bin_path, f)
                     if path.exists(link):
                         unlink(link)
