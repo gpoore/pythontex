@@ -17,7 +17,7 @@ document (script for execution).
 
 
 
-Copyright (c) 2012-2018, Geoffrey M. Poore
+Copyright (c) 2012-2021, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause
@@ -1537,7 +1537,7 @@ rust_sub = '''
 CodeEngine('rust', 'rust', '.rs',
            # The full script name has to be used in order to make Windows and Unix behave nicely
            # together when naming executables.  Despite appearances, using `.exe` works on Unix too.
-           ['{rustc} --crate-type bin -o {File}.exe -L {workingdir} {file}.rs', '{File}.exe'],
+           ['{rustc} --crate-type bin -o "{File}.exe" -L "{workingdir}" {file}.rs', '"{File}.exe"'],
            rust_template, rust_wrapper, '{{ let val = {{ {code} }}; println!("{{}}", rstex.formatter(val)); }}', rust_sub,
            errors='error:', warnings='warning:', linenumbers='.rs:{number}',
            created='{File}.exe')
