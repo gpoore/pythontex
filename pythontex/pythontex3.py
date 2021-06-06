@@ -1232,7 +1232,7 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
             exec_cmd = shlex.split(command.format(file=script.replace('\\', '\\\\'), File=script_full.replace('\\', '\\\\')))
         try:
             proc = subprocess.Popen(exec_cmd)
-        except (WindowsError, FileNotFoundError) as e:
+        except (OSError, FileNotFoundError) as e:
             if platform.system() == 'Windows' and e.errno == 2:
                 # Batch files won't be found when called without extension. They
                 # would be found if `shell=True`, but then getting the right
@@ -1569,7 +1569,7 @@ def run_code(encoding, outputdir, workingdir,
                 proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=err_file)
             else:
                 proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=subprocess.STDOUT)
-        except WindowsError as e:
+        except OSError as e:
             if e.errno == 2:
                 # Batch files won't be found when called without extension. They
                 # would be found if `shell=True`, but then getting the right
