@@ -1,6 +1,6 @@
 % \iffalse meta-comment
 %
-% Copyright (C) 2012-2019 by Geoffrey M. Poore <gpoore@gmail.com>
+% Copyright (C) 2012-2021 by Geoffrey M. Poore <gpoore@gmail.com>
 % ---------------------------------------------------------------------------
 % This work may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.3
@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2020/02/03 v0.18dev execute and typeset Python code and other languages]
+    [2021/06/06 v0.18dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -898,7 +898,9 @@
 %
 % \DescribeMacro{\pys\oarg{session}\meta{opening~delim}\meta{code}\meta{closing~delim}}
 %
-% This command performs variable and expression substitution, or string interpolation, on \meta{code}.  Fields of the form |!{|\meta{expr}|}| in \meta{code} are replaced with the evaluated and printed output of \meta{expr}.  The suffix |s| is an abbreviation of |sub|, for ``substitute.''  This command is useful for inserting Python-generated content in contexts where the normal |\py| and |\pyc| would not function or would be inconvenient due to the restrictions imposed by \LaTeX.  Since Python processes \meta{code} and performs substitutions before the result is passed to \LaTeX, substitution fields may be anywhere.
+% This command performs variable and expression substitution, or string interpolation, on \meta{code}.  Fields of the form |!{|\meta{expr}|}| in \meta{code} are replaced with the evaluated and printed output of \meta{expr}.  Then the modified \meta{code} is inserted into the document and interpreted as \LaTeX.  The suffix |s| is an abbreviation of |sub|, for ``substitute.''
+%
+% This command is useful for inserting Python-generated content in contexts where the normal |\py| and |\pyc| would not function or would be inconvenient due to the restrictions imposed by \LaTeX.  Since Python processes \meta{code} and performs substitutions \emph{before} the result is passed to \LaTeX, substitution fields may be anywhere, including within parts of \meta{code} that will become \LaTeX\ comments.
 %
 % Literal exclamation points |!| in \meta{code} only need to be escaped when they immediately precede an opening curly brace |{|, or when they precede exclamation points that precede a brace.  Escaping is performed by doubling.  Thus, |!!{| would indicate a literal exclamation point followed by a literal curly brace (|!{|), not the beginning of a substitution field.  And |!!!{| would indicate a literal exclamation point (|!!|) followed by a substitution field (|!{...}|).  Because curly braces |{}| only have the meaning of field delimiters when immediately following a non-escaped exclamation point, curly braces never need to be escaped.
 %
@@ -933,7 +935,7 @@
 %
 % \DescribeEnv{pysub~\oarg{session}\oarg{fancyvrb~settings}}
 %
-% This environment performs variable and expression substitution, or string interpolation, on the enclosed code.  Fields of the form |!{|\meta{expr}|}| in \meta{code} are replaced with the evaluated and printed output of \meta{expr}.  See the description of the |\pys| command for details about substitution field syntax.
+% This environment performs variable and expression substitution, or string interpolation, on the enclosed code.  Fields of the form |!{|\meta{expr}|}| in \meta{code} are replaced with the evaluated and printed output of \meta{expr}.  See the description of the |\pys| command for details about substitution and the substitution field syntax.
 %
 %
 %
