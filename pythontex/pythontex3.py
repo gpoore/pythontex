@@ -437,7 +437,7 @@ def load_code_get_settings(data, temp_data):
                     elif v in ('false', 'False'):
                         v = False
                 else:
-                    k = option
+                    k = options
                     v = True
                 opt_dict[k] = v
         if family != ':GLOBAL':
