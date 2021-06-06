@@ -32,9 +32,8 @@ import shutil
 encoding = 'utf-8'
 
 # Read in the gallery
-f = open('pythontex_gallery.tex', encoding=encoding)
-gallery = f.readlines()
-f.close()
+with open('pythontex_gallery.tex', encoding=encoding) as f:
+    gallery = f.readlines()
 
 
 # Add depythontex package option
@@ -53,7 +52,7 @@ for n, line in enumerate(gallery):
     if 'savefig' in line and re.search(r"savefig\('\w+\.pdf'", line):
         gallery[n] = re.sub(r"savefig\('(\w+)\.pdf'", r"savefig('\1.png'", line)
     if r'\includegraphics' in line and re.search(r'\\includegraphics(?:\[.*\])?\{\w+\.pdf\}', line):
-        gallery[n] = re.sub(r'\\includegraphics(?:\[.*\])?\{(\w+)\.pdf\}', r'\includegraphics{\1.png}', line)
+        gallery[n] = re.sub(r'\\includegraphics(?:\[.*\])?\{(\w+)\.pdf\}', r'\\includegraphics{\1.png}', line)
     if r'\begin{mdframed}' in line:
         gallery[n] = re.sub(r'\\begin\{mdframed\}(?:\[.*\])?', '', line)
     if r'\end{mdframed}' in line:
@@ -66,9 +65,8 @@ os.chdir('depy_temp')
 
 
 # Save the modified version of the gallery
-f = open('pythontex_gallery.tex', 'w', encoding=encoding)
-f.write(''.join(gallery))
-f.close()
+with open('pythontex_gallery.tex', 'w', encoding=encoding) as f:
+    f.write(''.join(gallery))
 
 
 # Compile the document with depythontex, and create html
@@ -83,7 +81,12 @@ try:
     subprocess.call(['depythontex', '-o', 'depythontex_pythontex_gallery.tex', 'pythontex_gallery.tex', '--listing=minted'])
 except:
     subprocess.call(['depythontex.py', '-o', 'depythontex_pythontex_gallery.tex', 'pythontex_gallery.tex', '--listing=minted'])
-subprocess.call(['pandoc', '--standalone', '--mathjax', 'depythontex_pythontex_gallery.tex', '-o', 'pythontex_gallery.html'])
+with open('depythontex_pythontex_gallery.tex', 'r', encoding=encoding) as f:
+    depy = f.read()
+depy = depy.replace('{python3}', '{python}').replace('{pycon}', '{python}')
+with open('depythontex_pythontex_gallery.tex', 'w', encoding=encoding) as f:
+    f.write(depy)
+subprocess.call(['pandoc', '--standalone', '--mathjax', '--highlight-style', 'tango', 'depythontex_pythontex_gallery.tex', '-o', 'pythontex_gallery.html'])
 
 
 # Move html and graphics to the main document directory
