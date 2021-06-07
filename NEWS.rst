@@ -7,6 +7,26 @@ Version History
 ===============
 
 
+v0.18 (2021/06/06)
+------------------
+
+*  ``\inputpygments`` now checks inputted files for modification, so that
+   typeset code will correctly update when the source is changed (#162).
+
+*  Julia now uses project flag "``--project=@.``" (#157, #158).
+
+*  Fixed bug in processing Pygments options (``pygopt``) when a key is used
+   without a value (#181).
+
+*  Some error handling for Windows was incompatible with other operating
+   systems: replaced checks for ``WindowsError`` with checks for ``OSError``
+   (#177).
+
+*  Rust support is now compatible with document and working directory paths
+   that contain spaces (#167).
+
+
+
 v0.17 (2019/09/22)
 ------------------
 

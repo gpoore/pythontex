@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2021/06/06 v0.18dev execute and typeset Python code and other languages]
+    [2021/06/06 v0.18 execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -168,13 +168,13 @@
 %
 %
 %
-% \begin{changelog}{v0.18}{2021/??/??}
+% \begin{changelog}{v0.18}{2021/06/06}
 % \begin{itemize}
 % \item \texttt{\string\inputpygments} now checks inputted files for modification, so that typeset code will correctly update when the source is changed (\#162).
 % \item Julia now uses project flag ``\texttt{-{}-project=@.}'' (\#157, \#158).
 % \item Fixed bug in processing Pygments options (\texttt{pygopt}) when a key is used without a value (\#181).
-% \item Some error handling for Windows was incompatible with other operating systems: replaced checks for WindowsError with checks for OSError (\#177).
-% \item Rust support is now compatible with document or working directory paths that contain spaces (\#167).
+% \item Some error handling for Windows was incompatible with other operating systems: replaced checks for \texttt{WindowsError} with checks for \texttt{OSError} (\#177).
+% \item Rust support is now compatible with document and working directory paths that contain spaces (\#167).
 % \end{itemize}
 % \end{changelog}
 %
@@ -1898,7 +1898,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.18dev}
+\newcommand{\pytx@packageversion}{0.18}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
