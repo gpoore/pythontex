@@ -21,102 +21,102 @@
 \usepackage{amssymb,amsmath}
 \usepackage{graphicx}
 \usepackage{fullpage}
-\usepackage[keeptemps=all, makestderr, usefamily={perlsix}]{pythontex}
+\usepackage[keeptemps=all, makestderr, usefamily={raku}]{pythontex}
 
 
 \begin{document}
 
 
 
-\section*{Perl 6}
+\section*{Raku}
 
 \subsection*{Commands}
 
-\perlsix{2**8}
+\raku{2**8}
 
-\perlsixc{put 2**16;}
+\rakuc{put 2**16;}
 
-\perlsixb{put 2**32;}
+\rakub{put 2**32;}
 
 \printpythontex
 
-\perlsixv{put 2**32;}
+\rakuv{put 2**32;}
 
-\perlsixs{\LaTeX\ and then \textcolor{blue}{!{"Perl 6"}} and back to \LaTeX.}
+\rakus{\LaTeX\ and then \textcolor{blue}{!{"Raku"}} and back to \LaTeX.}
 
 
 \subsection*{Environments}
 
 Code:
-\begin{perlsixcode}
+\begin{rakucode}
 put "A string. " ~ "More.";
 put 2**8;
-\end{perlsixcode}
+\end{rakucode}
 
 Block:
-\begin{perlsixblock}
+\begin{rakublock}
 put "A string. " ~ "More.";
 put 2**8;
-\end{perlsixblock}
+\end{rakublock}
 
 \printpythontex
 
 Verbatim:
-\begin{perlsixverbatim}
+\begin{rakuverbatim}
 put "A string. " ~ "More.";
 put 2**8;
-\end{perlsixverbatim}
+\end{rakuverbatim}
 
 Sub:
-\begin{perlsixsub}
-\LaTeX\ and then \textcolor{blue}{!{"Perl 6"}} and back to \LaTeX.
-\end{perlsixsub}
+\begin{rakusub}
+\LaTeX\ and then \textcolor{blue}{!{"Raku"}} and back to \LaTeX.
+\end{rakusub}
 
 
-\section*{Perl 6 stderr}
+\section*{Raku stderr}
 
 
-\begin{perlsixblock}[err1][numbers=left]
+\begin{rakublock}[err1][numbers=left]
 # Comment
-my $s = "Perl a
-\end{perlsixblock}
+my $s = "Raku a
+\end{rakublock}
 
 \stderrpythontex[][breaklines, breakafter=\\/]
 
 
-\begin{perlsixblock}[err2][numbers=left]
+\begin{rakublock}[err2][numbers=left]
 1+;
-\end{perlsixblock}
+\end{rakublock}
 
 \stderrpythontex[][breaklines, breakafter=\\/]
 
 
-\begin{perlsixblock}[err3][numbers=left]
+\begin{rakublock}[err3][numbers=left]
 # Comment
 # Another comment
 "a" "b";
-\end{perlsixblock}
+\end{rakublock}
 
 \stderrpythontex[][breaklines, breakafter=\\/]
 
 
-\begin{perlsixblock}[err4][numbers=left]
+\begin{rakublock}[err4][numbers=left]
 # Comment
 my $idx = "text";
 my @arr = <1, 2, 3>;
 my $var = @arr[$idx];
-\end{perlsixblock}
+\end{rakublock}
 
 \stderrpythontex[][breaklines, breakafter=\\/]
 
 
-\begin{perlsixblock}[err5][numbers=left]
+\begin{rakublock}[err5][numbers=left]
 sub nums {1 ... 1000}
 
 for nums {
     say "Current element: $_";
 }
-\end{perlsixblock}
+\end{rakublock}
 
 \stderrpythontex[][breaklines, breakafter=\\/]
 

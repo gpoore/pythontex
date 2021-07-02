@@ -34,7 +34,7 @@ from collections import OrderedDict, namedtuple
 
 
 interpreter_dict = {k:k for k in ('python', 'ruby', 'julia', 'octave', 'bash',
-                                  'sage', 'rustc', 'Rscript', 'perl', 'perl6')}
+                                  'sage', 'rustc', 'Rscript', 'perl', 'raku')}
 # The {file} field needs to be replaced by itself, since the actual
 # substitution of the real file can only be done at runtime, whereas the
 # substitution for the interpreter should be done when the engine is
@@ -1627,32 +1627,32 @@ CodeEngine('perl', 'perl', '.pl',
 SubCodeEngine('perl', 'pl')
 
 
-perl6_template = '''
-    use v6;
+raku_template = '''
+    use v6.d;
     chdir("{workingdir}");
     {body}
     put "{dependencies_delim}";
     put "{created_delim}";
     '''
 
-perl6_wrapper = '''
+raku_wrapper = '''
     put "{stdoutdelim}";
     note "{stderrdelim}";
     {code}
     '''
 
-perl6_sub = '''
+raku_sub = '''
     put "{field_delim}";
     put ({field});
     '''
 
-CodeEngine('perlsix', 'perl6', '.p6',
-           '{perl6} "{File}.p6"',
-           perl6_template, perl6_wrapper, 'put ({code});', perl6_sub,
+CodeEngine('raku', 'raku', '.raku',
+           '{raku} "{File}.raku"',
+           raku_template, raku_wrapper, 'put ({code});', raku_sub,
            ['error', 'Error', 'Cannot'], ['warning', 'Warning'],
-           ['.p6:{number}', '.p6 line {number}'], True)
+           ['.raku:{number}', '.raku line {number}'], True)
 
-SubCodeEngine('perlsix', 'psix')
+SubCodeEngine('raku', 'raku')
 
 javascript_template = '''
     jstex = {{

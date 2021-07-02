@@ -1803,7 +1803,7 @@ def run_code(encoding, outputdir, workingdir,
             index_next = index_now
             start_errgobble = None
             for n, line in enumerate(err_ud):
-                if basename in line and (family not in ('perlsix', 'psix') or '.p6:' in line or '.p6 line' in line):
+                if basename in line and (family not in ('raku', 'raku') or '.raku:' in line or '.raku line' in line):
                     # Get the gobbleation.  This is used to determine if
                     # other lines containing the basename are a continuation,
                     # or separate messages.
@@ -1849,7 +1849,7 @@ def run_code(encoding, outputdir, workingdir,
                                 # both the error and warning patterns, default to
                                 # error.
                                 past_line = err_ud[index]
-                                if (index < n and basename in past_line and (family not in ('perlsix', 'psix') or '.p6:' in past_line or '.p6 line' in past_line)):
+                                if (index < n and basename in past_line and (family not in ('raku', 'raku') or '.raku:' in past_line or '.raku line' in past_line)):
                                     break
                                 for pattern in warningsig:
                                     if pattern in past_line:
@@ -1913,9 +1913,9 @@ def run_code(encoding, outputdir, workingdir,
                 index_now_last = index_now
                 index_next_last = index_next
                 err_key_last_int = -1
-                p6_sorry_search = False
+                raku_sorry_search = False
                 for n, line in enumerate(err_ud):
-                    if basename in line and (family not in ('perlsix', 'psix') or '.p6:' in line or '.p6 line' in line):
+                    if basename in line and (family not in ('raku', 'raku') or '.raku:' in line or '.raku line' in line):
                         # Determine the corresponding line number in the document
                         found = False
                         for pattern in linesig:
@@ -1977,34 +1977,34 @@ def run_code(encoding, outputdir, workingdir,
                                 line = line.replace(fullbasename + '.' + extension, '<file>')
                             elif stderrfilename == 'genericscript':
                                 line = line.replace(fullbasename + '.' + extension, '<script>')
-                            if family in ('perlsix', 'psix'):
-                                # Perl 6 "SORRY!" errors during compiling
+                            if family in ('raku', 'raku'):
+                                # Raku "SORRY!" errors during compiling
                                 # (before execution) need special processing,
                                 # since they lack stderr delims and must
                                 # include lines before the current one.
-                                if p6_sorry_search:  # Already handled
+                                if raku_sorry_search:  # Already handled
                                     pass
                                 else:
-                                    p6_sorry_search = True
-                                    p6_sorry_index = n - 1
-                                    while p6_sorry_index >= 0:
-                                        if not err_ud[p6_sorry_index].startswith('===SORRY!==='):
-                                            p6_sorry_index -= 1
+                                    raku_sorry_search = True
+                                    raku_sorry_index = n - 1
+                                    while raku_sorry_index >= 0:
+                                        if not err_ud[raku_sorry_index].startswith('===SORRY!==='):
+                                            raku_sorry_index -= 1
                                             continue
                                         if errlinenum > index_now[1].lines_total + index_now[1].lines_input:
-                                            p6_linenum_offset = index_now[1].lines_total
+                                            raku_linenum_offset = index_now[1].lines_total
                                         else:
-                                            p6_linenum_offset = index_now[1].lines_total - index_now[1].lines_user + index_now[1].inline_count
-                                        p6_preceding_err_lines = [sub(r'line ([1-9][0-9]*)', lambda m: 'line {0}'.format(int(m.group(1)) - p6_linenum_offset), x) for x in err_ud[p6_sorry_index:n]]
+                                            raku_linenum_offset = index_now[1].lines_total - index_now[1].lines_user + index_now[1].inline_count
+                                        raku_preceding_err_lines = [sub(r'line ([1-9][0-9]*)', lambda m: 'line {0}'.format(int(m.group(1)) - raku_linenum_offset), x) for x in err_ud[raku_sorry_index:n]]
                                         if stderrfilename == 'full':
-                                            p6_preceding_err_lines[0] = p6_preceding_err_lines[0].replace(fullbasename, basename)
+                                            raku_preceding_err_lines[0] = raku_preceding_err_lines[0].replace(fullbasename, basename)
                                         elif stderrfilename == 'session':
-                                            p6_preceding_err_lines[0] = p6_preceding_err_lines[0].replace(fullbasename, session)
+                                            raku_preceding_err_lines[0] = raku_preceding_err_lines[0].replace(fullbasename, session)
                                         elif stderrfilename == 'genericfile':
-                                            p6_preceding_err_lines[0] = p6_preceding_err_lines[0].replace(fullbasename + '.' + extension, '<file>')
+                                            raku_preceding_err_lines[0] = raku_preceding_err_lines[0].replace(fullbasename + '.' + extension, '<file>')
                                         elif stderrfilename == 'genericscript':
-                                            p6_preceding_err_lines[0] = p6_preceding_err_lines[0].replace(fullbasename + '.' + extension, '<script>')
-                                        err_dict[err_key].extend(p6_preceding_err_lines)
+                                            raku_preceding_err_lines[0] = raku_preceding_err_lines[0].replace(fullbasename + '.' + extension, '<script>')
+                                        err_dict[err_key].extend(raku_preceding_err_lines)
                                         break
                             err_dict[err_key].append(line)
                     elif process:
@@ -2067,7 +2067,7 @@ def run_code(encoding, outputdir, workingdir,
                     # Never process delimiting info until it is used
                     # Rather, store the index of the last delimiter
                     last_delim = line
-                elif basename in line and (family not in ('perlsix', 'psix') or '.p6:' in line or '.p6 line' in line):
+                elif basename in line and (family not in ('raku', 'raku') or '.raku:' in line or '.raku line' in line):
                     found_basename = True
                     # Get the gobbleation.  This is used to determine if
                     # other lines containing the basename are a continuation,
@@ -2222,7 +2222,7 @@ def run_code(encoding, outputdir, workingdir,
                         else:
                             process = True
                             err_key = basename + '_' + instance
-                    elif process and basename in line and (family not in ('perlsix', 'psix') or '.p6:' in line or '.p6 line' in line):
+                    elif process and basename in line and (family not in ('raku', 'raku') or '.raku:' in line or '.raku line' in line):
                         found = False
                         for pattern in linesig:
                             try:
