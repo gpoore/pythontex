@@ -1748,3 +1748,4 @@ CodeEngine('javascript', 'javascript', '.js',
            ['error', 'Error'], ['warning', 'Warning'],
            ':{number}')
 
+SubCodeEngine('javascript', 'js')
