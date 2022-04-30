@@ -228,7 +228,7 @@ class PythonTeXUtils(object):
             
     # Finally, create the actual interface to SymPy's LatexPrinter
     def _make_sympy_latex(self):
-        '''
+        r'''
         Create a context-aware interface to SymPy's LatexPrinter class.
         
         This is an interface to the LatexPrinter class, rather than 
