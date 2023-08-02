@@ -98,7 +98,7 @@
 \AtBeginDocument{%
     \ifbool{pytx@opt@stdout}{}{%
         \PackageWarning{\pytx@packagename}{Using package option debug}%
-    }%
+    }
 }
 \newbool{pytx@opt@stderr}
 \pgfkeys{/PYTX/pkgopt/makestderr/.default=true}
@@ -339,7 +339,7 @@
 \edef\pytx@delimchar{\string#}
 \edef\pytx@delim{=\string>PYTHONTEX\string#}
 \edef\pytx@delimsettings{=\string>PYTHONTEX:SETTINGS\string#}
-\AtEndDocument{%
+\AfterEndDocument{%
     \immediate\write\pytx@codefile{\pytx@delimsettings}%
     \immediate\write\pytx@codefile{version=\pytx@packageversion}%
     \immediate\write\pytx@codefile{outputdir=\pytx@outputdir}%
@@ -557,7 +557,7 @@
     {\let\Depythontex\Depythontex@orig}%
     {\let\Depythontex\@gobble}
 \ifbool{pytx@opt@depythontex}{%
-\AtEndDocument{%
+\AfterEndDocument{%
     \immediate\write\pytx@depyfile{=>DEPYTHONTEX:SETTINGS\pytx@delimchar version=%
         \pytx@packageversion\pytx@delimchar}%
     \immediate\write\pytx@depyfile{=>DEPYTHONTEX:SETTINGS\pytx@delimchar macrofile=%
@@ -1229,7 +1229,7 @@
     \pytx@MakeBlockPyg{#1}%
     \pytx@MakeVerbPyg{#1}%
     \booltrue{pytx@usedpygments}%
-    \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=#1|%
+    \AfterEndDocument{\immediate\write\pytx@codefile{pygfamily=#1|%
         \csname pytx@pyglexer@#1\endcsname|%
         \csname pytx@pygopt@#1\endcsname}%
     }%
@@ -1248,7 +1248,7 @@
     \pytx@MakeConsPyg{#1}{sole}%
     \pytx@MakeVerbPyg{#1}%
     \booltrue{pytx@usedpygments}%
-    \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=#1|%
+    \AfterEndDocument{\immediate\write\pytx@codefile{pygfamily=#1|%
         \csname pytx@pyglexer@#1\endcsname|%
         \csname pytx@pygopt@#1\endcsname}%
     }%
@@ -1292,7 +1292,7 @@
     \expandafter\xdef\csname pytx@pyglexer@#2con\endcsname{\pytx@tmp@pyglexer}%
     \expandafter\xdef\csname pytx@pygopt@#2con\endcsname{\pytx@tmp@pygopt}%
     \expandafter\xdef\csname pytx@console@#2con\endcsname{\pytx@tmp@console}%
-    \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=#2con|%
+    \AfterEndDocument{\immediate\write\pytx@codefile{pygfamily=#2con|%
         \csname pytx@pyglexer@#2con\endcsname|%
         \csname pytx@pygopt@#2con\endcsname}%
     }%
@@ -1398,7 +1398,7 @@
     \ifcsname pytx@fvsettings@PYG#1\endcsname\else
         \expandafter\gdef\csname pytx@fvsettings@PYG#1\endcsname{}%
         \expandafter\gdef\csname pytx@pygopt@PYG#1\endcsname{}%
-        \AtEndDocument{\immediate\write\pytx@codefile{pygfamily=PYG#1|#1|%
+        \AfterEndDocument{\immediate\write\pytx@codefile{pygfamily=PYG#1|#1|%
             \csname pytx@pygopt@PYG#1\endcsname}}%
     \fi
 }
@@ -1731,7 +1731,7 @@
 }
 \def\setpygmentspygopt#1#2{%
     \Depythontex{cmd:setpygmentspygopt:mm:n}%
-    \AtEndDocument{\immediate\write\pytx@codefile{%
+    \AfterEndDocument{\immediate\write\pytx@codefile{%
         \pytx@delimsettings pygfamily=PYG#1,#1,%
         \string{#2\string}\pytx@delimchar}%
     }%
