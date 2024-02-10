@@ -355,6 +355,15 @@ class PythonTeXUtils(object):
                     return r'\mathchoice{' + display + '}{' + text + '}{' + script + '}{' + scriptscript+ '}'
         self._sympy_latex = _sympy_latex
     
+    def repr_latex_formatter(self, expr):
+        if hasattr(expr, '_repr_latex_'):
+            return expr._repr_latex_()
+        else:
+            if sys.version_info[0] == 2:
+                return unicode(expr)
+            else:
+                return str(expr)
+
     # Now we are ready to create non-SymPy formatters and a method for 
     # setting formatters
     def identity_formatter(self, expr):
@@ -364,7 +373,7 @@ class PythonTeXUtils(object):
         '''
         return expr
     
-    def set_formatter(self, fmtr='str'):
+    def set_formatter(self, fmtr='repr_latex'):
         '''
         Set the formatter method.
         
@@ -380,6 +389,8 @@ class PythonTeXUtils(object):
             self.formatter = self.sympy_latex
         elif fmtr in ('None', 'none', 'identity') or fmtr is None:
             self.formatter = self.identity_formatter
+        elif fmtr == 'repr_latex':
+            self.formatter = self.repr_latex_formatter
         else:
             raise ValueError('Unsupported formatter type')
     
