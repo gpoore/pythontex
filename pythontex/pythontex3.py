@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3.13
 # -*- coding: utf-8 -*-
 
 '''
@@ -554,7 +554,7 @@ def do_upgrade_compatibility(data, old_data, temp_data):
                   It will continue to use the output directory for now.  To keep your
                   current settings long-term and avoid seeing this message in the future,
                   add the following command to the preamble of your document, right after
-                  the "\\usepackage{pythontex}":  "\setpythontexworkingdir{<outputdir>}".
+                  the "\\usepackage{pythontex}":  "\\setpythontexworkingdir{<outputdir>}".
                   If you wish to continue with the new settings instead, simply delete
                   the file with extension .pkl in the output directory, and run PythonTeX.
                   ****  End PythonTeX upgrade message  ****
@@ -1807,7 +1807,7 @@ def run_code(encoding, outputdir, workingdir,
                     # Get the gobbleation.  This is used to determine if
                     # other lines containing the basename are a continuation,
                     # or separate messages.
-                    errgobble = match('(\s*)', line).groups()[0]
+                    errgobble = match(r'(\s*)', line).groups()[0]
                     if start_errgobble is None:
                         start_errgobble = errgobble
                     # Only issue a message and track down the line numer if
@@ -2072,7 +2072,7 @@ def run_code(encoding, outputdir, workingdir,
                     # Get the gobbleation.  This is used to determine if
                     # other lines containing the basename are a continuation,
                     # or separate messages.
-                    errgobble = match('(\s*)', line).groups()[0]
+                    errgobble = match(r'(\s*)', line).groups()[0]
                     if start_errgobble is None:
                         start_errgobble = errgobble
                     # Only issue a message and track down the line numer if
