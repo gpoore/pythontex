@@ -121,7 +121,7 @@ def replace_code_cmd(name, arglist, linenum, code_replacement,
 
     Usually, code from a command is also typeset with a command.  This
     function primarily deals with that case.  In cases where code from a
-    command is typeset with an environment (for example, `\inputpygments`),
+    command is typeset with an environment (for example, `\\inputpygments`),
     this function performs some preprocessing and then uses
     replace_code_env() to do the real work.  This approach prevents the two
     functions from unnecessarily duplicating each other, while still giving
@@ -505,7 +505,7 @@ def replace_print_env(name, arglist, linenum,
 
     #### The inlineverb and verb modes should work, but haven't been tested
     since there are currently no environments that use them; they are only
-    used by `\printpythontex`, which is a command.
+    used by `\\printpythontex`, which is a command.
     '''
     if print_replacement_mode == 'verb':
         if print_replacement.count('\n') > 1:
