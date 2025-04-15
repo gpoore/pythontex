@@ -162,6 +162,10 @@ def process_argv(data, temp_data):
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
                         help='verbose output')
     parser.add_argument('--interpreter', default=None, help='set a custom interpreter; argument should be in the form "<interpreter>:<command>, <interp>:<cmd>, ..." where <interpreter> is "python", "ruby", etc., and <command> is the command for invoking the interpreter; argument may also be in the form of a Python dictionary')
+    parser.add_argument('--force', default=None,
+                        metavar='<family>:<session>:<restart>;[<family>:<session>:<restart>;...]',
+                        type=lambda s: [i for i in s.split(';')],
+                        help='force listed session(s) to be rerun, regardless of rerun option condition')
     group_debug = parser.add_mutually_exclusive_group()
     group_debug.add_argument('--debug', nargs='?', default=None,
                              const='default',
@@ -201,6 +205,7 @@ def process_argv(data, temp_data):
     temp_data['verbose'] = args.verbose
     temp_data['debug'] = args.debug
     temp_data['interactive'] = args.interactive
+    temp_data['force'] = args.force
     # Update interpreter_dict based on interpreter
     set_python_interpreter = False
     if args.interpreter is not None:
@@ -677,7 +682,9 @@ def modified_dependencies(key, data, old_data, temp_data):
 
 def should_rerun(hash, old_hash, old_exit_status, key, rerun, data, old_data, temp_data):
     # #### Need to clean up arg passing here
-    if rerun == 'never':
+    if temp_data['force'] is not None and key.replace('#', ':') in temp_data['force']: 
+        return True # Don't check rerun if session has been forced to rerun
+    elif rerun == 'never':
         if (hash != old_hash or modified_dependencies(key, data, old_data, temp_data)):
             print('* PythonTeX warning')
             print('    Session ' + key.replace('#', ':') + ' has rerun=never')
