@@ -760,7 +760,7 @@ depytxfile_name = texfile_name.rsplit('.')[0] + '.depytx'
 if not os.path.isfile(depytxfile_name):
     print('* DePythonTeX error:')
     print('    Could not find DePythonTeX auxiliary file "' + depytxfile_name + '"')
-    print('    Use package option depythontex to creat it')
+    print('    Use package option depythontex to create it')
     sys.exit(1)
 
 
