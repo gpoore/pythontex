@@ -13,7 +13,7 @@ should be in the same directory.
 
 Licensed under the BSD 3-Clause License:
 
-Copyright (c) 2012-2021, Geoffrey M. Poore
+Copyright (c) 2012-2025, Geoffrey M. Poore
 
 All rights reserved.
 
@@ -78,7 +78,7 @@ else:
 
 # Script parameters
 # Version
-__version__ = '0.18'
+__version__ = '0.19dev'
 
 
 
