@@ -215,7 +215,8 @@ def process_argv(data, temp_data):
                     if k == 'python':
                         set_python_interpreter = True
                 except:
-                    print('Invalid --interpreter argument')
+                    print('* PythonTeX error')
+                    print('    Invalid --interpreter argument')
                     return sys.exit(2)
     # If the Python interpreter wasn't set, then try to set an appropriate
     # default value, based on how PythonTeX was launched (pythontex.py,
@@ -365,8 +366,9 @@ def load_code_get_settings(data, temp_data):
     try:
         pytxcode, pytxsettings = pytxcode.rsplit('=>PYTHONTEX:SETTINGS#', 1)
     except:
-        print('The .pytxcode file appears to have an outdated format or be invalid')
-        print('Run LaTeX to make sure the file is current')
+        print('* PythonTeX error')
+        print('    The .pytxcode file appears to have an outdated format or be invalid')
+        print('    Run LaTeX to make sure the file is current')
         return sys.exit(1)
 
 
