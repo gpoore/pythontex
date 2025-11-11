@@ -29,7 +29,7 @@ This script is purposely written in a simple, largely linear form to
 facilitate customization.  Most of the key substitutions are performed by a
 few functions defined near the beginning of the script, so if you need custom
 substitutions, you should begin there.  By default, all typeset code is
-wrapped in `\verb` commands and verbatim environments, since these have the
+wrapped in `\\verb` commands and verbatim environments, since these have the
 greatest generality.  However, the command-line option --listing allows code
 to be typeset with the fancyvrb, listings, minted, or PythonTeX packages
 instead.
