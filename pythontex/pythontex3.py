@@ -2421,6 +2421,7 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
                 else:
                     dependencies[c.key_typeset] = {c.extfile: (os.path.getmtime(c.extfile), '')}
             else:
+                errors += 1
                 content = None
                 messages.append('* PythonTeX error')
                 messages.append('    Could not find external file ' + c.extfile)
