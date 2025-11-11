@@ -1570,7 +1570,7 @@ def run_code(encoding, outputdir, workingdir,
             else:
                 proc = subprocess.Popen(exec_cmd, stdout=out_file, stderr=subprocess.STDOUT)
         except OSError as e:
-            if e.errno == 2:
+            if platform.system() == 'Windows' and e.errno == 2:
                 # Batch files won't be found when called without extension. They
                 # would be found if `shell=True`, but then getting the right
                 # exit code is tricky.  So we perform some `cmd` trickery that

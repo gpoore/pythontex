@@ -7,6 +7,23 @@ Version History
 ===============
 
 
+v0.19 (dev)
+-----------
+
+*  Fixed backslash escapes in docstrings and regexes for syntax compatibility
+   with Python 3.11+.
+
+*  ``js`` now works as a command family for JavaScript (#197).
+
+*  Python console commands and environments are now compatible with Python
+   3.14 (#229).
+
+*  Fixed a bug that could cause non-Windows operating systems to attempt to
+   invoke a batch file when the executable associated with a language is
+   not found (#225).
+
+
+
 v0.18 (2021/06/06)
 ------------------
 
