@@ -2471,6 +2471,13 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
     Use Python's ``code`` module to typeset emulated Python interactive
     sessions, optionally highlighting with Pygments.
     '''
+    try:
+        ps1 = sys.ps1
+        ps2 = sys.ps2
+    except AttributeError:
+        ps1 = '>>> '
+        ps2 = '... '
+
     # Create what's needed for storing results
     key_run = cons_list[0].key_run
     files = []
@@ -2578,7 +2585,7 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                     self.write(old_line)
                 except IndexError:
                     raise EOFError
-            if line or prompt == sys.ps2:
+            if line or prompt == ps2:
                 self.write('{0}{1}\n'.format(prompt, line))
             else:
                 self.write('\n')
@@ -2636,8 +2643,8 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                 exception = False
                 console_content_lines = console_content.splitlines()
                 for line in console_content_lines:
-                    if (not line.startswith(sys.ps1) and
-                            not line.startswith(sys.ps2) and
+                    if (not line.startswith(ps1) and
+                            not line.startswith(ps2) and
                             line and not line.isspace()):
                         exception = True
                         break
@@ -2658,8 +2665,8 @@ def python_console(jobname, encoding, outputdir, workingdir, fvextfile,
                 exception = False
                 console_content_lines = console_content.splitlines()
                 for line in console_content_lines:
-                    if (line and not line.startswith(sys.ps1) and
-                            not line.startswith(sys.ps2) and
+                    if (line and not line.startswith(ps1) and
+                            not line.startswith(ps2) and
                             not line.isspace()):
                         exception = True
                         break
