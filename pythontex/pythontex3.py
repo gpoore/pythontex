@@ -2343,7 +2343,7 @@ def run_code(encoding, outputdir, workingdir,
         errors += 1
         command_message = '''
                 * PythonTeX error
-                    An error occurred but no error messages were identified.
+                    An error occurred, but no error messages were identified.
                     This may indicate a bad command or missing program.
                     The following command was executed:
                         "{0}"'''
