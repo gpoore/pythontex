@@ -1114,7 +1114,7 @@ CodeEngine('julia', 'julia', '.jl', '{julia} --project=@. "{file}.jl"', julia_te
 SubCodeEngine('julia', 'jl')
 
 
-CodeEngine('juliacon', 'julia', '.jl', '{julia} --project=@. -e "using Weave; weave(\\"{File}.jl\\", \\"tex\\")"', '{body}\n',
+CodeEngine('juliacon', 'julia', '.jl', '{julia} --project=@. -e "using Weave; weave(\\"{File}.jl\\", \\"texminted\\")"', '{body}\n',
            '#+ term=true\n{code}\n', '', '',
            'ERROR:', 'WARNING:', ':{number}', True, created='{File}.tex')
 

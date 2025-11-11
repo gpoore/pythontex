@@ -22,6 +22,8 @@ v0.19 (dev)
    invoke a batch file when the executable associated with a language is
    not found (#225).
 
+*  Replaced doctype ``tex`` with ``texminted`` for ``Weave.jl`` (#219).
+
 
 
 v0.18 (2021/06/06)
