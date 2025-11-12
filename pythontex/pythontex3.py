@@ -2410,17 +2410,16 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
         if c.is_cons:
             content = typeset_cache[c.key_run][c.instance]
         elif c.is_extfile:
-            if os.path.isfile(c.extfile):
-                f = open(c.extfile, encoding=encoding)
-                content = f.read()
-                f.close()
+            try:
+                with open(c.extfile, encoding=encoding) as f:
+                    content = f.read()
                 if hashdependencies:
                     hasher = sha1()
                     hasher.update(content.encode(encoding))
                     dependencies[c.key_typeset] = {c.extfile: (os.path.getmtime(c.extfile), hasher.hexdigest())}
                 else:
                     dependencies[c.key_typeset] = {c.extfile: (os.path.getmtime(c.extfile), '')}
-            else:
+            except FileNotFoundError:
                 errors += 1
                 content = None
                 messages.append('* PythonTeX error')
@@ -2429,7 +2428,9 @@ def do_pygments(encoding, outputdir, fvextfile, pygments_list,
         else:
             content = c.code
         processed = highlight(content, lexer[c.family], formatter[c.family])
-        if c.is_inline or content.count('\n') < fvextfile:
+        if content is None:
+            pass
+        elif c.is_inline or content.count('\n') < fvextfile:
             # Highlighted code brought in via macros needs SaveVerbatim
             if c.args_prettyprint:
                 processed = sub(r'\\begin{Verbatim}\[(.+)\]',

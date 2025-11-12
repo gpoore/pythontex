@@ -24,6 +24,9 @@ v0.19 (dev)
 
 *  Replaced doctype ``tex`` with ``texminted`` for ``Weave.jl`` (#219).
 
+*  Fixed a bug that resulted in uncaught exceptions when ``\inputpygments``
+   was used with files that do not exist (#64).
+
 
 
 v0.18 (2021/06/06)
