@@ -485,7 +485,7 @@ def load_code_get_settings(data, temp_data):
                 print('    Unknown option "' + key + '"')
                 temp_data['warnings'] += 1
 
-    # Check for compatility between the .pytxcode and the script
+    # Check for compatibility between the .pytxcode and the script
     if 'version' not in settings or settings['version'] != data['version']:
         print('* PythonTeX error')
         print('    The version of the PythonTeX scripts does not match the last code')
@@ -594,7 +594,7 @@ def get_old_data(data, old_data, temp_data):
         f = open(pythontex_data_file, 'rb')
         old = pickle.load(f)
         f.close()
-        # Check for compabilility
+        # Check for compatibility
         if 'vitals' in old and data['vitals'] == old['vitals']:
             temp_data['loaded_old_data'] = True
             old_data.update(old)
