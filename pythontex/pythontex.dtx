@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2025/11/11 v0.19dev execute and typeset Python code and other languages]
+    [2025/11/12 v0.19dev execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -1546,9 +1546,9 @@
 % b = DiscreteUniform('b', range(-10, 11))
 % c = DiscreteUniform('c', range(-10, 11))
 % def randquad():
-%     return Eq(sample(a)*x**2 + sample(b)*x + sample(c))
+%     return Eq(sample(a)*x**2 + sample(b)*x + sample(c), 0)
 % \end{sympycode}
-% \newcommand\randquad{\sympy{randquad()}}
+% \newcommand{\randquad}{\ensuremath{\sympy{randquad()}}}
 % \end{verbatim}
 %
 % If you are considering writing macros that involve \pytex, you should keep a few things in mind.
