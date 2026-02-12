@@ -47,7 +47,7 @@ example, typeset code may have a different appearance or layout when it is
 typeset with a different package.
 
 
-Copyright (c) 2013-2025, Geoffrey M. Poore
+Copyright (c) 2013-2026, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause

@@ -6,7 +6,7 @@ The utilities class provides variables and methods for the individual
 Python scripts created and executed by PythonTeX.  An instance of the class
 named "pytex" is automatically created in each individual script.
 
-Copyright (c) 2012-2025, Geoffrey M. Poore
+Copyright (c) 2012-2026, Geoffrey M. Poore
 All rights reserved.
 Licensed under the BSD 3-Clause License:
     http://www.opensource.org/licenses/BSD-3-Clause

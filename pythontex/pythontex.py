@@ -16,7 +16,7 @@ under which your code is actually executed.
 
 Licensed under the BSD 3-Clause License:
 
-Copyright (c) 2012-2025, Geoffrey M. Poore
+Copyright (c) 2012-2026, Geoffrey M. Poore
 
 All rights reserved.
 
