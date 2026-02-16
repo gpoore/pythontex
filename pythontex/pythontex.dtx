@@ -26,7 +26,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{pythontex}
 %<*package>
-    [2026/02/11 v0.19dev execute and typeset Python code and other languages]
+    [2026/02/15 v0.19 execute and typeset Python code and other languages]
 %</package>
 %
 %<*driver>
@@ -35,6 +35,8 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
+\usepackage{microtype}
+
 \usepackage{textcomp}
 \usepackage[svgnames]{xcolor}
 \usepackage{environ}
@@ -108,6 +110,11 @@
 \AtBeginDocument{\let|\pipe@active@verbatim}
 \endgroup
 
+\renewenvironment{verbatim}%
+ {\VerbatimEnvironment\begin{Verbatim}[gobble=1]}%
+ {\end{Verbatim}}
+
+
 \def\MacroFont{%
   \fontencoding\encodingdefault%
   \fontfamily\ttdefault%
@@ -117,12 +124,55 @@
 
 \def\PrintMacroName#1{{\strut\MacroFont\color{DarkGreen}\footnotesize\string #1\ }}
 
-\def\PrintDescribeMacro#1{\strut\MacroFont\textcolor{DarkGreen}{\string #1\ }}
+\def\PrintDescribeMacro#1{\parbox[t]{1in}{\strut\MacroFont\textcolor{DarkGreen}{\string #1\ }}}
 \let\PrintDescribeEnv\PrintDescribeMacro
 %\let\PrintMacroName\PrintDescribeMacro
 \let\PrintEnvName\PrintDescribeEnv
 
 \def\theCodelineNo{\textcolor{DarkGreen}{\sffamily\scriptsize{\arabic{CodelineNo}}}}
+
+
+\renewenvironment{macro}{\macro@custom@arg}{}
+\def\macro@custom@arg{%
+  \begingroup\makeatletter\macro@custom@arg@i}
+\def\macro@custom@arg@i#1{%
+  \makeatother
+  \par\noindent
+  \ifstrempty{#1}%
+   {~\par}%
+   {\ttfamily\color{DarkGreen}\hspace*{-0.5in}%
+    \macro@custom@arg@split#1,\FV@Sentinel\par}%
+  \endgroup}
+\def\macro@custom@arg@spacegobble#1{#1}
+\def\macro@custom@arg@split#1,#2\FV@Sentinel{%
+  \expandafter\string\macro@custom@arg@spacegobble#1%
+  \if\relax\detokenize{#2}\relax
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+  {}{\\\hspace*{-0.5in}\macro@custom@arg@split#2\FV@Sentinel}}
+
+\renewenvironment{environment}{\env@custom@arg}{}
+\def\env@custom@arg{%
+  \begingroup\makeatletter\env@custom@arg@i}
+\def\env@custom@arg@i#1{%
+  \makeatother
+  \ifstrempty{#1}%
+   {~\par}%
+   {\ttfamily\color{DarkGreen}\hspace*{-0.5in}%
+    \env@custom@arg@split#1,\FV@Sentinel\par}%
+  \endgroup}
+\def\env@custom@arg@spacegobble#1{#1}
+\def\env@custom@arg@split#1,#2\FV@Sentinel{%
+  \env@custom@arg@spacegobble#1{\textrm{ \textit{(env.)}}}%
+  \if\relax\detokenize{#2}\relax
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi
+  {}{\\\hspace*{-0.5in}\env@custom@arg@split#2\FV@Sentinel}}
+
 
 \let\orig@footnote\footnote
 \renewcommand{\footnote}{%
@@ -135,6 +185,7 @@
 \newcommand{\new@footnote}[1]{%
   \endgroup
   \orig@footnote{\scantokens{#1}}}
+
 
 %\EnableCrossrefs
 %\CodelineIndex
@@ -166,6 +217,21 @@
 %   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
 %
+%
+%
+% \begin{changelog}{v0.19}{2026/02/15}
+% \begin{itemize}
+% \item Fixed backslash escapes in docstrings and regexes for syntax compatibility with Python 3.11+.
+% \item \texttt{js} now works as a command family for JavaScript (\#197).
+% \item Python console commands and environments are now compatible with Python 3.14 (\#229).
+% \item Fixed a bug that could cause non-Windows operating systems to attempt to invoke a nonexistent batch file when the executable associated with a language is not found (\#225).
+% \item Replaced doctype \texttt{tex} with \texttt{texminted} for \texttt{Weave.jl} (\#219).
+% \item Fixed a bug that resulted in uncaught exceptions when \Verb{\inputpygments} was used with files that do not exist (\#64).
+% \item Fixed a bug in tracking the number of Pygments errors (\#206).
+% \item Improved error messages (\#207, \#209).  Improved documentation for \Verb{--error-exit-code} (\#208).
+% \item Several minor improvements to documentation.
+% \end{itemize}
+% \end{changelog}
 %
 %
 % \begin{changelog}{v0.18}{2021/06/06}
@@ -474,6 +540,7 @@
 %
 % \maketitle
 %
+%
 % \begin{abstract}
 % \pytex\ provides access to Python from within \LaTeX\ documents. It allows Python code entered within a \LaTeX\ document to be executed, and the results to be included within the original document.  Python code may be adjacent to the figure or calculation it produces.  The package also makes possible macro definitions that mix Python and \LaTeX\ code.  In addition, \pytex\ provides syntax highlighting for many programming languages via the Pygments syntax highlighter.
 %
@@ -486,9 +553,19 @@
 %
 %
 %
-% \section*{\centering Warning}
+% \begingroup
+% \small
+%
+% \subsection*{\centering Development Status}
+% Since 2020, I am increasingly creating new teaching materials with Markdown and HTML instead of \pytex\ and \LaTeX. I have limited time for developing open-source software that I do not use frequently myself. There should be occasional releases to keep \pytex\ running, but no major changes or significant new features are anticipated.
+%
+%
+%
+% \subsection*{\centering Warning}
 %
 % \pytex\ makes possible some pretty amazing things.  But that power brings with it a certain risk and responsibility.  Compiling a document that uses \pytex\ involves executing Python code, and potentially other programs, on your computer.  You should only compile \pytex\ documents from sources you trust.  \pytex\ comes with NO WARRANTY.\footnote{All \LaTeX\ code is licensed under the \href{http://www.latex-project.org/lppl.txt}{\LaTeX\ Project Public License (LPPL)} and all Python code is licensed under the \href{http://www.opensource.org/licenses/BSD-3-Clause}{BSD 3-Clause License}.} The copyright holder and any additional authors will not be liable for any damages.
+%
+% \endgroup
 %
 %
 % \pagebreak
@@ -551,7 +628,7 @@
 %
 % \pytex\ requires a \TeX\ installation.  It has been tested with  \href{http://www.tug.org/texlive/}{\TeX\ Live} and  \href{http://miktex.org/}{MiK\TeX}, but should work with other distributions.  The following \LaTeX\ packages, with their dependencies, are required:  |fancyvrb|, |fvextra|, |etoolbox|, |xstring|, |pgfopts|, |newfloat| (part of the |caption| bundle), |currfile|, and |color| or |xcolor|.  A current \TeX\ installation is recommended, since some features require recent versions of the packages.  If you are creating and including graphics, you will also need |graphicx|.  The \href{http://www.ctan.org/pkg/mdframed}{\texttt{mdframed}} package is recommended for enclosing typeset code in boxes with fancy borders and/or background colors; \href{http://www.ctan.org/pkg/tcolorbox}{\texttt{tcolorbox}} and \href{http://www.ctan.org/pkg/framed}{\texttt{framed}} are alternatives.
 %
-% \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  Python 2.7 is recommended for the greatest compatibility with scientific tools, although many scientific packages are now compatible with Python 3.  \pytex\ is compatible with Python 2.7 and 3.2+.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile |pythontex_gallery.tex|, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}.  When using \pytex\ with LyX, be aware that LyX may try to use its own version of Python; you may need to reconfigure LyX.
+% \pytex\ also requires a \href{http://www.python.org/}{Python} installation.  A recent Python 3 installation is recommended, but there is still support for Python 2.7.  The Python package \href{http://pygments.org/}{Pygments} must be installed for syntax highlighting to function.  \pytex\ has been tested with Pygments 1.4 and later, but the latest version is recommended.  For scientific work, or to compile |pythontex_gallery.tex|, the following are also recommended:  \href{http://numpy.scipy.org/}{NumPy}, \href{http://www.scipy.org/}{SciPy}, \href{http://matplotlib.sourceforge.net/}{matplotlib}, and \href{http://sympy.org}{SymPy}.  When using \pytex\ with LyX, be aware that LyX may try to use its own version of Python; you may need to reconfigure LyX.
 %
 % \pytex\ also provides support for other languages such as Ruby, so you will need to install any additional languags you plan to use.  Typically, the most recent major version of these languages is supported.
 %
@@ -569,9 +646,9 @@
 % \item |pythontex_quickstart.tex| and |pythontex_quickstart.pdf|
 % \item Optional installation script |pythontex_install.py| for \TeX\ Live and MiKTeX
 % \item Optional batch file |pythontex.bat| for use in launching |pythontex.py| under Windows
-% \item Optional conversion script |pythontex_2to3.py| for converting \pytex\ code written for Python 2 into a form compatible with Python 3
+% \item |pythontex_2to3.py| was originally included with \pytex, but it is no longer needed. Originally, the core of \pytex\ was developed in |pythontex2.py| for Python 2.7, and then |pythontex_2to3.py| was used convert |pythontex2.py| into |pythontex3.py| for Python 3.2+.  Currently, all development is in |pythontex3.py|.  |pythontex2.py| is retained for backward compatibility, but in most cases it is no longer updated to maintain parity with |pythontex3.py|.  Similarly, |depythontex3.py| is now developed directly, separately from |depythontex2.py|, and |depythontex2.py| typically doesn't receive updates.
 % \end{itemize}
-% The style file |pythontex.sty| may be generated by running \LaTeX\ on |pythontex.ins|.  The documentation you are reading may be generated by running \LaTeX\ on |pythontex.dtx|.  Some code is provided in two forms, one for Python 2 and one for Python 3 (names ending in |2| and |3|).  Whenever this is the case, a version-independent wrapper is supplied that automatically runs the correct code based on the Python version.  For example, there are two main scripts, |pythontex2.py| and |pythontex3.py|, but you should actually run |pythontex.py|, which imports the correct code based on the Python version.\footnote{Unfortunately, it is not possible to provide full Unicode support for both Python 2 and 3 using a single script.  Currently, all code is written for Python 2, and then the Python 3 version is automatically generated via the |pythontex_2to3.py| script.  This script comments out code that is only for Python 2, and un-comments code that is only for Python 3.}
+% The style file |pythontex.sty| may be generated by running \LaTeX\ on |pythontex.ins|.  The documentation you are reading may be generated by running \LaTeX\ on |pythontex.dtx|.  Some code is provided in two forms, one for Python 2 and one for Python 3 (names ending in |2| and |3|).  Whenever this is the case, a version-independent wrapper is supplied that automatically runs the correct code based on the Python version.  For example, there are two main scripts, |pythontex2.py| and |pythontex3.py|, but you can typically run |pythontex.py|, which imports the correct code based on the Python version.
 %
 % If you want the absolute latest version of \pytex, you should install it manually from \href{https://github.com/gpoore/pythontex}{github.com/gpoore/pythontex}.  A Python installation script is provided for use with \TeX\ Live and MiKTeX.  It has been tested with Windows, Linux, and OS~X, but may need manual input or slight modifications depending on your system.  The installation script performs the steps described below.
 %
@@ -579,7 +656,7 @@
 %
 % \textbf{Note that for a typical \TeX\ setup under Linux, you may need to run the script with elevated privileges, and may need to run it with the user's PATH.}  This can be necessary when you are using a Linux distribution that includes an outdated version of \TeX\ Live, and have installed a new version manually.  \textbf{If you are installing \pytex\ on a machine with multiple versions of \TeX, make sure you install \pytex\ for the correct version.}  For example, under Ubuntu Linux, you will probably need the following command if you have installed the latest version of \TeX\ Live manually:
 % \begin{verbatim}
-% sudo env PATH=$PATH python pythontex_install.py
+%sudo env PATH=$PATH python pythontex_install.py
 % \end{verbatim}
 %
 % The installer creates the following files.  It will offer to create the paths if they do not exist.  If you are installing in TEXMFLOCAL, the paths will have an additional |local/| at the end.
@@ -750,6 +827,10 @@
 %
 % \DescribeMacro{autoprint=\meta{none}/true/false default:true \meta{none}=true}
 %
+% ~
+%
+% ~
+%
 % \DescribeMacro{autostdout=\meta{none}/true/false default:true \meta{none}=true}
 %
 % Whenever a |print| command/statement is used, the printed content will automatically be included in the document, unless the code doing the printing is being typeset.\footnote{Note that |autoprint| only works within the body of the document.  The |code| command and environment can be used in the preamble, but |autoprint| is disabled there.  It is usually a not a good idea to print in the preamble, because nothing can be typeset; the only thing that could be validly printed is \LaTeX\ commands that do not typeset content, such as macro definitions.  Thus, it is appropriate that printed content is only brought in while in the preamble if it is explicitly requested via |\printpythontex|. This approach is also helpful for writing packages using \pytex, since the author does not have to worry about any \LaTeX\ commands printed by the package either not being included (if |autoprint| is relied upon, but the user turns it off) or being included twice (if |\printpythontex| is used and |autoprint| is enabled).  Printing should only be used in the preamble with great care.}  In that case, the printed content must be included using the |\printpythontex| or |\stdoutpythontex| commands.
@@ -855,11 +936,11 @@
 %
 % This governs the form of the filename that appears in error messages in Python console environments.  Python errors messages have a form such as the following:
 % \begin{verbatim}
-% >>> z = 1 + 34 +
-%   File "<name>", line 1
-%     z = 1 + 34 +
-%                ^
-% SyntaxError: invalid syntax
+%>>> z = 1 + 34 +
+%  File "<name>", line 1
+%    z = 1 + 34 +
+%               ^
+%SyntaxError: invalid syntax
 % \end{verbatim}
 % The |stdin| option replaces |<name>| with |<stdin>|, as it appears in a standard Python interactive session.  The |console| option uses |<console>| instead, which is the default setting for the Python |code| module used by \pytex\ to create Python console environments.
 %
@@ -1297,7 +1378,7 @@
 %
 % \pytex\ uses |fancyvrb| internally to typeset all code.  Even code that is highlighted with Pygments is typeset afterwards with |fancyvrb|.  Using |fancyvrb|, it is possible to set background colors for individual lines of code, but not for entire blocks of code, using |\FancyVerbFormatLine| (you may also wish to consider the |formatcom| option).   For example, the following command puts a green background behind all the characters in each line of code:
 % \begin{verbatim}
-% \renewcommand{\FancyVerbFormatLine}[1]{\colorbox{green}{#1}}
+%\renewcommand{\FancyVerbFormatLine}[1]{\colorbox{green}{#1}}
 % \end{verbatim}
 %
 % If you need a completely solid colored background for an environment, or a highly customizable background, you should consider the |mdframed| package.  Wrapping \pytex\ environments with |mdframed| frames works quite well.  You can even automatically add a particular style of frame to all instances of an environment using the command
@@ -1434,7 +1515,7 @@
 % \item If you need to insert content from Python in inline contexts, it is best to use |\py| or an equivalent command.  If you use |print|, either directly (for example, from within |\pyc|) or via |\printpythontex|, make sure that the spacing following the printed content is correct.  You may need to print an |\endinput| or |%| at the end of your content to prevent an extra trailing space.  |depythontex| will attempt to reproduce the spacing of the original document, even if it is not ideal.  See Section~\ref{sec:depythontex:technical-details} for additional details.
 % \item Some \LaTeX\ environments, such as the |verbatim| environment from the |verbatim| package and the |Verbatim| environment from |fancyvrb|, do not allow text to follow the |\end{|\meta{environment}|}|.  If you bring Python-generated content that ends with one of these environments into your document, using |print| or |\py|, make sure that the end-of-environment command is followed by a newline.  For example, if you are assembling a |Verbatim| environment to bring in, the last line should be the string
 % \begin{verbatim}
-% '\\end{Verbatim}\n'
+%'\\end{Verbatim}\n'
 % \end{verbatim}
 % Even if you neglect a final newline, |depythontex| will still function correctly in most cases.  Whenever Python-generated content does not end with a newline, |depythontex| usually inserts one and gobbles spaces that follow the environment.  This preserves the correct spacing while avoiding any issues produced by an end-of-environment command.  But in some cases, |depythontex| cannot do this.  For example, if |\py| is used to bring in a |Verbatim| environment, and there is text immediately after the |\py|, without any intervening space, |depythontex| cannot substitute a newline for spaces, because there are none.  Because of the way that |print| and |\py| content is brought in, everything may still work correctly in the original \pytex\ document.  But it would fail in the |depythontex| output.
 % \item Do not create \pytex\ commands or environments on the Python side and |print| or otherwise bring them in.  That is too many levels of complexity!
@@ -1461,7 +1542,7 @@
 % When code is typeset with any option other than |verbatim|, listing line numbering from the original document will be preserved.  When code is typeset with any option other than |verbatim| and |fancyvrb|, syntax highlighting will also be preserved.  The only exception is when |listings| is used, and |listings|'s language name does not correspond to Pygments' lexer name.  In this case, you should use the |--lexer-dict| option to specify how the Pygments lexer is to be translated into a |listings| language.
 %     \item |--lexer-dict| This option is used to specify how Pygments lexers are converted to |listings| languages, when the two do not have the same name.  It takes a comma-separated list of the form
 % \begin{verbatim}
-% "<Pygments lexer>:<listings language>, ..., ... "
+%"<Pygments lexer>:<listings language>, ..., ... "
 % \end{verbatim}
 % A Python-style dict will also be accepted.
 %     \item |--preamble| This option allows additional commands to be added to the output document's preamble.  This is useful when you want the output document to load a package that was automatically loaded by \pytex, such as |upquote|.
@@ -1526,12 +1607,12 @@
 % In many situations, you can use \pytex\ commands inside macro definitions without any special consideration.  For example, consider the following macro, for calculating powers.
 % \newcommand{\pow}[2]{\py{#1**#2}}
 % \begin{verbatim}
-% \newcommand{\pow}[2]{\py{#1**#2}}
+%\newcommand{\pow}[2]{\py{#1**#2}}
 % \end{verbatim}
 % Once this is defined, we can calculate |2**8| via |\pow{2}{8}|:  \pow{2}{8}.  Similarly, we can reverse a string.
 % \newcommand{\reverse}[1]{\py{"#1"[::-1]}}
 % \begin{verbatim}
-% \newcommand{\reverse}[1]{\py{"#1"[::-1]}}
+%\newcommand{\reverse}[1]{\py{"#1"[::-1]}}
 % \end{verbatim}
 % Now we can use |\reverse{``This is some text!''}|:  \reverse{``This is some text!''}.
 %
@@ -1539,16 +1620,16 @@
 %
 % Of course, there are many cases where macros don't need arguments.  Here is code for creating a macro that generates random polynomials.
 % \begin{verbatim}
-% \begin{sympycode}
-% from sympy.stats import DiscreteUniform, sample
-% x = Symbol('x')
-% a = DiscreteUniform('a', range(-10, 11))
-% b = DiscreteUniform('b', range(-10, 11))
-% c = DiscreteUniform('c', range(-10, 11))
-% def randquad():
-%     return Eq(sample(a)*x**2 + sample(b)*x + sample(c), 0)
-% \end{sympycode}
-% \newcommand{\randquad}{\ensuremath{\sympy{randquad()}}}
+%\begin{sympycode}
+%from sympy.stats import DiscreteUniform, sample
+%x = Symbol('x')
+%a = DiscreteUniform('a', range(-10, 11))
+%b = DiscreteUniform('b', range(-10, 11))
+%c = DiscreteUniform('c', range(-10, 11))
+%def randquad():
+%    return Eq(sample(a)*x**2 + sample(b)*x + sample(c), 0)
+%\end{sympycode}
+%\newcommand{\randquad}{\ensuremath{\sympy{randquad()}}}
 % \end{verbatim}
 %
 % If you are considering writing macros that involve \pytex, you should keep a few things in mind.
@@ -1898,7 +1979,7 @@
 % We store the name of the package in a macro for later use in warnings and error messages.
 %    \begin{macrocode}
 \newcommand{\pytx@packagename}{PythonTeX}
-\newcommand{\pytx@packageversion}{0.19dev}
+\newcommand{\pytx@packageversion}{0.19}
 %    \end{macrocode}
 %
 % \subsection{Required packages}
@@ -2205,7 +2286,7 @@
 %
 % Currently, three options may be passed in this manner:  |style=|\meta{style}, which sets the formatting style; |texcomments|, which allows \LaTeX\ in code comments to be rendered; and |mathescape|, which allows \LaTeX\ math mode (|$...$|) in comments.  The |texcomments| and |mathescape| options may be used with a boolean argument; if an argument is not supplied, true is assumed.  As an example of |pygopt| usage, consider the following:
 % \begin{verbatim}
-% pygopt={style=colorful, texcomments=true, mathescape=false}
+%pygopt={style=colorful, texcomments=true, mathescape=false}
 % \end{verbatim}
 %
 % While the package-level |pygments| option may be overridden by individual commands and environments (though it is not by default), the package-level Pygments options cannot be overridden by individual commands and environments.  While we're defining storage for |pygopt|, go ahead and define parsing to extract |style| for later use under all cicumstances.  This should be reorganized during the next refactoring.
@@ -2266,8 +2347,8 @@
 % \begin{macro}{\pytx@opt@pyconfilename}
 % This option governs the file name that appears in error messages in the console.  The file name may be either |stdin|, as it is in a standard interactive interpreter, or |console|, as it would typically be for the Python |code| module.
 % \begin{verbatim}
-% Traceback (most recent call last):
-%   File "<file name>", line <line no>, in <module>
+%Traceback (most recent call last):
+%  File "<file name>", line <line no>, in <module>
 % \end{verbatim}
 %    \begin{macrocode}
 \def\pytx@opt@pyconfilename{stdin}
@@ -2921,7 +3002,7 @@
 % \begin{macro}{\Depythontex}
 % Each command or environment that is to work with depythontex will write the following information to the auxiliary file:
 % \begin{verbatim}
-% =>DEPYTHONTEX#<type>:<name>:<args>:<typeset>:<line>:[<Pygments lexer>]#
+%=>DEPYTHONTEX#<type>:<name>:<args>:<typeset>:<line>:[<Pygments lexer>]#
 % \end{verbatim}
 % where |<type>| is |cmd| or |env|; |<name>| is the complete name of the command or environment; |<args>| is a string representing the arguments taken (|o|=optional, |m|=mandatory, |v|=mandatory~verbatim, |n|=none); |<typeset>| is a string representing what is typeset (|c|=code, |p|=printed, |n|=null), and |<line>| is |\the\inputlineno|.  The last one can be determined automatically without user input, but the first four must be entered when a macro is created.  Optionally, the Pygments lexer is written to file if it is available (if |\pytx@lexer| is not |\relax|). These pieces of information are needed for the following reasons.
 % \begin{itemize}

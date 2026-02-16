@@ -7,8 +7,8 @@ Version History
 ===============
 
 
-v0.19 (dev)
------------
+v0.19 (2026/02/15)
+------------------
 
 *  Fixed backslash escapes in docstrings and regexes for syntax compatibility
    with Python 3.11+.
@@ -19,13 +19,20 @@ v0.19 (dev)
    3.14 (#229).
 
 *  Fixed a bug that could cause non-Windows operating systems to attempt to
-   invoke a batch file when the executable associated with a language is
-   not found (#225).
+   invoke a nonexistent batch file when the executable associated with a
+   language is not found (#225).
 
 *  Replaced doctype ``tex`` with ``texminted`` for ``Weave.jl`` (#219).
 
 *  Fixed a bug that resulted in uncaught exceptions when ``\inputpygments``
    was used with files that do not exist (#64).
+
+*  Fixed a bug in tracking the number of Pygments errors (#206).
+
+*  Improved error messages (#207, #209).  Improved documentation for
+   ``--error-exit-code`` (#208).
+
+*  Several minor improvements to documentation.
 
 
 
