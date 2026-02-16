@@ -57,12 +57,18 @@ from hashlib import sha1
 from collections import defaultdict, OrderedDict, namedtuple
 from re import match, sub, search
 import subprocess
-import multiprocessing
 from pygments.styles import get_all_styles
 from pythontex_engines import *
 import textwrap
 import platform
 import itertools
+
+try:
+    import multiprocessing.synchronize  # noqa: F401
+    from multiprocessing import Pool
+except ImportError:
+    multiprocessing = False
+
 
 if sys.version_info[0] == 2:
     try:
@@ -192,8 +198,9 @@ def process_argv(data, temp_data):
         temp_data['hashdependencies'] = False
     if args.jobs is None:
         try:
-            jobs = multiprocessing.cpu_count()
+            jobs = os.cpu_count()
         except NotImplementedError:
+            # Is this exception needed with os.cpu_count?
             jobs = 1
         temp_data['jobs'] = jobs
     else:
@@ -1147,6 +1154,13 @@ def parse_code_write_scripts(data, temp_data, engine_dict):
 
 
 
+def eval_task(fun_name, arg_list):
+    '''
+    Some platforms, like android, does not support multiprocessing. For such
+    platforms we fall back to this function when running tasks.
+    '''
+    arg_tuple = tuple(arg_list)
+    return eval(fun_name)(*arg_tuple)
 
 def do_multiprocessing(data, temp_data, old_data, engine_dict):
     jobname = data['jobname']
@@ -1271,7 +1285,14 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     # concurrent processes to a user-specified value for jobs.  If the user
     # has not specified a value, then it will be None, and
     # multiprocessing.Pool() will use cpu_count().
-    pool = multiprocessing.Pool(jobs)
+    if multiprocessing:
+        pool = Pool(jobs)
+        # Add task to list of tasks to run asynchronously, from function
+        # name and list of args.
+        # globals()[fun] converts string with function name into function handle
+        async_or_eval = lambda fun, args: pool.apply_async(globals()[fun], args)
+    else:
+        async_or_eval = eval_task
     tasks = []
 
     # If verbose, print a list of processes
@@ -1286,39 +1307,39 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         family = key.split('#')[0]
         # Uncomment the following for debugging, and comment out what follows
         '''run_code(encoding, outputdir,
-                                                 workingdir,
-                                                 cc_dict_begin[family],
-                                                 code_dict[key],
-                                                 cc_dict_end[family],
-                                                 engine_dict[family].language,
-                                                 engine_dict[family].commands,
-                                                 engine_dict[family].created,
-                                                 engine_dict[family].extension,
-                                                 makestderr, stderrfilename,
-                                                 code_index_dict[key],
-                                                 engine_dict[family].errors,
-                                                 engine_dict[family].warnings,
-                                                 engine_dict[family].linenumbers,
-                                                 engine_dict[family].lookbehind,
-                                                 keeptemps, hashdependencies,
-                                                 pygments_settings]))'''
-        tasks.append(pool.apply_async(run_code, [encoding, outputdir,
-                                                 workingdir,
-                                                 cc_dict_begin[family],
-                                                 code_dict[key],
-                                                 cc_dict_end[family],
-                                                 engine_dict[family].language,
-                                                 engine_dict[family].commands,
-                                                 engine_dict[family].created,
-                                                 engine_dict[family].extension,
-                                                 makestderr, stderrfilename,
-                                                 code_index_dict[key],
-                                                 engine_dict[family].errors,
-                                                 engine_dict[family].warnings,
-                                                 engine_dict[family].linenumbers,
-                                                 engine_dict[family].lookbehind,
-                                                 keeptemps, hashdependencies,
-                                                 pygments_settings]))
+                                                workingdir,
+                                                cc_dict_begin[family],
+                                                code_dict[key],
+                                                cc_dict_end[family],
+                                                engine_dict[family].language,
+                                                engine_dict[family].commands,
+                                                engine_dict[family].created,
+                                                engine_dict[family].extension,
+                                                makestderr, stderrfilename,
+                                                code_index_dict[key],
+                                                engine_dict[family].errors,
+                                                engine_dict[family].warnings,
+                                                engine_dict[family].linenumbers,
+                                                engine_dict[family].lookbehind,
+                                                keeptemps, hashdependencies,
+                                                pygments_settings)'''
+        tasks.append(async_or_eval('run_code', [encoding, outputdir,
+                                                workingdir,
+                                                cc_dict_begin[family],
+                                                code_dict[key],
+                                                cc_dict_end[family],
+                                                engine_dict[family].language,
+                                                engine_dict[family].commands,
+                                                engine_dict[family].created,
+                                                engine_dict[family].extension,
+                                                makestderr, stderrfilename,
+                                                code_index_dict[key],
+                                                engine_dict[family].errors,
+                                                engine_dict[family].warnings,
+                                                engine_dict[family].linenumbers,
+                                                engine_dict[family].lookbehind,
+                                                keeptemps, hashdependencies,
+                                                pygments_settings]))
         if verbose:
             print('    - Code process ' + key.replace('#', ':'))
 
@@ -1326,35 +1347,23 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     for key in cons_dict:
         family = key.split('#')[0]
         if engine_dict[family].language.startswith('python'):
-            if family in pygments_settings:
-                # Uncomment the following for debugging
-                '''python_console(jobname, encoding, outputdir, workingdir,
-                               fvextfile, pygments_settings[family],
-                               cc_dict_begin[family], cons_dict[key],
-                               cc_dict_end[family], engine_dict[family].startup,
-                               engine_dict[family].banner,
-                               engine_dict[family].filename)'''
-                tasks.append(pool.apply_async(python_console, [jobname, encoding,
-                                                               outputdir, workingdir,
-                                                               fvextfile,
-                                                               pygments_settings[family],
-                                                               cc_dict_begin[family],
-                                                               cons_dict[key],
-                                                               cc_dict_end[family],
-                                                               engine_dict[family].startup,
-                                                               engine_dict[family].banner,
-                                                               engine_dict[family].filename]))
-            else:
-                tasks.append(pool.apply_async(python_console, [jobname, encoding,
-                                                               outputdir, workingdir,
-                                                               fvextfile,
-                                                               None,
-                                                               cc_dict_begin[family],
-                                                               cons_dict[key],
-                                                               cc_dict_end[family],
-                                                               engine_dict[family].startup,
-                                                               engine_dict[family].banner,
-                                                               engine_dict[family].filename]))
+            # Uncomment the following for debugging
+            '''python_console(jobname, encoding, outputdir, workingdir,
+                           fvextfile, pygments_settings[family],
+                           cc_dict_begin[family], cons_dict[key],
+                           cc_dict_end[family], engine_dict[family].startup,
+                           engine_dict[family].banner,
+                           engine_dict[family].filename)'''
+            tasks.append(async_or_eval('python_console', [jobname, encoding,
+                                                          outputdir, workingdir,
+                                                          fvextfile,
+                                                          pygments_settings[family] if family in pygments_settings else None,
+                                                          cc_dict_begin[family],
+                                                          cons_dict[key],
+                                                          cc_dict_end[family],
+                                                          engine_dict[family].startup,
+                                                          engine_dict[family].banner,
+                                                          engine_dict[family].filename]))
         else:
             print('* PythonTeX error')
             print('    Currently, non-Python consoles are not supported')
@@ -1367,18 +1376,19 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
         # Uncomment the following for debugging
         # do_pygments(encoding, outputdir, fvextfile, pygments_list,
         #             pygments_settings, typeset_cache, hashdependencies)
-        tasks.append(pool.apply_async(do_pygments, [encoding, outputdir,
-                                                    fvextfile,
-                                                    pygments_list,
-                                                    pygments_settings,
-                                                    typeset_cache,
-                                                    hashdependencies]))
+        tasks.append(async_or_eval('do_pygments', [encoding, outputdir,
+                                                   fvextfile,
+                                                   pygments_list,
+                                                   pygments_settings,
+                                                   typeset_cache,
+                                                   hashdependencies]))
         if verbose:
             print('    - Pygments process')
 
     # Execute the processes
-    pool.close()
-    pool.join()
+    if multiprocessing:
+        pool.close()
+        pool.join()
 
     # Get the outputs of processes
     # Get the files and macros created.  Get the number of errors and warnings
@@ -1389,7 +1399,11 @@ def do_multiprocessing(data, temp_data, old_data, engine_dict):
     new_files = False
     messages = []
     for task in tasks:
-        result = task.get()
+        if multiprocessing:
+            result = task.get()
+        else:
+            result = task
+
         if result['process'] == 'code':
             key = result['key']
             files[key].extend(result['files'])
