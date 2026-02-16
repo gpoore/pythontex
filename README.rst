@@ -97,24 +97,19 @@ in any resulting publications.  The best and most recent paper is in
 Development status
 ==================
 
-Starting in 2020, I have increasingly used Markdown and HTML instead of
-PythonTeX and LaTeX when creating new teaching materials.  I can no longer
-make major time investments in open-source software that I do not use
-frequently myself.  PythonTeX v0.19 is under development.  It will address
-some minor bugs and incompatibilities that have developed with Python and
-dependencies over the last few years.  After v0.19, there should be occasional
-releases to keep PythonTeX running, but no major changes or significant new
-features are anticipated.
+Since 2020, I am increasingly creating new teaching materials with Markdown
+and HTML instead of PythonTeX and LaTeX.  I have limited time for developing
+open-source software that I do not use frequently myself.  There should be
+occasional releases to keep PythonTeX running, but no major changes or
+significant new features are anticipated.
 
 I have been developing `Codebraid <https://codebraid.org/>`_ since 2019,
 partially to have a PythonTeX equivalent for Markdown but also in the hope
 that it could eventually be integrated with LaTeX as a PythonTeX replacement.
-I currently have a grant to develop
-`minted <https://github.com/gpoore/minted>`_ v3.0, and as part of this am
-creating new software for passing data between LaTeX and Python.  I cannot
-make any guarantees, but I hope that this will eventually make it possible to
-create a new LaTeX package based on Codebraid, with significant PythonTeX
-compatibility.
+As part of `minted <https://github.com/gpoore/minted>`_ version 3, I created
+new software for passing data between LaTeX and Python.  I cannot make any
+guarantees, but I hope that this will eventually make it possible to create a
+new LaTeX package based on Codebraid, with significant PythonTeX compatibility.
 
 
 License
